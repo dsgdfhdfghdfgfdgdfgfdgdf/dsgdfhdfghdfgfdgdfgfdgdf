@@ -667,6 +667,57 @@
             max-height: 200px;
             overflow-y: auto;
         }
+
+        .log-entry {
+            margin-bottom: 4px;
+            line-height: 1.4;
+        }
+
+        .log-error {
+            color: #ff6e6e;
+        }
+
+        .log-warning {
+            color: #ffde6e;
+        }
+
+        .log-success {
+            color: #6effae;
+        }
+
+        .log-info {
+            color: #6eb5ff;
+        }
+
+        .resource-preview {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .resource-preview-item {
+            width: 80px;
+            height: 80px;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 5px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .manual-add-section {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+        }
+
+        .manual-add-title {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+            color: var(--secondary-color);
+        }
     </style>
 </head>
 <body>
@@ -748,8 +799,16 @@
             
             <div class="tab-content" id="characters-tab">
                 <div class="resource-list" id="character-list">
-                    <!-- Characters will be populated here -->
                     <div id="character-loading">Загрузка персонажей...</div>
+                </div>
+                
+                <div class="manual-add-section">
+                    <div class="manual-add-title">Добавить спрайты Алисы вручную</div>
+                    <p>Если спрайты Алисы не были обнаружены автоматически, вы можете добавить их вручную:</p>
+                    <div class="resource-preview" id="alisa-sprites-preview">
+                        <!-- Preview images will be here -->
+                    </div>
+                    <button class="btn" id="add-alisa-btn" style="margin-top: 10px;">Добавить Алису</button>
                 </div>
                 
                 <button class="btn" id="add-character-btn">Добавить персонажа</button>
@@ -758,8 +817,16 @@
             
             <div class="tab-content" id="locations-tab">
                 <div class="resource-list" id="location-list">
-                    <!-- Locations will be populated here -->
                     <div id="location-loading">Загрузка локаций...</div>
+                </div>
+                
+                <div class="manual-add-section">
+                    <div class="manual-add-title">Добавить основные фоны вручную</div>
+                    <p>Если фоны не были обнаружены автоматически, вы можете добавить стандартные:</p>
+                    <div class="resource-preview" id="background-preview">
+                        <!-- Preview images will be here -->
+                    </div>
+                    <button class="btn" id="add-default-backgrounds-btn" style="margin-top: 10px;">Добавить стандартные фоны</button>
                 </div>
                 
                 <button class="btn" id="add-location-btn">Добавить локацию</button>
@@ -799,7 +866,7 @@
             <div class="tab-content" id="debug-tab">
                 <div class="form-group">
                     <label>Журнал отладки</label>
-                    <div id="debug-log"></div>
+                    <div id="debug-log" style="background: rgba(0,0,0,0.2); padding: 10px; border-radius: 5px; max-height: 300px; overflow-y: auto; font-family: monospace; font-size: 0.85rem;"></div>
                 </div>
                 <button class="btn" id="clear-debug-btn">Очистить журнал</button>
                 <button class="btn" id="test-image-scan-btn">Проверить доступ к изображениям</button>
@@ -874,6 +941,32 @@
             
             <div class="form-group">
                 <label>Эмоции персонажа</label>
+                <div id="emotions-container">
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="emotion-normal" checked>
+                        <label for="emotion-normal">Нормальная</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="emotion-happy" checked>
+                        <label for="emotion-happy">Счастливая</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="emotion-sad" checked>
+                        <label for="emotion-sad">Грустная</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="emotion-angry" checked>
+                        <label for="emotion-angry">Злая</label>
+                    </div>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="emotion-surprised" checked>
+                        <label for="emotion-surprised">Удивленная</label>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Предпросмотр спрайтов</label>
                 <div class="sprite-gallery" id="character-sprites">
                     <!-- Sprites will be added here -->
                 </div>
@@ -1027,6 +1120,37 @@
             debug: {
                 logs: [],
                 testResults: {}
+            },
+            definedResources: {
+                // Конкретные пути к спрайтам Алисы
+                alisaSprites: [
+                    { name: "normal", path: "sprites/Алиса/normal.png" },
+                    { name: "happy", path: "sprites/Алиса/happy.png" },
+                    { name: "angry", path: "sprites/Алиса/angry.png" },
+                    { name: "sad", path: "sprites/Алиса/sad.png" },
+                    { name: "surprised", path: "sprites/Алиса/surprised.png" }
+                ],
+                // Конкретные фоны
+                backgrounds: [
+                    { 
+                        key: "ВходВоротаВпионерлагерь", 
+                        name: "Вход в пионерлагерь", 
+                        path: "background/ВходВоротаВпионерлагерь.jpg", 
+                        description: "Ворота лагеря с яркой вывеской \"Добро пожаловать!\""
+                    },
+                    { 
+                        key: "Пляж", 
+                        name: "Пляж", 
+                        path: "background/Пляж.jpg", 
+                        description: "Песчаный пляж на берегу озера"
+                    },
+                    { 
+                        key: "Столовая", 
+                        name: "Столовая", 
+                        path: "background/Столовая.jpg", 
+                        description: "Просторная столовая лагеря"
+                    }
+                ]
             }
         };
 
@@ -1055,6 +1179,8 @@
             systemPrompt: document.getElementById('system-prompt'),
             debugLog: document.getElementById('debug-log'),
             debugResults: document.getElementById('debug-results'),
+            alisaSpritesPreview: document.getElementById('alisa-sprites-preview'),
+            backgroundPreview: document.getElementById('background-preview'),
             
             // Game elements
             background: document.getElementById('background'),
@@ -1102,6 +1228,7 @@
             elements.disclaimer.style.display = 'none';
             elements.settings.style.display = 'block';
             loadSettings();
+            initializeResourcePreviews();
             scanResources();
         });
 
@@ -1198,6 +1325,16 @@
             scanBackgrounds(true);
         });
 
+        // Add Alisa button
+        document.getElementById('add-alisa-btn').addEventListener('click', () => {
+            addAlisaManually();
+        });
+
+        // Add default backgrounds button
+        document.getElementById('add-default-backgrounds-btn').addEventListener('click', () => {
+            addDefaultBackgrounds();
+        });
+
         // Character file upload
         document.getElementById('character-upload').addEventListener('click', () => {
             document.getElementById('character-file').click();
@@ -1266,14 +1403,93 @@
             });
         }
 
+        // Initialize resource previews
+        function initializeResourcePreviews() {
+            // Initialize Alisa sprites preview
+            if (elements.alisaSpritesPreview) {
+                elements.alisaSpritesPreview.innerHTML = '';
+                gameState.definedResources.alisaSprites.forEach(sprite => {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'resource-preview-item';
+                    previewItem.style.backgroundImage = `url('${sprite.path}')`;
+                    previewItem.title = sprite.name;
+                    elements.alisaSpritesPreview.appendChild(previewItem);
+                });
+            }
+
+            // Initialize background preview
+            if (elements.backgroundPreview) {
+                elements.backgroundPreview.innerHTML = '';
+                gameState.definedResources.backgrounds.forEach(background => {
+                    const previewItem = document.createElement('div');
+                    previewItem.className = 'resource-preview-item';
+                    previewItem.style.backgroundImage = `url('${background.path}')`;
+                    previewItem.title = background.name;
+                    elements.backgroundPreview.appendChild(previewItem);
+                });
+            }
+        }
+
+        // Add Alisa manually
+        function addAlisaManually() {
+            if (gameState.characters.Алиса) {
+                debugLog('Алиса уже добавлена в список персонажей', 'warning');
+                alert('Алиса уже добавлена в список персонажей');
+                return;
+            }
+
+            gameState.characters.Алиса = {
+                name: 'Алиса',
+                description: 'Активная и энергичная девушка с рыжими волосами. Спортивная, немного вспыльчивая, но добрая.',
+                sprites: ['normal.png', 'happy.png', 'angry.png', 'sad.png', 'surprised.png'],
+                path: 'sprites/Алиса/'
+            };
+
+            debugLog('Алиса добавлена вручную', 'success');
+            updateCharacterList();
+            alert('Алиса успешно добавлена!');
+        }
+
+        // Add default backgrounds
+        function addDefaultBackgrounds() {
+            let addedCount = 0;
+            
+            gameState.definedResources.backgrounds.forEach(bg => {
+                if (!gameState.backgrounds[bg.key]) {
+                    gameState.backgrounds[bg.key] = {
+                        name: bg.name,
+                        description: bg.description,
+                        file: bg.path.split('/').pop(),
+                        path: 'background/'
+                    };
+                    addedCount++;
+                }
+            });
+            
+            if (addedCount > 0) {
+                debugLog(`Добавлено ${addedCount} стандартных фонов`, 'success');
+                updateLocationList();
+                alert(`Успешно добавлено ${addedCount} стандартных фонов!`);
+            } else {
+                debugLog('Все стандартные фоны уже добавлены', 'info');
+                alert('Все стандартные фоны уже добавлены');
+            }
+        }
+
         async function testImageAccess() {
             debugLog('Начинаем тестирование доступа к изображениям...', 'test');
             elements.debugResults.innerHTML = '<p>Проверка изображений...</p>';
             
+            // Проверяем спрайты Алисы
             const tests = [
                 { name: 'Фон ВходВоротаВпионерлагерь', url: 'background/ВходВоротаВпионерлагерь.jpg' },
+                { name: 'Фон Пляж', url: 'background/Пляж.jpg' },
+                { name: 'Фон Столовая', url: 'background/Столовая.jpg' },
                 { name: 'Алиса/normal', url: 'sprites/Алиса/normal.png' },
-                { name: 'Нестандартный фон', url: 'background/beach.jpg' }
+                { name: 'Алиса/happy', url: 'sprites/Алиса/happy.png' },
+                { name: 'Алиса/sad', url: 'sprites/Алиса/sad.png' },
+                { name: 'Алиса/angry', url: 'sprites/Алиса/angry.png' },
+                { name: 'Алиса/surprised', url: 'sprites/Алиса/surprised.png' }
             ];
             
             let results = '<ul>';
@@ -1288,7 +1504,6 @@
             elements.debugResults.innerHTML = results;
         }
 
-        // Functions
         function loadSettings() {
             try {
                 const savedSettings = localStorage.getItem('vnSettings');
@@ -1439,64 +1654,43 @@
             }
         }
 
-        // Direct access method for backgrounds
+        // Сканирование фонов
         async function scanBackgrounds(showAlerts = false) {
             debugLog('Начинаем сканирование фонов...', 'info');
             
-            // Common background names to try
-            const commonBackgrounds = [
-                'ВходВоротаВпионерлагерь.jpg',
-                'Пляж.jpg',
-                'Столовая.jpg',
-                'ДомикОтряда.jpg',
-                'Лес.jpg',
-                'Площадь.jpg',
-                'Библиотека.jpg',
-                'Спортплощадка.jpg',
-                'Медпункт.jpg',
-                'Пристань.jpg',
-                'Костер.jpg',
-                'КомнатаГероя.jpg'
-            ];
-            
             let foundBackgrounds = 0;
             
-            // Try both potential paths
-            const folders = ['background/', 'backgrounds/'];
-            
-            for (const folder of folders) {
-                for (const bgFile of commonBackgrounds) {
-                    try {
-                        // Check if the image exists
-                        const exists = await checkImageExists(`${folder}${bgFile}`);
+            // Проверяем каждый фон из определенного списка
+            for (const bg of gameState.definedResources.backgrounds) {
+                try {
+                    const exists = await checkImageExists(bg.path);
+                    
+                    if (exists) {
+                        debugLog(`Найден фон: ${bg.path}`, 'success');
                         
-                        if (exists) {
-                            debugLog(`Найден фон: ${folder}${bgFile}`, 'success');
-                            
-                            // Add to backgrounds if not already there
-                            const key = bgFile.replace(/\.[^/.]+$/, ""); // Remove file extension
-                            const name = key.replace(/([A-Z])/g, ' $1').trim(); // Add spaces before capitals
-                            
-                            if (!gameState.backgrounds[key]) {
-                                gameState.backgrounds[key] = {
-                                    name: name,
-                                    description: `Фон: ${name}`,
-                                    file: bgFile,
-                                    path: folder
-                                };
-                                foundBackgrounds++;
-                            }
+                        // Добавляем фон в список, если его еще нет
+                        if (!gameState.backgrounds[bg.key]) {
+                            gameState.backgrounds[bg.key] = {
+                                name: bg.name,
+                                description: bg.description,
+                                file: bg.path.split('/').pop(),
+                                path: 'background/'
+                            };
+                            foundBackgrounds++;
                         }
-                    } catch (error) {
-                        debugLog(`Ошибка при проверке ${folder}${bgFile}: ${error.message}`, 'error');
+                    } else {
+                        debugLog(`Фон не найден: ${bg.path}`, 'warning');
                     }
+                } catch (error) {
+                    debugLog(`Ошибка при проверке фона ${bg.path}: ${error.message}`, 'error');
                 }
             }
             
-            // Ensure the default background is available
+            // Проверяем наличие стандартного фона входа
             if (!gameState.backgrounds['ВходВоротаВпионерлагерь']) {
-                debugLog('Добавляем стандартный фон входа', 'info');
+                debugLog('Стандартный фон входа не обнаружен, добавляем заглушку', 'warning');
                 
+                // Добавляем заглушку для стандартного фона
                 gameState.backgrounds['ВходВоротаВпионерлагерь'] = {
                     name: 'Вход в пионерлагерь',
                     description: 'Ворота лагеря с яркой вывеской "Добро пожаловать!"',
@@ -1516,94 +1710,67 @@
             return foundBackgrounds > 0;
         }
 
-        // Direct access method for character sprites
+        // Сканирование персонажей (конкретно Алисы)
         async function scanCharacters(showAlerts = false) {
             debugLog('Начинаем сканирование персонажей...', 'info');
             
-            // Define common character names and emotions
-            const characterNames = ['Алиса', 'Герой', 'Славя', 'Лена', 'Ульяна', 'Мику', 'Ольга'];
-            const emotions = ['normal', 'happy', 'angry', 'sad', 'surprised', 'scared', 'laugh'];
+            let alisaFound = false;
+            let foundSprites = 0;
             
-            let foundCharacters = 0;
-            let totalSprites = 0;
-            
-            // Try both potential paths
-            const baseFolders = ['sprites/', 'sprite/'];
-            
-            for (const baseFolder of baseFolders) {
-                for (const charName of characterNames) {
-                    let characterExists = false;
-                    let characterSprites = [];
+            // Проверяем наличие каждого спрайта Алисы
+            for (const sprite of gameState.definedResources.alisaSprites) {
+                try {
+                    const exists = await checkImageExists(sprite.path);
                     
-                    // Try each emotion for this character
-                    for (const emotion of emotions) {
-                        const spritePaths = [
-                            `${baseFolder}${charName}/${emotion}.png`,
-                            `${baseFolder}${charName.toLowerCase()}/${emotion}.png`
-                        ];
-                        
-                        for (const spritePath of spritePaths) {
-                            try {
-                                const exists = await checkImageExists(spritePath);
-                                
-                                if (exists) {
-                                    debugLog(`Найден спрайт: ${spritePath}`, 'success');
-                                    characterExists = true;
-                                    if (!characterSprites.includes(`${emotion}.png`)) {
-                                        characterSprites.push(`${emotion}.png`);
-                                        totalSprites++;
-                                    }
-                                }
-                            } catch (error) {
-                                debugLog(`Ошибка при проверке ${spritePath}: ${error.message}`, 'error');
-                            }
-                        }
+                    if (exists) {
+                        debugLog(`Найден спрайт: ${sprite.path}`, 'success');
+                        foundSprites++;
+                        alisaFound = true;
+                    } else {
+                        debugLog(`Спрайт не найден: ${sprite.path}`, 'warning');
                     }
-                    
-                    if (characterExists) {
-                        // Add character to our list
-                        if (!gameState.characters[charName]) {
-                            gameState.characters[charName] = {
-                                name: charName,
-                                description: `${charName} - персонаж визуальной новеллы`,
-                                sprites: characterSprites,
-                                path: baseFolder
-                            };
-                            foundCharacters++;
-                        } else {
-                            // Update sprites if we found new ones
-                            for (const sprite of characterSprites) {
-                                if (!gameState.characters[charName].sprites.includes(sprite)) {
-                                    gameState.characters[charName].sprites.push(sprite);
-                                }
-                            }
-                            gameState.characters[charName].path = baseFolder;
-                        }
-                    }
+                } catch (error) {
+                    debugLog(`Ошибка при проверке спрайта ${sprite.path}: ${error.message}`, 'error');
                 }
             }
             
-            // Special case for Алиса, make sure she's there
-            if (!gameState.characters.Алиса) {
-                debugLog('Добавляем стандартного персонажа Алиса', 'info');
+            // Если найдены спрайты Алисы, добавляем её в список персонажей
+            if (alisaFound) {
+                debugLog('Обнаружены спрайты Алисы, добавляем персонажа', 'success');
                 
+                // Получаем список обнаруженных спрайтов
+                const validSprites = [];
+                for (const sprite of gameState.definedResources.alisaSprites) {
+                    const exists = await checkImageExists(sprite.path);
+                    if (exists) {
+                        validSprites.push(sprite.name + '.png');
+                    }
+                }
+                
+                // Добавляем Алису в список персонажей
                 gameState.characters.Алиса = {
                     name: 'Алиса',
                     description: 'Активная и энергичная девушка с рыжими волосами. Спортивная, немного вспыльчивая, но добрая.',
-                    sprites: ['normal.png', 'happy.png', 'angry.png', 'sad.png', 'surprised.png'],
-                    path: 'sprites/'
+                    sprites: validSprites,
+                    path: 'sprites/Алиса/'
                 };
+            } else {
+                debugLog('Спрайты Алисы не обнаружены, пожалуйста, добавьте их вручную', 'warning');
             }
             
             updateCharacterList();
             
-            debugLog(`Сканирование персонажей завершено. Найдено персонажей: ${foundCharacters}, спрайтов: ${totalSprites}`, 'info');
+            debugLog(`Сканирование персонажей завершено. Найдено спрайтов: ${foundSprites}`, 'info');
             
             if (showAlerts) {
-                alert(`Сканирование персонажей завершено. Найдено персонажей: ${foundCharacters}, спрайтов: ${totalSprites}`);
+                if (alisaFound) {
+                    alert(`Сканирование завершено. Найдено ${foundSprites} спрайтов Алисы.`);
+                } else {
+                    alert('Спрайты Алисы не обнаружены. Пожалуйста, добавьте их вручную.');
+                }
             }
             
-            return foundCharacters > 0;
+            return alisaFound;
         }
 
         function updateCharacterList() {
@@ -1635,6 +1802,11 @@
                 `;
                 elements.characterList.appendChild(item);
             });
+            
+            // If no characters
+            if (Object.keys(gameState.characters).length === 0 && Object.keys(gameState.userResources.characters).length === 0) {
+                elements.characterList.innerHTML = '<div style="padding: 10px; text-align: center;">Персонажи не найдены. Добавьте персонажей вручную.</div>';
+            }
             
             // Add event listeners to edit and delete buttons
             document.querySelectorAll('#character-list .edit-btn').forEach(btn => {
@@ -1691,6 +1863,11 @@
                 `;
                 elements.locationList.appendChild(item);
             });
+            
+            // If no locations
+            if (Object.keys(gameState.backgrounds).length === 0 && Object.keys(gameState.userResources.backgrounds).length === 0) {
+                elements.locationList.innerHTML = '<div style="padding: 10px; text-align: center;">Фоны не найдены. Добавьте фоны вручную.</div>';
+            }
             
             // Add event listeners to edit and delete buttons
             document.querySelectorAll('#location-list .edit-btn').forEach(btn => {
@@ -1757,7 +1934,8 @@
                         character.sprites.forEach(sprite => {
                             const spriteDiv = document.createElement('div');
                             spriteDiv.className = 'sprite-item';
-                            spriteDiv.style.backgroundImage = `url('${character.path || 'sprites/'}${characterName}/${sprite}')`;
+                            const path = character.path || 'sprites/Алиса/';
+                            spriteDiv.style.backgroundImage = `url('${path}${sprite}')`;
                             
                             const spriteName = document.createElement('div');
                             spriteName.className = 'sprite-item-name';
@@ -1781,6 +1959,21 @@
                         });
                     }
                     
+                    // Проверяем эмоции
+                    if (character.sprites) {
+                        document.getElementById('emotion-normal').checked = character.sprites.includes('normal.png');
+                        document.getElementById('emotion-happy').checked = character.sprites.includes('happy.png');
+                        document.getElementById('emotion-sad').checked = character.sprites.includes('sad.png');
+                        document.getElementById('emotion-angry').checked = character.sprites.includes('angry.png');
+                        document.getElementById('emotion-surprised').checked = character.sprites.includes('surprised.png');
+                    } else if (character.emotions) {
+                        document.getElementById('emotion-normal').checked = character.emotions.includes('normal');
+                        document.getElementById('emotion-happy').checked = character.emotions.includes('happy');
+                        document.getElementById('emotion-sad').checked = character.emotions.includes('sad');
+                        document.getElementById('emotion-angry').checked = character.emotions.includes('angry');
+                        document.getElementById('emotion-surprised').checked = character.emotions.includes('surprised');
+                    }
+                    
                     // Store original data for update
                     nameInput.dataset.originalName = characterName;
                     nameInput.dataset.isUser = isUserResource ? 'true' : 'false';
@@ -1794,6 +1987,13 @@
                 descriptionInput.value = '';
                 nameInput.dataset.originalName = '';
                 nameInput.dataset.isUser = 'true'; // New characters are user resources
+                
+                // Сбрасываем чекбоксы на значения по умолчанию
+                document.getElementById('emotion-normal').checked = true;
+                document.getElementById('emotion-happy').checked = true;
+                document.getElementById('emotion-sad').checked = true;
+                document.getElementById('emotion-angry').checked = true;
+                document.getElementById('emotion-surprised').checked = true;
             }
             
             modal.style.display = 'flex';
@@ -1829,7 +2029,8 @@
                         const location = gameState.backgrounds[locationKey];
                         nameInput.value = location.name;
                         descriptionInput.value = location.description;
-                        preview.style.backgroundImage = `url('${location.path || 'background/'}${location.file}')`;
+                        const path = location.path || 'background/';
+                        preview.style.backgroundImage = `url('${path}${location.file}')`;
                         
                         // Store original data for update
                         nameInput.dataset.originalKey = locationKey;
@@ -1930,6 +2131,14 @@
                 return;
             }
             
+            // Собираем выбранные эмоции
+            const emotions = [];
+            if (document.getElementById('emotion-normal').checked) emotions.push('normal');
+            if (document.getElementById('emotion-happy').checked) emotions.push('happy');
+            if (document.getElementById('emotion-sad').checked) emotions.push('sad');
+            if (document.getElementById('emotion-angry').checked) emotions.push('angry');
+            if (document.getElementById('emotion-surprised').checked) emotions.push('surprised');
+            
             // Handle user resource
             if (isUserResource) {
                 // Remove old entry if renamed
@@ -1948,7 +2157,7 @@
                     name: newName,
                     description: descriptionInput.value.trim(),
                     image: preview.dataset.image || gameState.userResources.characters[originalName]?.image,
-                    emotions: ['normal', 'happy', 'sad', 'angry', 'surprised'] // Default emotions
+                    emotions: emotions
                 };
             } else {
                 // Renaming system character
@@ -1956,12 +2165,20 @@
                     delete gameState.characters[originalName];
                 }
                 
+                // Создаем список спрайтов на основе выбранных эмоций
+                const sprites = [];
+                if (document.getElementById('emotion-normal').checked) sprites.push('normal.png');
+                if (document.getElementById('emotion-happy').checked) sprites.push('happy.png');
+                if (document.getElementById('emotion-sad').checked) sprites.push('sad.png');
+                if (document.getElementById('emotion-angry').checked) sprites.push('angry.png');
+                if (document.getElementById('emotion-surprised').checked) sprites.push('surprised.png');
+                
                 // Update regular character
                 gameState.characters[newName] = {
                     name: newName,
                     description: descriptionInput.value.trim(),
-                    sprites: gameState.characters[originalName]?.sprites || [],
-                    path: gameState.characters[originalName]?.path || 'sprites/'
+                    sprites: sprites,
+                    path: gameState.characters[originalName]?.path || 'sprites/Алиса/'
                 };
             }
             
@@ -2017,7 +2234,7 @@
                     name: newName,
                     description: descriptionInput.value.trim(),
                     file: gameState.backgrounds[originalKey]?.file || `${newKey}.jpg`,
-                    path: gameState.backgrounds[originalKey]?.path || 'background/'
+                    path: 'background/'
                 };
             }
             
@@ -2107,9 +2324,9 @@
                     spriteFile = character.sprites[0];
                 }
                 
-                const path = character.path || 'sprites/';
-                characterElement.style.backgroundImage = `url('${path}${characterName}/${spriteFile}')`;
-                debugLog(`Установлен спрайт: ${path}${characterName}/${spriteFile}`, 'success');
+                const path = character.path || 'sprites/Алиса/';
+                characterElement.style.backgroundImage = `url('${path}${spriteFile}')`;
+                debugLog(`Установлен спрайт: ${path}${spriteFile}`, 'success');
             }
             
             characterElement.style.backgroundSize = 'contain';
@@ -2677,9 +2894,10 @@
             }
         }
 
-        // Add debug tab initialization
+        // Initialize debug tab if exists
         if (elements.debugLog) {
-            elements.debugLog.innerHTML = '<div>Журнал отладки инициализирован</div>';
+            elements.debugLog.innerHTML = '<div class="log-entry log-info">Журнал отладки инициализирован</div>';
+            debugLog('Страница загружена', 'info');
         }
     </script>
 </body>
