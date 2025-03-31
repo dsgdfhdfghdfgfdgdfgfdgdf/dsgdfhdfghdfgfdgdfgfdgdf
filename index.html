@@ -694,60 +694,44 @@
             background: rgba(128, 0, 128, 0.1);
         }
 
-        /* Resources presets */
-        .resources-presets {
-            margin-bottom: 1.5rem;
-        }
-
-        .resources-presets h3 {
-            margin-bottom: 0.8rem;
-            color: var(--secondary-color);
-        }
-
-        .preset-buttons {
+        /* Scanned resources */
+        .scanned-resources {
             display: flex;
             flex-wrap: wrap;
-            gap: 0.5rem;
-        }
-
-        .preset-btn {
-            background: rgba(109, 74, 255, 0.2);
-            border: 1px solid var(--primary-color);
-            border-radius: 5px;
-            padding: 0.5rem 1rem;
-            color: var(--light-color);
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .preset-btn:hover {
-            background: rgba(109, 74, 255, 0.4);
-        }
-
-        /* Manual resources */
-        .manual-resource-entry {
-            background: rgba(0,0,0,0.2);
-            border-radius: 5px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-        }
-
-        .manual-resource-buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 0.5rem;
+            gap: 10px;
             margin-top: 1rem;
         }
 
-        .preview-image {
-            width: 100%;
-            height: 120px;
+        .resource-thumbnail {
+            width: 100px;
+            height: 100px;
             background-size: contain;
             background-position: center;
             background-repeat: no-repeat;
-            margin-top: 0.5rem;
             border-radius: 5px;
-            background-color: rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.2);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .resource-thumbnail:hover {
+            border-color: var(--secondary-color);
+        }
+
+        .resource-thumbnail-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            font-size: 0.8rem;
+            padding: 3px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
     </style>
 </head>
@@ -829,84 +813,32 @@
             </div>
             
             <div class="tab-content" id="characters-tab">
-                <div class="resources-presets">
-                    <h3>Стандартные персонажи</h3>
-                    <div class="preset-buttons">
-                        <button class="preset-btn" data-character="alisa">Добавить Алису</button>
-                    </div>
-                </div>
-                
                 <div class="form-group">
-                    <label>Ручное добавление персонажа</label>
-                    <div class="manual-resource-entry">
-                        <div class="form-group">
-                            <label for="manual-character-name">Имя персонажа</label>
-                            <input type="text" id="manual-character-name">
-                        </div>
-                        <div class="form-group">
-                            <label for="manual-character-desc">Описание</label>
-                            <textarea id="manual-character-desc" rows="2"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="manual-character-path">Путь к изображениям</label>
-                            <input type="text" id="manual-character-path" placeholder="sprites/Алиса/">
-                        </div>
-                        <div class="form-group">
-                            <label for="manual-character-emotion">Доступные эмоции (через запятую)</label>
-                            <input type="text" id="manual-character-emotion" value="normal, happy, angry, sad, surprised">
-                        </div>
-                        <div id="manual-character-preview" class="preview-image"></div>
-                        <div class="manual-resource-buttons">
-                            <button id="check-character-btn" class="btn">Проверить</button>
-                            <button id="add-manual-character-btn" class="btn">Добавить</button>
-                        </div>
-                    </div>
+                    <label>Доступные спрайты персонажей</label>
+                    <div id="characters-loading">Сканирование спрайтов...</div>
+                    <div id="characters-scanned" class="scanned-resources"></div>
+                    <button id="scan-characters-btn" class="btn">Сканировать спрайты</button>
                 </div>
                 
                 <div class="resource-list" id="character-list">
                     <!-- Characters will be populated here -->
-                    <div id="character-loading">Нет персонажей. Добавьте их вручную или используйте пресеты.</div>
+                    <div id="character-loading">Нет персонажей</div>
                 </div>
                 
                 <button class="btn" id="add-character-btn">Добавить пользовательского персонажа</button>
             </div>
             
             <div class="tab-content" id="locations-tab">
-                <div class="resources-presets">
-                    <h3>Стандартные локации</h3>
-                    <div class="preset-buttons">
-                        <button class="preset-btn" data-location="gate">Добавить ворота лагеря</button>
-                        <button class="preset-btn" data-location="beach">Добавить пляж</button>
-                        <button class="preset-btn" data-location="canteen">Добавить столовую</button>
-                    </div>
-                </div>
-                
                 <div class="form-group">
-                    <label>Ручное добавление локации</label>
-                    <div class="manual-resource-entry">
-                        <div class="form-group">
-                            <label for="manual-location-name">Название локации</label>
-                            <input type="text" id="manual-location-name">
-                        </div>
-                        <div class="form-group">
-                            <label for="manual-location-desc">Описание</label>
-                            <textarea id="manual-location-desc" rows="2"></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label for="manual-location-file">Путь к файлу</label>
-                            <input type="text" id="manual-location-file" placeholder="background/ВходВоротаВпионерлагерь.jpg">
-                        </div>
-                        <div id="manual-location-preview" class="preview-image"></div>
-                        <div class="manual-resource-buttons">
-                            <button id="check-location-btn" class="btn">Проверить</button>
-                            <button id="add-manual-location-btn" class="btn">Добавить</button>
-                        </div>
-                    </div>
+                    <label>Доступные фоны</label>
+                    <div id="backgrounds-loading">Сканирование фонов...</div>
+                    <div id="backgrounds-scanned" class="scanned-resources"></div>
+                    <button id="scan-locations-btn" class="btn">Сканировать фоны</button>
                 </div>
                 
                 <div class="resource-list" id="location-list">
                     <!-- Locations will be populated here -->
-                    <div id="location-loading">Нет локаций. Добавьте их вручную или используйте пресеты.</div>
+                    <div id="location-loading">Нет локаций</div>
                 </div>
                 
                 <button class="btn" id="add-location-btn">Добавить пользовательскую локацию</button>
@@ -948,19 +880,12 @@
                     <div id="debug-log" style="max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 10px; font-family: monospace; margin-bottom: 1rem; border-radius: 5px;"></div>
                 </div>
                 
-                <div class="form-group">
-                    <label>Проверка ресурсов</label>
-                    <div class="preset-buttons">
-                        <button class="btn" id="test-alisa-btn">Проверить Алису</button>
-                        <button class="btn" id="test-gate-btn">Проверить ворота</button>
-                        <button class="btn" id="clear-debug-btn">Очистить журнал</button>
-                    </div>
-                </div>
-                
                 <div id="debug-section">
-                    <h4>Результаты тестов:</h4>
+                    <h4>Сведения о ресурсах:</h4>
                     <div id="debug-results"></div>
                 </div>
+                
+                <button class="btn" id="clear-debug-btn">Очистить журнал</button>
             </div>
             
             <div style="text-align: center; margin-top: 2rem;">
@@ -1180,33 +1105,9 @@
                 logs: [],
                 testResults: {}
             },
-            // Preset resources for quick addition
-            presets: {
-                characters: {
-                    alisa: {
-                        name: "Алиса",
-                        description: "Активная и энергичная девушка с рыжими волосами. Спортивная, немного вспыльчивая, но добрая.",
-                        basePath: "sprites/Алиса/",
-                        emotions: ["normal", "happy", "angry", "sad", "surprised"]
-                    }
-                },
-                backgrounds: {
-                    gate: {
-                        name: "Вход в пионерлагерь",
-                        description: "Ворота лагеря с яркой вывеской 'Добро пожаловать!'",
-                        file: "background/ВходВоротаВпионерлагерь.jpg"
-                    },
-                    beach: {
-                        name: "Пляж",
-                        description: "Песчаный пляж на берегу озера с чистой водой",
-                        file: "background/Пляж.jpg"
-                    },
-                    canteen: {
-                        name: "Столовая",
-                        description: "Просторная столовая пионерского лагеря с длинными столами",
-                        file: "background/Столовая.jpg"
-                    }
-                }
+            scannedResources: {
+                characterSprites: [],
+                backgroundImages: []
             }
         };
 
@@ -1236,6 +1137,12 @@
             debugLog: document.getElementById('debug-log'),
             debugResults: document.getElementById('debug-results'),
             
+            // Scanned resources
+            charactersScanned: document.getElementById('characters-scanned'),
+            charactersLoading: document.getElementById('characters-loading'),
+            backgroundsScanned: document.getElementById('backgrounds-scanned'),
+            backgroundsLoading: document.getElementById('backgrounds-loading'),
+            
             // Game elements
             background: document.getElementById('background'),
             characters: document.getElementById('characters'),
@@ -1255,19 +1162,7 @@
             locationModal: document.getElementById('location-modal'),
             
             // Loading
-            loading: document.getElementById('loading'),
-            
-            // Manual resource inputs
-            manualCharacterName: document.getElementById('manual-character-name'),
-            manualCharacterDesc: document.getElementById('manual-character-desc'),
-            manualCharacterPath: document.getElementById('manual-character-path'),
-            manualCharacterEmotion: document.getElementById('manual-character-emotion'),
-            manualCharacterPreview: document.getElementById('manual-character-preview'),
-            
-            manualLocationName: document.getElementById('manual-location-name'),
-            manualLocationDesc: document.getElementById('manual-location-desc'),
-            manualLocationFile: document.getElementById('manual-location-file'),
-            manualLocationPreview: document.getElementById('manual-location-preview')
+            loading: document.getElementById('loading')
         };
 
         // Debug function
@@ -1294,7 +1189,10 @@
             elements.disclaimer.style.display = 'none';
             elements.settings.style.display = 'block';
             loadSettings();
-            addDefaultResources();
+            
+            // Start scanning resources
+            scanCharacterSprites();
+            scanBackgroundImages();
         });
 
         // Tab switching
@@ -1429,48 +1327,19 @@
             handleLocationFileDrop(e);
         });
 
-        // Preset buttons
-        document.querySelectorAll('[data-character]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const presetName = e.target.dataset.character;
-                addPresetCharacter(presetName);
-            });
+        // Scan buttons
+        document.getElementById('scan-characters-btn').addEventListener('click', () => {
+            scanCharacterSprites();
+        });
+        
+        document.getElementById('scan-locations-btn').addEventListener('click', () => {
+            scanBackgroundImages();
         });
 
-        document.querySelectorAll('[data-location]').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const presetName = e.target.dataset.location;
-                addPresetLocation(presetName);
-            });
-        });
-
-        // Manual resource buttons
-        document.getElementById('check-character-btn').addEventListener('click', checkManualCharacter);
-        document.getElementById('add-manual-character-btn').addEventListener('click', addManualCharacter);
-        document.getElementById('check-location-btn').addEventListener('click', checkManualLocation);
-        document.getElementById('add-manual-location-btn').addEventListener('click', addManualLocation);
-
-        // Debug buttons
+        // Debug button
         document.getElementById('clear-debug-btn')?.addEventListener('click', () => {
             gameState.debug.logs = [];
             elements.debugLog.innerHTML = '';
-        });
-
-        document.getElementById('test-alisa-btn')?.addEventListener('click', () => {
-            testAlisaSprites();
-        });
-
-        document.getElementById('test-gate-btn')?.addEventListener('click', () => {
-            testGateBackground();
-        });
-
-        // Manual resource path change
-        elements.manualCharacterPath?.addEventListener('input', () => {
-            checkManualCharacter();
-        });
-
-        elements.manualLocationFile?.addEventListener('input', () => {
-            checkManualLocation();
         });
 
         // Image checking utility function
@@ -1483,288 +1352,387 @@
             });
         }
 
-        async function testAlisaSprites() {
-            debugLog('Тестирование спрайтов Алисы...', 'test');
-            elements.debugResults.innerHTML = '<p>Проверка спрайтов Алисы...</p>';
+        // Function to scan the "Алиса" folder for character sprites
+        async function scanCharacterSprites() {
+            debugLog('Начинаем сканирование спрайтов...', 'info');
+            elements.charactersLoading.textContent = 'Сканирование спрайтов...';
+            elements.charactersScanned.innerHTML = '';
             
-            const emotions = ['normal', 'happy', 'angry', 'sad', 'surprised'];
-            const basePath = 'sprites/Алиса/';
-            
-            let results = '<ul>';
-            for (const emotion of emotions) {
-                const url = `${basePath}${emotion}.png`;
-                const exists = await checkImageExists(url);
-                results += `<li>Спрайт ${emotion}: ${exists ? '✓ Доступен' : '✗ Недоступен'} (${url})</li>`;
-                gameState.debug.testResults[`alisa_${emotion}`] = exists;
-                debugLog(`Тест Алиса/${emotion}: ${exists ? 'успешно' : 'неудачно'}`, exists ? 'success' : 'error');
-            }
-            results += '</ul>';
-            
-            elements.debugResults.innerHTML = results;
-        }
-
-        async function testGateBackground() {
-            debugLog('Тестирование фона входа в лагерь...', 'test');
-            elements.debugResults.innerHTML = '<p>Проверка фона входа в лагерь...</p>';
-            
-            const variants = [
-                'background/ВходВоротаВпионерлагерь.jpg',
-                'backgrounds/ВходВоротаВпионерлагерь.jpg',
-                'background/entrance.jpg',
-                'background/gate.jpg'
-            ];
-            
-            let foundAny = false;
-            let results = '<ul>';
-            for (const url of variants) {
-                const exists = await checkImageExists(url);
-                results += `<li>Фон: ${exists ? '✓ Доступен' : '✗ Недоступен'} (${url})</li>`;
-                gameState.debug.testResults[`gate_${url}`] = exists;
-                debugLog(`Тест фона ${url}: ${exists ? 'успешно' : 'неудачно'}`, exists ? 'success' : 'error');
+            try {
+                // Try to fetch the Алиса directory using fetch directly
+                const response = await fetch('Алиса/');
+                const html = await response.text();
                 
-                if (exists) {
-                    foundAny = true;
-                }
-            }
-            results += '</ul>';
-            
-            if (foundAny) {
-                results += '<p class="log-success">Найден как минимум один вариант фона!</p>';
-            } else {
-                results += '<p class="log-error">Не найдено ни одного варианта фона. Добавьте фон вручную.</p>';
-            }
-            
-            elements.debugResults.innerHTML = results;
-        }
-
-        async function checkManualCharacter() {
-            const path = elements.manualCharacterPath.value;
-            const emotions = elements.manualCharacterEmotion.value.split(',').map(e => e.trim());
-            
-            if (!path) {
-                elements.manualCharacterPreview.style.backgroundImage = '';
-                return;
-            }
-            
-            let characterExists = false;
-            
-            // Try to check the first emotion
-            if (emotions.length > 0) {
-                const fullPath = path.endsWith('/') ? `${path}${emotions[0]}.png` : `${path}/${emotions[0]}.png`;
-                const exists = await checkImageExists(fullPath);
+                // Parse the HTML to find all sprite files
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const links = Array.from(doc.querySelectorAll('a'))
+                    .filter(a => a.href.endsWith('.png'))
+                    .map(a => {
+                        const href = a.href;
+                        const filename = href.substring(href.lastIndexOf('/') + 1);
+                        return {
+                            path: `Алиса/${filename}`,
+                            filename: filename,
+                            name: filename.replace('.png', '')
+                        };
+                    });
                 
-                if (exists) {
-                    elements.manualCharacterPreview.style.backgroundImage = `url('${fullPath}')`;
-                    debugLog(`Проверка персонажа: спрайт ${fullPath} найден`, 'success');
-                    characterExists = true;
+                if (links.length > 0) {
+                    gameState.scannedResources.characterSprites = links;
+                    debugLog(`Найдено ${links.length} спрайтов персонажа Алиса`, 'success');
+                    
+                    // Create character if not exists
+                    if (!gameState.characters.Алиса) {
+                        const emotions = links.map(sprite => sprite.name);
+                        
+                        gameState.characters.Алиса = {
+                            name: 'Алиса',
+                            description: 'Рыжеволосая спортивная девушка, яркая и напористая',
+                            sprites: links.map(sprite => sprite.filename),
+                            emotions: emotions
+                        };
+                        
+                        updateCharacterList();
+                    }
+                    
+                    // Display thumbnails
+                    displayCharacterSprites(links);
                 } else {
-                    elements.manualCharacterPreview.style.backgroundImage = '';
-                    debugLog(`Проверка персонажа: спрайт ${fullPath} не найден`, 'warning');
+                    // Fallback - try common emotions
+                    debugLog('Не удалось найти спрайты, пробуем стандартные эмоции', 'warning');
+                    const commonEmotions = ['normal', 'happy', 'angry', 'sad', 'surprised'];
+                    const foundSprites = [];
+                    
+                    for (const emotion of commonEmotions) {
+                        const path = `Алиса/${emotion}.png`;
+                        const exists = await checkImageExists(path);
+                        if (exists) {
+                            foundSprites.push({
+                                path: path,
+                                filename: `${emotion}.png`,
+                                name: emotion
+                            });
+                        }
+                    }
+                    
+                    if (foundSprites.length > 0) {
+                        gameState.scannedResources.characterSprites = foundSprites;
+                        debugLog(`Найдено ${foundSprites.length} стандартных спрайтов`, 'success');
+                        
+                        // Create character if not exists
+                        if (!gameState.characters.Алиса) {
+                            const emotions = foundSprites.map(sprite => sprite.name);
+                            
+                            gameState.characters.Алиса = {
+                                name: 'Алиса',
+                                description: 'Рыжеволосая спортивная девушка, яркая и напористая',
+                                sprites: foundSprites.map(sprite => sprite.filename),
+                                emotions: emotions
+                            };
+                            
+                            updateCharacterList();
+                        }
+                        
+                        // Display thumbnails
+                        displayCharacterSprites(foundSprites);
+                    } else {
+                        elements.charactersLoading.textContent = 'Спрайты не найдены';
+                        debugLog('Не удалось найти спрайты персонажа', 'error');
+                    }
                 }
-            }
-            
-            return characterExists;
-        }
-
-        async function addManualCharacter() {
-            const name = elements.manualCharacterName.value.trim();
-            const description = elements.manualCharacterDesc.value.trim();
-            const path = elements.manualCharacterPath.value.trim();
-            const emotions = elements.manualCharacterEmotion.value.split(',').map(e => e.trim());
-            
-            if (!name) {
-                alert('Введите имя персонажа');
-                return;
-            }
-            
-            if (!path) {
-                alert('Введите путь к спрайтам');
-                return;
-            }
-            
-            const exists = await checkManualCharacter();
-            
-            if (!exists) {
-                if (!confirm('Не удалось найти спрайты персонажа. Всё равно добавить?')) {
-                    return;
-                }
-            }
-            
-            // Create the character
-            gameState.characters[name] = {
-                name: name,
-                description: description || `${name} - персонаж визуальной новеллы`,
-                basePath: path.endsWith('/') ? path : `${path}/`,
-                emotions: emotions
-            };
-            
-            debugLog(`Добавлен персонаж ${name} с путем ${path}`, 'success');
-            
-            // Clear inputs
-            elements.manualCharacterName.value = '';
-            elements.manualCharacterDesc.value = '';
-            elements.manualCharacterPreview.style.backgroundImage = '';
-            
-            // Update UI
-            updateCharacterList();
-        }
-
-        async function checkManualLocation() {
-            const file = elements.manualLocationFile.value;
-            
-            if (!file) {
-                elements.manualLocationPreview.style.backgroundImage = '';
-                return;
-            }
-            
-            const exists = await checkImageExists(file);
-            
-            if (exists) {
-                elements.manualLocationPreview.style.backgroundImage = `url('${file}')`;
-                debugLog(`Проверка локации: фон ${file} найден`, 'success');
-                return true;
-            } else {
-                elements.manualLocationPreview.style.backgroundImage = '';
-                debugLog(`Проверка локации: фон ${file} не найден`, 'warning');
-                return false;
-            }
-        }
-
-        async function addManualLocation() {
-            const name = elements.manualLocationName.value.trim();
-            const description = elements.manualLocationDesc.value.trim();
-            const file = elements.manualLocationFile.value.trim();
-            
-            if (!name) {
-                alert('Введите название локации');
-                return;
-            }
-            
-            if (!file) {
-                alert('Введите путь к файлу фона');
-                return;
-            }
-            
-            const exists = await checkManualLocation();
-            
-            if (!exists) {
-                if (!confirm('Не удалось найти фон. Всё равно добавить?')) {
-                    return;
-                }
-            }
-            
-            // Generate a key from the name
-            const key = name.replace(/\s+/g, '');
-            
-            // Create the location
-            gameState.backgrounds[key] = {
-                name: name,
-                description: description || `Фон: ${name}`,
-                file: file
-            };
-            
-            debugLog(`Добавлен фон ${name} с файлом ${file}`, 'success');
-            
-            // Clear inputs
-            elements.manualLocationName.value = '';
-            elements.manualLocationDesc.value = '';
-            elements.manualLocationPreview.style.backgroundImage = '';
-            
-            // Update UI
-            updateLocationList();
-        }
-
-        function addPresetCharacter(presetName) {
-            const preset = gameState.presets.characters[presetName];
-            
-            if (!preset) {
-                debugLog(`Пресет персонажа ${presetName} не найден`, 'error');
-                return;
-            }
-            
-            // Create character
-            gameState.characters[preset.name] = {
-                name: preset.name,
-                description: preset.description,
-                basePath: preset.basePath,
-                emotions: preset.emotions
-            };
-            
-            debugLog(`Добавлен персонаж ${preset.name} из пресетов`, 'success');
-            updateCharacterList();
-            
-            // Check if the character's sprites actually exist
-            checkCharacterSprites(preset.name, preset.basePath, preset.emotions);
-        }
-
-        async function checkCharacterSprites(name, basePath, emotions) {
-            let foundSprites = 0;
-            
-            for (const emotion of emotions) {
-                const spritePath = `${basePath}${emotion}.png`;
-                const exists = await checkImageExists(spritePath);
+            } catch (error) {
+                console.error('Ошибка при сканировании спрайтов:', error);
+                debugLog(`Ошибка при сканировании спрайтов: ${error.message}`, 'error');
                 
+                // Try fallback method for character sprites
+                tryFallbackForCharacters();
+            }
+        }
+        
+        // Fallback method for character sprites
+        async function tryFallbackForCharacters() {
+            const commonEmotions = ['normal', 'happy', 'angry', 'sad', 'surprised'];
+            const foundSprites = [];
+            
+            for (const emotion of commonEmotions) {
+                const path = `Алиса/${emotion}.png`;
+                const exists = await checkImageExists(path);
                 if (exists) {
-                    foundSprites++;
-                    debugLog(`Спрайт ${name}/${emotion} найден`, 'success');
-                } else {
-                    debugLog(`Спрайт ${name}/${emotion} не найден`, 'warning');
+                    foundSprites.push({
+                        path: path,
+                        filename: `${emotion}.png`,
+                        name: emotion
+                    });
+                    debugLog(`Найден спрайт: ${path}`, 'success');
                 }
             }
             
-            debugLog(`Проверка спрайтов ${name}: найдено ${foundSprites} из ${emotions.length}`, 'info');
-        }
-
-        function addPresetLocation(presetName) {
-            const preset = gameState.presets.backgrounds[presetName];
-            
-            if (!preset) {
-                debugLog(`Пресет локации ${presetName} не найден`, 'error');
-                return;
-            }
-            
-            // Generate a key from the name
-            const key = preset.name.replace(/\s+/g, '');
-            
-            // Create location
-            gameState.backgrounds[key] = {
-                name: preset.name,
-                description: preset.description,
-                file: preset.file
-            };
-            
-            debugLog(`Добавлена локация ${preset.name} из пресетов`, 'success');
-            updateLocationList();
-            
-            // Check if the background actually exists
-            checkBackgroundFile(preset.name, preset.file);
-        }
-
-        async function checkBackgroundFile(name, file) {
-            const exists = await checkImageExists(file);
-            
-            if (exists) {
-                debugLog(`Фон ${name} (${file}) найден`, 'success');
+            if (foundSprites.length > 0) {
+                gameState.scannedResources.characterSprites = foundSprites;
+                debugLog(`Найдено ${foundSprites.length} спрайтов с помощью запасного метода`, 'success');
+                
+                // Create character if not exists
+                if (!gameState.characters.Алиса) {
+                    const emotions = foundSprites.map(sprite => sprite.name);
+                    
+                    gameState.characters.Алиса = {
+                        name: 'Алиса',
+                        description: 'Рыжеволосая спортивная девушка, яркая и напористая',
+                        sprites: foundSprites.map(sprite => sprite.filename),
+                        emotions: emotions
+                    };
+                    
+                    updateCharacterList();
+                }
+                
+                // Display thumbnails
+                displayCharacterSprites(foundSprites);
             } else {
-                debugLog(`Фон ${name} (${file}) не найден`, 'warning');
+                elements.charactersLoading.textContent = 'Спрайты не найдены';
+                debugLog('Не удалось найти спрайты даже запасным методом', 'error');
+            }
+        }
+        
+        // Display character sprites thumbnails
+        function displayCharacterSprites(sprites) {
+            elements.charactersLoading.style.display = 'none';
+            elements.charactersScanned.innerHTML = '';
+            
+            sprites.forEach(sprite => {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = 'resource-thumbnail';
+                thumbnail.style.backgroundImage = `url('${sprite.path}')`;
+                
+                const nameLabel = document.createElement('div');
+                nameLabel.className = 'resource-thumbnail-name';
+                nameLabel.textContent = sprite.name;
+                
+                thumbnail.appendChild(nameLabel);
+                elements.charactersScanned.appendChild(thumbnail);
+                
+                // Add click event to add this sprite as a character
+                thumbnail.addEventListener('click', () => {
+                    const character = sprite.path.split('/')[0]; // Extract character name from path
+                    addSpriteAsCharacter(character, sprite);
+                });
+            });
+        }
+        
+        // Add sprite as character
+        function addSpriteAsCharacter(characterName, sprite) {
+            // Check if we already have this character
+            if (!gameState.characters[characterName]) {
+                gameState.characters[characterName] = {
+                    name: characterName,
+                    description: `${characterName} - персонаж визуальной новеллы`,
+                    sprites: [sprite.filename],
+                    emotions: [sprite.name]
+                };
+                
+                debugLog(`Добавлен персонаж ${characterName} из спрайта ${sprite.path}`, 'success');
+                updateCharacterList();
+            } else {
+                // Just add this sprite/emotion if we don't have it
+                if (!gameState.characters[characterName].sprites.includes(sprite.filename)) {
+                    gameState.characters[characterName].sprites.push(sprite.filename);
+                    gameState.characters[characterName].emotions.push(sprite.name);
+                    
+                    debugLog(`Добавлена эмоция ${sprite.name} для персонажа ${characterName}`, 'success');
+                    updateCharacterList();
+                }
             }
         }
 
-        function addDefaultResources() {
-            debugLog('Добавление стандартных ресурсов...', 'info');
+        // Function to scan the "background" folder for images
+        async function scanBackgroundImages() {
+            debugLog('Начинаем сканирование фонов...', 'info');
+            elements.backgroundsLoading.textContent = 'Сканирование фонов...';
+            elements.backgroundsScanned.innerHTML = '';
             
-            // Add default character - Alisa
-            if (!gameState.characters.Алиса && !gameState.userResources.characters.Алиса) {
-                addPresetCharacter('alisa');
+            try {
+                // Try to fetch the background directory using fetch directly
+                const response = await fetch('background/');
+                const html = await response.text();
+                
+                // Parse the HTML to find all background files
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const links = Array.from(doc.querySelectorAll('a'))
+                    .filter(a => a.href.endsWith('.jpg') || a.href.endsWith('.png'))
+                    .map(a => {
+                        const href = a.href;
+                        const filename = href.substring(href.lastIndexOf('/') + 1);
+                        return {
+                            path: `background/${filename}`,
+                            filename: filename,
+                            name: filename.replace(/\.[^/.]+$/, "") // Remove file extension
+                        };
+                    });
+                
+                if (links.length > 0) {
+                    gameState.scannedResources.backgroundImages = links;
+                    debugLog(`Найдено ${links.length} фоновых изображений`, 'success');
+                    
+                    // Add the gate background by default if available
+                    const gateBackground = links.find(bg => 
+                        bg.filename.toLowerCase().includes('вход') || 
+                        bg.filename.toLowerCase().includes('ворота')
+                    );
+                    
+                    if (gateBackground) {
+                        const key = gateBackground.name.replace(/\s+/g, '');
+                        
+                        if (!gameState.backgrounds[key]) {
+                            gameState.backgrounds[key] = {
+                                name: gateBackground.name,
+                                description: 'Вход в пионерский лагерь с воротами',
+                                file: gateBackground.path
+                            };
+                            
+                            updateLocationList();
+                        }
+                    }
+                    
+                    // Display thumbnails
+                    displayBackgroundImages(links);
+                } else {
+                    // Fallback - try common background
+                    debugLog('Не удалось найти фоны, пробуем стандартные', 'warning');
+                    const commonBackgrounds = ['ВходВоротаВпионерлагерь.jpg', 'Пляж.jpg', 'Столовая.jpg'];
+                    const foundBackgrounds = [];
+                    
+                    for (const bg of commonBackgrounds) {
+                        const path = `background/${bg}`;
+                        const exists = await checkImageExists(path);
+                        if (exists) {
+                            foundBackgrounds.push({
+                                path: path,
+                                filename: bg,
+                                name: bg.replace(/\.[^/.]+$/, "")
+                            });
+                        }
+                    }
+                    
+                    if (foundBackgrounds.length > 0) {
+                        gameState.scannedResources.backgroundImages = foundBackgrounds;
+                        debugLog(`Найдено ${foundBackgrounds.length} стандартных фонов`, 'success');
+                        
+                        // Add backgrounds to game
+                        foundBackgrounds.forEach(bg => {
+                            const key = bg.name.replace(/\s+/g, '');
+                            
+                            if (!gameState.backgrounds[key]) {
+                                gameState.backgrounds[key] = {
+                                    name: bg.name,
+                                    description: `Фон: ${bg.name}`,
+                                    file: bg.path
+                                };
+                            }
+                        });
+                        
+                        updateLocationList();
+                        
+                        // Display thumbnails
+                        displayBackgroundImages(foundBackgrounds);
+                    } else {
+                        elements.backgroundsLoading.textContent = 'Фоны не найдены';
+                        debugLog('Не удалось найти фоны', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('Ошибка при сканировании фонов:', error);
+                debugLog(`Ошибка при сканировании фонов: ${error.message}`, 'error');
+                
+                // Try fallback method for backgrounds
+                tryFallbackForBackgrounds();
+            }
+        }
+        
+        // Fallback method for backgrounds
+        async function tryFallbackForBackgrounds() {
+            const commonBackgrounds = ['ВходВоротаВпионерлагерь.jpg', 'Пляж.jpg', 'Столовая.jpg'];
+            const foundBackgrounds = [];
+            
+            for (const bg of commonBackgrounds) {
+                const path = `background/${bg}`;
+                const exists = await checkImageExists(path);
+                if (exists) {
+                    foundBackgrounds.push({
+                        path: path,
+                        filename: bg,
+                        name: bg.replace(/\.[^/.]+$/, "")
+                    });
+                    debugLog(`Найден фон: ${path}`, 'success');
+                }
             }
             
-            // Add default background - Gate
-            if (!gameState.backgrounds.ВходВпионерлагерь) {
-                addPresetLocation('gate');
+            if (foundBackgrounds.length > 0) {
+                gameState.scannedResources.backgroundImages = foundBackgrounds;
+                debugLog(`Найдено ${foundBackgrounds.length} фонов с помощью запасного метода`, 'success');
+                
+                // Add backgrounds to game
+                foundBackgrounds.forEach(bg => {
+                    const key = bg.name.replace(/\s+/g, '');
+                    
+                    if (!gameState.backgrounds[key]) {
+                        gameState.backgrounds[key] = {
+                            name: bg.name,
+                            description: `Фон: ${bg.name}`,
+                            file: bg.path
+                        };
+                    }
+                });
+                
+                updateLocationList();
+                
+                // Display thumbnails
+                displayBackgroundImages(foundBackgrounds);
+            } else {
+                elements.backgroundsLoading.textContent = 'Фоны не найдены';
+                debugLog('Не удалось найти фоны даже запасным методом', 'error');
             }
+        }
+        
+        // Display background images thumbnails
+        function displayBackgroundImages(backgrounds) {
+            elements.backgroundsLoading.style.display = 'none';
+            elements.backgroundsScanned.innerHTML = '';
             
-            updateCharacterList();
-            updateLocationList();
+            backgrounds.forEach(bg => {
+                const thumbnail = document.createElement('div');
+                thumbnail.className = 'resource-thumbnail';
+                thumbnail.style.backgroundImage = `url('${bg.path}')`;
+                
+                const nameLabel = document.createElement('div');
+                nameLabel.className = 'resource-thumbnail-name';
+                nameLabel.textContent = bg.name;
+                
+                thumbnail.appendChild(nameLabel);
+                elements.backgroundsScanned.appendChild(thumbnail);
+                
+                // Add click event to add this background
+                thumbnail.addEventListener('click', () => {
+                    addBackgroundImage(bg);
+                });
+            });
+        }
+        
+        // Add background image
+        function addBackgroundImage(background) {
+            const key = background.name.replace(/\s+/g, '');
+            
+            // Check if we already have this background
+            if (!gameState.backgrounds[key]) {
+                gameState.backgrounds[key] = {
+                    name: background.name,
+                    description: `Фон: ${background.name}`,
+                    file: background.path
+                };
+                
+                debugLog(`Добавлен фон ${background.name} из ${background.path}`, 'success');
+                updateLocationList();
+            }
         }
 
         function loadSettings() {
@@ -1914,7 +1882,7 @@
             elements.characterList.innerHTML = '';
             
             if (Object.keys(gameState.characters).length === 0 && Object.keys(gameState.userResources.characters).length === 0) {
-                elements.characterList.innerHTML = '<div id="character-loading">Нет персонажей. Добавьте их вручную или используйте пресеты.</div>';
+                elements.characterList.innerHTML = '<div id="character-loading">Нет персонажей</div>';
                 return;
             }
             
@@ -1975,7 +1943,7 @@
             elements.locationList.innerHTML = '';
             
             if (Object.keys(gameState.backgrounds).length === 0 && Object.keys(gameState.userResources.backgrounds).length === 0) {
-                elements.locationList.innerHTML = '<div id="location-loading">Нет локаций. Добавьте их вручную или используйте пресеты.</div>';
+                elements.locationList.innerHTML = '<div id="location-loading">Нет локаций</div>';
                 return;
             }
             
@@ -2064,11 +2032,13 @@
                     // Handle uploaded character
                     if (isUserResource && character.image) {
                         preview.style.backgroundImage = `url(${character.image})`;
-                    } else if (!isUserResource && character.basePath) {
+                    } else if (!isUserResource) {
                         // Try to show preview of the character
-                        const firstEmotion = character.emotions && character.emotions.length > 0 ? character.emotions[0] : 'normal';
-                        const spritePath = `${character.basePath}${firstEmotion}.png`;
-                        preview.style.backgroundImage = `url('${spritePath}')`;
+                        if (character.sprites && character.sprites.length > 0) {
+                            const firstSprite = character.sprites[0];
+                            const spritePath = `${character.name}/${firstSprite}`;
+                            preview.style.backgroundImage = `url('${spritePath}')`;
+                        }
                     }
                     
                     // Store original data for update
@@ -2254,7 +2224,7 @@
                     gameState.characters[newName] = {
                         name: newName,
                         description: descriptionInput.value.trim(),
-                        basePath: originalChar.basePath,
+                        sprites: originalChar.sprites || [],
                         emotions: emotions.length > 0 ? emotions : (originalChar.emotions || ['normal'])
                     };
                 } else {
@@ -2341,19 +2311,32 @@
             elements.settings.style.display = 'none';
             elements.game.style.display = 'block';
             
-            // Make sure we have some resources before starting
-            if (Object.keys(gameState.characters).length === 0 && Object.keys(gameState.userResources.characters).length === 0) {
-                debugLog('Нет персонажей, добавляем Алису по умолчанию', 'warning');
-                addPresetCharacter('alisa');
+            // Set initial background - find entry that matches gate
+            let gateFound = false;
+            
+            // First try by key
+            if (gameState.backgrounds.ВходВоротаВпионерлагерь) {
+                setBackground('ВходВоротаВпионерлагерь');
+                gateFound = true;
+            } 
+            
+            // Then try by finding a matching name
+            if (!gateFound) {
+                for (const key in gameState.backgrounds) {
+                    const bg = gameState.backgrounds[key];
+                    if (bg.name.toLowerCase().includes('вход') || bg.name.toLowerCase().includes('ворота')) {
+                        setBackground(key);
+                        gateFound = true;
+                        break;
+                    }
+                }
             }
             
-            if (Object.keys(gameState.backgrounds).length === 0 && Object.keys(gameState.userResources.backgrounds).length === 0) {
-                debugLog('Нет фонов, добавляем вход в лагерь по умолчанию', 'warning');
-                addPresetLocation('gate');
+            // Fallback to first background
+            if (!gateFound && Object.keys(gameState.backgrounds).length > 0) {
+                const firstKey = Object.keys(gameState.backgrounds)[0];
+                setBackground(firstKey);
             }
-            
-            // Set initial background
-            setBackground('ВходВпионерлагерь');
             
             // Initialize game context
             initializeGameContext();
@@ -2433,18 +2416,63 @@
                 debugLog(`Установлено пользовательское изображение для: ${characterName}`, 'success');
             } else {
                 // For regular character, try to find the sprite with the specified emotion
-                let emotionExists = character.emotions && character.emotions.includes(emotion);
+                const emotionExists = character.emotions && character.emotions.includes(emotion);
                 let spritePath;
                 
                 if (emotionExists) {
-                    spritePath = `${character.basePath}${emotion}.png`;
-                    debugLog(`Используем эмоцию ${emotion} для ${characterName}`, 'info');
+                    // Find the sprite file that corresponds to this emotion
+                    if (character.sprites) {
+                        let spriteFile;
+                        
+                        // Try exact match first
+                        spriteFile = character.sprites.find(s => s === `${emotion}.png`);
+                        
+                        // If no exact match, try name contains emotion
+                        if (!spriteFile) {
+                            spriteFile = character.sprites.find(s => s.includes(emotion));
+                        }
+                        
+                        // If still no match, use first sprite
+                        if (!spriteFile && character.sprites.length > 0) {
+                            spriteFile = character.sprites[0];
+                        }
+                        
+                        if (spriteFile) {
+                            spritePath = `${characterName}/${spriteFile}`;
+                        }
+                    }
+                    
+                    // If we couldn't determine the sprite file, try standard path
+                    if (!spritePath) {
+                        spritePath = `${characterName}/${emotion}.png`;
+                    }
+                    
+                    debugLog(`Используем эмоцию ${emotion} для ${characterName}: ${spritePath}`, 'info');
                 } else {
                     // Fallback to the first available emotion
-                    const fallbackEmotion = character.emotions && character.emotions.length > 0 ? 
-                                          character.emotions[0] : 'normal';
-                    spritePath = `${character.basePath}${fallbackEmotion}.png`;
-                    debugLog(`Эмоция ${emotion} не найдена, используем ${fallbackEmotion} для ${characterName}`, 'warning');
+                    let fallbackEmotion = 'normal';
+                    
+                    if (character.emotions && character.emotions.length > 0) {
+                        fallbackEmotion = character.emotions[0];
+                    }
+                    
+                    // Find sprite file
+                    if (character.sprites && character.sprites.length > 0) {
+                        // Try to find sprite that matches fallback emotion
+                        let spriteFile = character.sprites.find(s => s === `${fallbackEmotion}.png`);
+                        
+                        // If not found, just use first sprite
+                        if (!spriteFile) {
+                            spriteFile = character.sprites[0];
+                        }
+                        
+                        spritePath = `${characterName}/${spriteFile}`;
+                    } else {
+                        // Just try standard path
+                        spritePath = `${characterName}/${fallbackEmotion}.png`;
+                    }
+                    
+                    debugLog(`Эмоция ${emotion} не найдена, используем ${fallbackEmotion} для ${characterName}: ${spritePath}`, 'warning');
                 }
                 
                 characterElement.style.backgroundImage = `url('${spritePath}')`;
