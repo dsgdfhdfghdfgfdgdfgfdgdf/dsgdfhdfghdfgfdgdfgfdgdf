@@ -508,6 +508,150 @@
             font-size: 1.5rem;
             cursor: pointer;
         }
+
+        /* File upload styles */
+        .file-upload {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1.5rem;
+            background: rgba(0,0,0,0.2);
+            border: 2px dashed rgba(255,255,255,0.3);
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 1.5rem;
+        }
+
+        .file-upload:hover {
+            background: rgba(0,0,0,0.3);
+            border-color: rgba(255,255,255,0.5);
+        }
+
+        .file-upload p {
+            margin-top: 0.5rem;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .image-preview {
+            width: 100%;
+            height: 200px;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 10px;
+            margin-top: 1rem;
+            background-color: rgba(0,0,0,0.2);
+        }
+
+        .system-prompt-editor {
+            width: 100%;
+            height: 300px;
+            font-family: monospace;
+            line-height: 1.4;
+            font-size: 0.9rem;
+        }
+
+        /* Sprite gallery */
+        .sprite-gallery {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        .sprite-item {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            background-size: contain;
+            background-position: center;
+            background-repeat: no-repeat;
+            border-radius: 5px;
+            border: 2px solid rgba(255,255,255,0.2);
+            overflow: hidden;
+        }
+
+        .sprite-item-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            font-size: 0.8rem;
+            padding: 3px;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .background-item {
+            position: relative;
+            width: 100%;
+            height: 150px;
+            margin-bottom: 10px;
+            background-size: cover;
+            background-position: center;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .background-item-name {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px;
+            font-weight: bold;
+        }
+
+        /* API keys management */
+        .api-keys-container {
+            margin-bottom: 1.5rem;
+        }
+
+        .api-key-item {
+            display: flex;
+            margin-bottom: 0.5rem;
+        }
+
+        .api-key-item input {
+            flex-grow: 1;
+            padding: 0.8rem;
+            border-radius: 5px 0 0 5px;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: rgba(0,0,0,0.2);
+            color: var(--light-color);
+        }
+
+        .api-key-item button {
+            background: rgba(255, 110, 159, 0.2);
+            border: none;
+            border-radius: 0 5px 5px 0;
+            padding: 0.8rem;
+            color: var(--light-color);
+            cursor: pointer;
+        }
+
+        #add-api-key-btn {
+            width: 100%;
+            background: rgba(109, 74, 255, 0.2);
+            border: 1px solid var(--primary-color);
+            border-radius: 5px;
+            padding: 0.7rem;
+            color: var(--light-color);
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 0.5rem;
+        }
+
+        #add-api-key-btn:hover {
+            background: rgba(109, 74, 255, 0.4);
+        }
     </style>
 </head>
 <body>
@@ -538,6 +682,7 @@
                 <button class="tab-btn" data-tab="characters">Персонажи</button>
                 <button class="tab-btn" data-tab="locations">Локации</button>
                 <button class="tab-btn" data-tab="story">Сюжет</button>
+                <button class="tab-btn" data-tab="system">Системный промпт</button>
             </div>
             
             <div class="tab-content active" id="general-tab">
@@ -547,8 +692,14 @@
                 </div>
                 
                 <div class="form-group">
-                    <label for="api-key">API Ключ OpenRouter</label>
-                    <input type="text" id="api-key" placeholder="sk-or-...">
+                    <label>API Ключи OpenRouter (один на строку)</label>
+                    <div class="api-keys-container" id="api-keys-container">
+                        <div class="api-key-item">
+                            <input type="text" class="api-key-input" placeholder="sk-or-...">
+                            <button class="remove-api-key-btn">✕</button>
+                        </div>
+                    </div>
+                    <button id="add-api-key-btn">Добавить API ключ</button>
                 </div>
                 
                 <div class="form-group">
@@ -588,6 +739,7 @@
                 </div>
                 
                 <button class="btn" id="add-character-btn">Добавить персонажа</button>
+                <button class="btn" id="scan-characters-btn">Сканировать персонажей</button>
             </div>
             
             <div class="tab-content" id="locations-tab">
@@ -596,6 +748,7 @@
                 </div>
                 
                 <button class="btn" id="add-location-btn">Добавить локацию</button>
+                <button class="btn" id="scan-locations-btn">Сканировать фоны</button>
             </div>
             
             <div class="tab-content" id="story-tab">
@@ -618,6 +771,14 @@
                     </div>
                     <button class="btn" id="add-event-btn">Добавить событие</button>
                 </div>
+            </div>
+            
+            <div class="tab-content" id="system-tab">
+                <div class="form-group">
+                    <label for="system-prompt">Системный промпт</label>
+                    <textarea id="system-prompt" class="system-prompt-editor"></textarea>
+                </div>
+                <button class="btn" id="reset-prompt-btn">Сбросить к стандартному</button>
             </div>
             
             <div style="text-align: center; margin-top: 2rem;">
@@ -670,8 +831,24 @@
             </div>
             
             <div class="form-group">
-                <label>Доступные спрайты</label>
-                <div id="character-sprites-preview" style="margin-top: 1rem;"></div>
+                <label>Загрузить изображение персонажа</label>
+                <div class="file-upload" id="character-upload">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p>Нажмите или перетащите файл</p>
+                </div>
+                <input type="file" id="character-file" style="display: none" accept="image/*" multiple>
+                <div class="image-preview" id="character-preview"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>Эмоции персонажа</label>
+                <div class="sprite-gallery" id="character-sprites">
+                    <!-- Sprites will be added here -->
+                </div>
             </div>
             
             <button class="btn" id="save-character-btn">Сохранить</button>
@@ -697,8 +874,17 @@
             </div>
             
             <div class="form-group">
-                <label>Изображение локации</label>
-                <div id="location-preview" style="margin-top: 1rem; height: 200px; background-size: cover; background-position: center; border-radius: 10px;"></div>
+                <label>Загрузить изображение локации</label>
+                <div class="file-upload" id="location-upload">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <p>Нажмите или перетащите файл</p>
+                </div>
+                <input type="file" id="location-file" style="display: none" accept="image/*">
+                <div class="image-preview" id="location-preview"></div>
             </div>
             
             <button class="btn" id="save-location-btn">Сохранить</button>
@@ -711,6 +897,71 @@
     </div>
 
     <script>
+        // Default system prompt
+        const DEFAULT_SYSTEM_PROMPT = `Ты являешься искусственным интеллектом, управляющим интерактивной визуальной новеллой. Твоя задача - создавать увлекательное повествование, управлять персонажами, сценами и развитием сюжета на основе выборов игрока.
+
+### ФОРМАТ ОТВЕТОВ
+
+Отвечай ИСКЛЮЧИТЕЛЬНО в JSON-формате:
+
+{
+  "messages": [
+    {
+      "text": "Текст диалога или повествования",
+      "speaker": "имя_персонажа или narrator",
+      "emotion": "эмоция_персонажа",
+      "background": "фон_если_меняется",
+      "sound": "звуковой_эффект_если_нужен",
+      "position": "left/center/right",
+      "choices": ["вариант1", "вариант2"]
+    }
+  ],
+  "internal_notes": "Заметки для себя, не показываются игроку",
+  "resource_request": {
+    "type": "character/background/sound",
+    "name": "имя_ресурса",
+    "description": "описание_как_должен_выглядеть"
+  }
+}
+
+### ДОСТУПНЫЕ РЕСУРСЫ
+
+## Персонажи
+{{CHARACTERS_LIST}}
+
+## Фоны
+{{BACKGROUNDS_LIST}}
+
+### ПАРАМЕТРЫ ИСТОРИИ
+
+Название: {{STORY_TITLE}}
+Описание: {{STORY_DESCRIPTION}}
+Текущий день: {{CURRENT_DAY}} {{STORY_MODE_ENABLED}}
+
+{{MODE_INSTRUCTIONS}}
+
+### ПРАВИЛА ПОВЕСТВОВАНИЯ
+
+- Создавай эмоционально насыщенные диалоги, соответствующие характеру персонажей
+- Развивай историю последовательно, учитывая предыдущие выборы игрока
+- Предлагай выборы в ключевых моментах (не более 2-4 вариантов)
+- Используй смену фонов для обозначения перемещений между локациями
+- Меняй эмоции персонажей в соответствии с ситуацией
+- Персонажи могут находиться в разных позициях: left, center, right
+
+### СЖАТАЯ ИСТОРИЯ ПРЕДЫДУЩИХ СОБЫТИЙ
+{{COMPRESSED_HISTORY}}
+
+### НАЧАЛО ИСТОРИИ
+
+Начни историю с прибытия в пионерский лагерь. Представь главного персонажа (игрока) и хотя бы одного второстепенного персонажа. Опиши обстановку, создай интригу или цель, которая будет мотивировать игрока продолжать историю.
+
+### ОГРАНИЧЕНИЯ
+
+- Все персонажи старше 21 года
+- Не нарушай установленный сеттинг и жанр
+- Отвечай строго в указанном JSON-формате для корректной работы игры`;
+
         // Game State
         const gameState = {
             characters: {},
@@ -723,9 +974,10 @@
             compressedHistory: "", // Compressed history of older messages
             settings: {
                 model: "google/gemini-2.0-flash-thinking-exp:free",
+                apiKeys: [""],
+                currentKeyIndex: 0,
                 temperature: 0.2,
                 maxTokens: 30000,
-                apiKey: "",
                 modes: {
                     romance: false,
                     cuteness: false,
@@ -734,11 +986,16 @@
                 },
                 storyTitle: "",
                 storyDescription: "",
-                storyEvents: []
+                storyEvents: [],
+                systemPrompt: DEFAULT_SYSTEM_PROMPT
             },
             gameDay: 1,
             waitingForResponse: false,
-            lastResponse: null
+            lastResponse: null,
+            userResources: {
+                characters: {},
+                backgrounds: {}
+            }
         };
 
         // DOM Elements
@@ -750,7 +1007,7 @@
             
             // Settings elements
             modelSelect: document.getElementById('model-select'),
-            apiKey: document.getElementById('api-key'),
+            apiKeysContainer: document.getElementById('api-keys-container'),
             temperature: document.getElementById('temperature'),
             tempValue: document.getElementById('temp-value'),
             maxTokens: document.getElementById('max-tokens'),
@@ -763,6 +1020,7 @@
             characterList: document.getElementById('character-list'),
             locationList: document.getElementById('location-list'),
             eventsContainer: document.getElementById('events-container'),
+            systemPrompt: document.getElementById('system-prompt'),
             
             // Game elements
             background: document.getElementById('background'),
@@ -868,6 +1126,68 @@
         // Send direct request
         elements.sendDirectBtn.addEventListener('click', sendDirectRequest);
 
+        // Add API key button
+        document.getElementById('add-api-key-btn').addEventListener('click', () => {
+            addApiKeyField();
+        });
+
+        // Reset system prompt button
+        document.getElementById('reset-prompt-btn').addEventListener('click', () => {
+            elements.systemPrompt.value = DEFAULT_SYSTEM_PROMPT;
+        });
+
+        // Scan buttons
+        document.getElementById('scan-characters-btn').addEventListener('click', scanCharacters);
+        document.getElementById('scan-locations-btn').addEventListener('click', scanBackgrounds);
+
+        // Character file upload
+        document.getElementById('character-upload').addEventListener('click', () => {
+            document.getElementById('character-file').click();
+        });
+
+        document.getElementById('character-file').addEventListener('change', handleCharacterFileSelect);
+
+        // Character file drop zone
+        const characterDropZone = document.getElementById('character-upload');
+        characterDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            characterDropZone.style.backgroundColor = 'rgba(0,0,0,0.4)';
+        });
+
+        characterDropZone.addEventListener('dragleave', () => {
+            characterDropZone.style.backgroundColor = '';
+        });
+
+        characterDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            characterDropZone.style.backgroundColor = '';
+            handleCharacterFileDrop(e);
+        });
+
+        // Location file upload
+        document.getElementById('location-upload').addEventListener('click', () => {
+            document.getElementById('location-file').click();
+        });
+
+        document.getElementById('location-file').addEventListener('change', handleLocationFileSelect);
+
+        // Location file drop zone
+        const locationDropZone = document.getElementById('location-upload');
+        locationDropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            locationDropZone.style.backgroundColor = 'rgba(0,0,0,0.4)';
+        });
+
+        locationDropZone.addEventListener('dragleave', () => {
+            locationDropZone.style.backgroundColor = '';
+        });
+
+        locationDropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            locationDropZone.style.backgroundColor = '';
+            handleLocationFileDrop(e);
+        });
+
         // Functions
         function loadSettings() {
             try {
@@ -878,7 +1198,10 @@
                     
                     // Update UI
                     elements.modelSelect.value = gameState.settings.model;
-                    elements.apiKey.value = gameState.settings.apiKey || '';
+                    
+                    // Handle API keys
+                    updateApiKeysUI();
+                    
                     elements.temperature.value = gameState.settings.temperature;
                     elements.tempValue.textContent = gameState.settings.temperature;
                     elements.maxTokens.value = gameState.settings.maxTokens;
@@ -888,6 +1211,9 @@
                     elements.storyMode.checked = gameState.settings.modes.story;
                     elements.storyTitle.value = gameState.settings.storyTitle || '';
                     elements.storyDescription.value = gameState.settings.storyDescription || '';
+                    
+                    // System prompt
+                    elements.systemPrompt.value = gameState.settings.systemPrompt || DEFAULT_SYSTEM_PROMPT;
                     
                     // Load characters
                     if (gameState.settings.characters) {
@@ -901,6 +1227,11 @@
                         updateLocationList();
                     }
                     
+                    // Load user resources
+                    if (gameState.settings.userResources) {
+                        gameState.userResources = gameState.settings.userResources;
+                    }
+                    
                     // Load story events
                     if (gameState.settings.storyEvents && gameState.settings.storyEvents.length > 0) {
                         elements.eventsContainer.innerHTML = '';
@@ -911,16 +1242,28 @@
                             elements.eventsContainer.appendChild(eventInput);
                         });
                     }
+                } else {
+                    // First time setup - initialize with default values
+                    elements.systemPrompt.value = DEFAULT_SYSTEM_PROMPT;
                 }
             } catch (error) {
                 console.error('Error loading settings:', error);
+                elements.systemPrompt.value = DEFAULT_SYSTEM_PROMPT;
             }
         }
 
         function saveSettings() {
             try {
+                // API keys collection
+                const apiKeys = [];
+                document.querySelectorAll('.api-key-input').forEach(input => {
+                    if (input.value.trim()) {
+                        apiKeys.push(input.value.trim());
+                    }
+                });
+                
                 gameState.settings.model = elements.modelSelect.value;
-                gameState.settings.apiKey = elements.apiKey.value;
+                gameState.settings.apiKeys = apiKeys;
                 gameState.settings.temperature = parseFloat(elements.temperature.value);
                 gameState.settings.maxTokens = parseInt(elements.maxTokens.value);
                 gameState.settings.modes.romance = elements.romanceMode.checked;
@@ -929,6 +1272,7 @@
                 gameState.settings.modes.story = elements.storyMode.checked;
                 gameState.settings.storyTitle = elements.storyTitle.value;
                 gameState.settings.storyDescription = elements.storyDescription.value;
+                gameState.settings.systemPrompt = elements.systemPrompt.value;
                 
                 // Save story events
                 gameState.settings.storyEvents = [];
@@ -941,55 +1285,179 @@
                 // Save to localStorage
                 gameState.settings.characters = gameState.characters;
                 gameState.settings.backgrounds = gameState.backgrounds;
+                gameState.settings.userResources = gameState.userResources;
                 localStorage.setItem('vnSettings', JSON.stringify(gameState.settings));
             } catch (error) {
                 console.error('Error saving settings:', error);
             }
         }
 
-        async function scanResources() {
-            // In a real implementation, we would scan the directories
-            // Since this is a static file and we can't access the filesystem directly
-            // we'll mock the scanning process with a fetch to a manifest or use predefined lists
+        function updateApiKeysUI() {
+            elements.apiKeysContainer.innerHTML = '';
             
+            if (!gameState.settings.apiKeys || gameState.settings.apiKeys.length === 0) {
+                // Add one empty field if no keys
+                addApiKeyField();
+                return;
+            }
+            
+            gameState.settings.apiKeys.forEach(key => {
+                addApiKeyField(key);
+            });
+        }
+
+        function addApiKeyField(value = '') {
+            const keyItem = document.createElement('div');
+            keyItem.className = 'api-key-item';
+            keyItem.innerHTML = `
+                <input type="text" class="api-key-input" value="${value}" placeholder="sk-or-...">
+                <button class="remove-api-key-btn">✕</button>
+            `;
+            elements.apiKeysContainer.appendChild(keyItem);
+            
+            // Add remove event listener
+            keyItem.querySelector('.remove-api-key-btn').addEventListener('click', () => {
+                if (document.querySelectorAll('.api-key-item').length > 1) {
+                    keyItem.remove();
+                } else {
+                    keyItem.querySelector('.api-key-input').value = '';
+                }
+            });
+        }
+
+        async function scanResources() {
             try {
-                // For demo purposes, we'll add some default resources
-                // In a real implementation, this would fetch data from the server
+                await scanBackgrounds();
+                await scanCharacters();
+            } catch (error) {
+                console.error('Error scanning resources:', error);
+                alert('Ошибка при сканировании ресурсов. Пожалуйста, проверьте консоль для деталей.');
+            }
+        }
+
+        async function scanBackgrounds() {
+            try {
+                // Fetch the list of backgrounds
+                const response = await fetch('backgrounds/');
                 
-                // Default characters
+                if (!response.ok) {
+                    throw new Error('Не удалось получить список фонов');
+                }
+                
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Extract file links
+                const links = Array.from(doc.querySelectorAll('a')).map(a => a.href);
+                
+                // Filter image files and extract filenames
+                const imageFiles = links
+                    .filter(link => /\.(jpg|jpeg|png|gif|webp)$/i.test(link))
+                    .map(link => {
+                        const parts = link.split('/');
+                        return parts[parts.length - 1];
+                    });
+                
+                // Add backgrounds
+                imageFiles.forEach(file => {
+                    const key = file.replace(/\.[^/.]+$/, ""); // Remove file extension
+                    const name = key.replace(/([A-Z])/g, ' $1').trim(); // Add spaces before capitals
+                    
+                    if (!gameState.backgrounds[key]) {
+                        gameState.backgrounds[key] = {
+                            name: name,
+                            description: `Фон: ${name}`,
+                            file: file
+                        };
+                    }
+                });
+                
+                updateLocationList();
+                return true;
+            } catch (error) {
+                console.error('Error scanning backgrounds:', error);
+                
+                // Fallback: add default background if scan fails
+                if (!gameState.backgrounds['ВходВоротаВпионерлагерь']) {
+                    gameState.backgrounds['ВходВоротаВпионерлагерь'] = {
+                        name: 'Вход в пионерлагерь',
+                        description: 'Ворота лагеря с яркой вывеской "Добро пожаловать!"',
+                        file: 'ВходВоротаВпионерлагерь.jpg'
+                    };
+                    updateLocationList();
+                }
+                
+                return false;
+            }
+        }
+
+        async function scanCharacters() {
+            try {
+                // Fetch the sprites directory
+                const response = await fetch('sprites/');
+                
+                if (!response.ok) {
+                    throw new Error('Не удалось получить список персонажей');
+                }
+                
+                const html = await response.text();
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Extract directory links
+                const links = Array.from(doc.querySelectorAll('a'))
+                    .filter(a => a.href.endsWith('/') && !a.href.endsWith('../'))
+                    .map(a => {
+                        const href = a.href;
+                        return href.substring(href.indexOf('sprites/') + 8, href.length - 1);
+                    });
+                
+                // Scan each character directory
+                for (const charName of links) {
+                    try {
+                        // Only process if it's not already in our list
+                        if (!gameState.characters[charName]) {
+                            const charResponse = await fetch(`sprites/${charName}/`);
+                            const charHtml = await charResponse.text();
+                            const charDoc = parser.parseFromString(charHtml, 'text/html');
+                            
+                            // Extract sprite files
+                            const spriteLinks = Array.from(charDoc.querySelectorAll('a'))
+                                .filter(a => /\.(png|jpg|jpeg|gif|webp)$/i.test(a.href))
+                                .map(a => {
+                                    const href = a.href;
+                                    return href.substring(href.lastIndexOf('/') + 1);
+                                });
+                            
+                            // Add character
+                            gameState.characters[charName] = {
+                                name: charName,
+                                description: `${charName} - персонаж визуальной новеллы`,
+                                sprites: spriteLinks
+                            };
+                        }
+                    } catch (charError) {
+                        console.error(`Error scanning character ${charName}:`, charError);
+                    }
+                }
+                
+                updateCharacterList();
+                return true;
+            } catch (error) {
+                console.error('Error scanning characters:', error);
+                
+                // Fallback: add default character if scan fails
                 if (!gameState.characters.Алиса) {
                     gameState.characters.Алиса = {
                         name: 'Алиса',
                         description: 'Активная и энергичная девушка с рыжими волосами. Спортивная, немного вспыльчивая, но добрая.',
                         sprites: ['normal.png', 'happy.png', 'angry.png', 'sad.png', 'surprised.png']
                     };
+                    updateCharacterList();
                 }
                 
-                // Default backgrounds
-                if (Object.keys(gameState.backgrounds).length === 0) {
-                    gameState.backgrounds = {
-                        'ВходВоротаВпионерлагерь': {
-                            name: 'Вход в пионерлагерь',
-                            description: 'Ворота лагеря с яркой вывеской "Добро пожаловать!"',
-                            file: 'ВходВоротаВпионерлагерь.jpg'
-                        },
-                        'Пляж': {
-                            name: 'Пляж',
-                            description: 'Песчаный пляж на берегу озера',
-                            file: 'Пляж.jpg'
-                        },
-                        'Столовая': {
-                            name: 'Столовая',
-                            description: 'Просторная столовая лагеря',
-                            file: 'Столовая.jpg'
-                        }
-                    };
-                }
-                
-                updateCharacterList();
-                updateLocationList();
-            } catch (error) {
-                console.error('Error scanning resources:', error);
+                return false;
             }
         }
 
@@ -1009,24 +1477,43 @@
                 elements.characterList.appendChild(item);
             });
             
-            // Add event listeners to edit and delete buttons
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                if (btn.parentElement.parentElement.parentElement.id === 'character-list') {
-                    btn.addEventListener('click', () => {
-                        openCharacterModal(btn.dataset.name);
-                    });
-                }
+            // Add user-uploaded characters
+            Object.values(gameState.userResources.characters).forEach(character => {
+                const item = document.createElement('div');
+                item.className = 'resource-item';
+                item.innerHTML = `
+                    <div class="resource-item-name">${character.name} (загруженный)</div>
+                    <div class="resource-controls">
+                        <button class="edit-btn" data-name="${character.name}" data-user="true">✏️</button>
+                        <button class="delete-btn" data-name="${character.name}" data-user="true">🗑️</button>
+                    </div>
+                `;
+                elements.characterList.appendChild(item);
             });
             
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                if (btn.parentElement.parentElement.parentElement.id === 'character-list') {
-                    btn.addEventListener('click', () => {
-                        if (confirm(`Удалить персонажа ${btn.dataset.name}?`)) {
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('#character-list .edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (btn.dataset.user === 'true') {
+                        openCharacterModal(btn.dataset.name, true);
+                    } else {
+                        openCharacterModal(btn.dataset.name);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('#character-list .delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const isUserResource = btn.dataset.user === 'true';
+                    if (confirm(`Удалить персонажа ${btn.dataset.name}?`)) {
+                        if (isUserResource) {
+                            delete gameState.userResources.characters[btn.dataset.name];
+                        } else {
                             delete gameState.characters[btn.dataset.name];
-                            updateCharacterList();
                         }
-                    });
-                }
+                        updateCharacterList();
+                    }
+                });
             });
         }
 
@@ -1046,106 +1533,251 @@
                 elements.locationList.appendChild(item);
             });
             
-            // Add event listeners to edit and delete buttons
-            document.querySelectorAll('.edit-btn').forEach(btn => {
-                if (btn.parentElement.parentElement.parentElement.id === 'location-list') {
-                    btn.addEventListener('click', () => {
-                        openLocationModal(btn.dataset.name);
-                    });
-                }
+            // Add user-uploaded backgrounds
+            Object.values(gameState.userResources.backgrounds).forEach(location => {
+                const item = document.createElement('div');
+                item.className = 'resource-item';
+                item.innerHTML = `
+                    <div class="resource-item-name">${location.name} (загруженный)</div>
+                    <div class="resource-controls">
+                        <button class="edit-btn" data-name="${location.name}" data-user="true">✏️</button>
+                        <button class="delete-btn" data-name="${location.name}" data-user="true">🗑️</button>
+                    </div>
+                `;
+                elements.locationList.appendChild(item);
             });
             
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                if (btn.parentElement.parentElement.parentElement.id === 'location-list') {
-                    btn.addEventListener('click', () => {
-                        if (confirm(`Удалить локацию ${btn.dataset.name}?`)) {
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('#location-list .edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    if (btn.dataset.user === 'true') {
+                        openLocationModal(btn.dataset.name, true);
+                    } else {
+                        openLocationModal(btn.dataset.name);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('#location-list .delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const isUserResource = btn.dataset.user === 'true';
+                    if (confirm(`Удалить локацию ${btn.dataset.name}?`)) {
+                        if (isUserResource) {
+                            delete gameState.userResources.backgrounds[btn.dataset.name];
+                        } else {
                             const locationKey = Object.keys(gameState.backgrounds).find(
                                 key => gameState.backgrounds[key].name === btn.dataset.name
                             );
                             if (locationKey) {
                                 delete gameState.backgrounds[locationKey];
-                                updateLocationList();
                             }
                         }
-                    });
-                }
+                        updateLocationList();
+                    }
+                });
             });
         }
 
-        function openCharacterModal(characterName = null) {
+        function openCharacterModal(characterName = null, isUserResource = false) {
             const modal = elements.characterModal;
             const nameInput = document.getElementById('character-name');
             const descriptionInput = document.getElementById('character-description');
-            const spritesPreview = document.getElementById('character-sprites-preview');
+            const preview = document.getElementById('character-preview');
+            const spritesContainer = document.getElementById('character-sprites');
             
-            if (characterName && gameState.characters[characterName]) {
-                const character = gameState.characters[characterName];
-                nameInput.value = character.name;
-                descriptionInput.value = character.description;
+            // Clear previous data
+            preview.style.backgroundImage = '';
+            spritesContainer.innerHTML = '';
+            
+            if (characterName) {
+                let character;
                 
-                // Display sprites
-                spritesPreview.innerHTML = '';
-                if (character.sprites && character.sprites.length > 0) {
-                    character.sprites.forEach(sprite => {
-                        const img = document.createElement('img');
-                        img.src = `sprites/${characterName}/${sprite}`;
-                        img.alt = sprite;
-                        img.style.height = '100px';
-                        img.style.margin = '5px';
-                        img.style.border = '2px solid rgba(255,255,255,0.2)';
-                        img.style.borderRadius = '5px';
-                        spritesPreview.appendChild(img);
-                    });
+                if (isUserResource) {
+                    character = gameState.userResources.characters[characterName];
                 } else {
-                    spritesPreview.innerHTML = '<p>Нет доступных спрайтов</p>';
+                    character = gameState.characters[characterName];
                 }
                 
-                // Store original name for update
-                nameInput.dataset.originalName = characterName;
+                if (character) {
+                    nameInput.value = character.name;
+                    descriptionInput.value = character.description;
+                    
+                    // Handle uploaded character
+                    if (isUserResource && character.image) {
+                        preview.style.backgroundImage = `url(${character.image})`;
+                    }
+                    
+                    // Display sprites
+                    if (!isUserResource && character.sprites && character.sprites.length > 0) {
+                        character.sprites.forEach(sprite => {
+                            const spriteDiv = document.createElement('div');
+                            spriteDiv.className = 'sprite-item';
+                            spriteDiv.style.backgroundImage = `url('sprites/${characterName}/${sprite}')`;
+                            
+                            const spriteName = document.createElement('div');
+                            spriteName.className = 'sprite-item-name';
+                            spriteName.textContent = sprite.replace('.png', '');
+                            
+                            spriteDiv.appendChild(spriteName);
+                            spritesContainer.appendChild(spriteDiv);
+                        });
+                    } else if (isUserResource && character.emotions) {
+                        character.emotions.forEach(emotion => {
+                            const spriteDiv = document.createElement('div');
+                            spriteDiv.className = 'sprite-item';
+                            spriteDiv.style.backgroundImage = `url(${character.image})`;
+                            
+                            const spriteName = document.createElement('div');
+                            spriteName.className = 'sprite-item-name';
+                            spriteName.textContent = emotion;
+                            
+                            spriteDiv.appendChild(spriteName);
+                            spritesContainer.appendChild(spriteDiv);
+                        });
+                    }
+                    
+                    // Store original data for update
+                    nameInput.dataset.originalName = characterName;
+                    nameInput.dataset.isUser = isUserResource ? 'true' : 'false';
+                } else {
+                    console.error('Character not found:', characterName);
+                    return;
+                }
             } else {
+                // New character
                 nameInput.value = '';
                 descriptionInput.value = '';
-                spritesPreview.innerHTML = '<p>Нет доступных спрайтов. Создайте папку с именем персонажа в директории sprites и добавьте изображения.</p>';
                 nameInput.dataset.originalName = '';
+                nameInput.dataset.isUser = 'true'; // New characters are user resources
             }
             
             modal.style.display = 'flex';
         }
 
-        function openLocationModal(locationName = null) {
+        function openLocationModal(locationName = null, isUserResource = false) {
             const modal = elements.locationModal;
             const nameInput = document.getElementById('location-name');
             const descriptionInput = document.getElementById('location-description');
             const preview = document.getElementById('location-preview');
             
-            let locationKey = null;
             if (locationName) {
-                locationKey = Object.keys(gameState.backgrounds).find(
-                    key => gameState.backgrounds[key].name === locationName
-                );
-            }
-            
-            if (locationKey && gameState.backgrounds[locationKey]) {
-                const location = gameState.backgrounds[locationKey];
-                nameInput.value = location.name;
-                descriptionInput.value = location.description;
-                preview.style.backgroundImage = `url('backgrounds/${location.file}')`;
-                nameInput.dataset.originalKey = locationKey;
+                let location;
+                
+                if (isUserResource) {
+                    location = gameState.userResources.backgrounds[locationName];
+                    
+                    if (location) {
+                        nameInput.value = location.name;
+                        descriptionInput.value = location.description;
+                        preview.style.backgroundImage = `url(${location.image})`;
+                        
+                        // Store original data for update
+                        nameInput.dataset.originalName = locationName;
+                        nameInput.dataset.isUser = 'true';
+                    }
+                } else {
+                    const locationKey = Object.keys(gameState.backgrounds).find(
+                        key => gameState.backgrounds[key].name === locationName
+                    );
+                    
+                    if (locationKey && gameState.backgrounds[locationKey]) {
+                        const location = gameState.backgrounds[locationKey];
+                        nameInput.value = location.name;
+                        descriptionInput.value = location.description;
+                        preview.style.backgroundImage = `url('backgrounds/${location.file}')`;
+                        
+                        // Store original data for update
+                        nameInput.dataset.originalKey = locationKey;
+                        nameInput.dataset.isUser = 'false';
+                    }
+                }
             } else {
+                // New location
                 nameInput.value = '';
                 descriptionInput.value = '';
-                preview.style.backgroundImage = 'none';
-                preview.innerHTML = '<p style="padding: 20px; text-align: center;">Предпросмотр изображения</p>';
+                preview.style.backgroundImage = '';
                 nameInput.dataset.originalKey = '';
+                nameInput.dataset.originalName = '';
+                nameInput.dataset.isUser = 'true'; // New locations are user resources
             }
             
             modal.style.display = 'flex';
         }
 
+        function handleCharacterFileSelect(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                const file = files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const characterPreview = document.getElementById('character-preview');
+                    characterPreview.style.backgroundImage = `url(${e.target.result})`;
+                    characterPreview.dataset.image = e.target.result;
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleCharacterFileDrop(event) {
+            event.preventDefault();
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const characterPreview = document.getElementById('character-preview');
+                    characterPreview.style.backgroundImage = `url(${e.target.result})`;
+                    characterPreview.dataset.image = e.target.result;
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleLocationFileSelect(event) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                const file = files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const locationPreview = document.getElementById('location-preview');
+                    locationPreview.style.backgroundImage = `url(${e.target.result})`;
+                    locationPreview.dataset.image = e.target.result;
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function handleLocationFileDrop(event) {
+            event.preventDefault();
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                const file = files[0];
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const locationPreview = document.getElementById('location-preview');
+                    locationPreview.style.backgroundImage = `url(${e.target.result})`;
+                    locationPreview.dataset.image = e.target.result;
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        }
+
         function saveCharacter() {
             const nameInput = document.getElementById('character-name');
             const descriptionInput = document.getElementById('character-description');
+            const preview = document.getElementById('character-preview');
             const originalName = nameInput.dataset.originalName;
+            const isUserResource = nameInput.dataset.isUser === 'true';
             const newName = nameInput.value.trim();
             
             if (!newName) {
@@ -1153,17 +1785,39 @@
                 return;
             }
             
-            // If renaming, remove old entry
-            if (originalName && originalName !== newName) {
-                delete gameState.characters[originalName];
+            // Handle user resource
+            if (isUserResource) {
+                // Remove old entry if renamed
+                if (originalName && originalName !== newName) {
+                    delete gameState.userResources.characters[originalName];
+                }
+                
+                // Check if we have an image
+                if (!preview.dataset.image && !originalName) {
+                    alert('Пожалуйста, загрузите изображение персонажа');
+                    return;
+                }
+                
+                // Create or update character
+                gameState.userResources.characters[newName] = {
+                    name: newName,
+                    description: descriptionInput.value.trim(),
+                    image: preview.dataset.image || gameState.userResources.characters[originalName]?.image,
+                    emotions: ['normal', 'happy', 'sad', 'angry', 'surprised'] // Default emotions
+                };
+            } else {
+                // Renaming system character
+                if (originalName && originalName !== newName) {
+                    delete gameState.characters[originalName];
+                }
+                
+                // Update regular character
+                gameState.characters[newName] = {
+                    name: newName,
+                    description: descriptionInput.value.trim(),
+                    sprites: gameState.characters[originalName]?.sprites || []
+                };
             }
-            
-            // Create or update character
-            gameState.characters[newName] = {
-                name: newName,
-                description: descriptionInput.value.trim(),
-                sprites: gameState.characters[originalName]?.sprites || []
-            };
             
             updateCharacterList();
             elements.characterModal.style.display = 'none';
@@ -1172,7 +1826,8 @@
         function saveLocation() {
             const nameInput = document.getElementById('location-name');
             const descriptionInput = document.getElementById('location-description');
-            const originalKey = nameInput.dataset.originalKey;
+            const preview = document.getElementById('location-preview');
+            const isUserResource = nameInput.dataset.isUser === 'true';
             const newName = nameInput.value.trim();
             
             if (!newName) {
@@ -1180,20 +1835,44 @@
                 return;
             }
             
-            // Generate a key from the name
-            const newKey = newName.replace(/\s+/g, '');
-            
-            // If renaming, remove old entry
-            if (originalKey && originalKey !== newKey) {
-                delete gameState.backgrounds[originalKey];
+            if (isUserResource) {
+                const originalName = nameInput.dataset.originalName;
+                
+                // Remove old entry if renamed
+                if (originalName && originalName !== newName) {
+                    delete gameState.userResources.backgrounds[originalName];
+                }
+                
+                // Check if we have an image
+                if (!preview.dataset.image && !originalName) {
+                    alert('Пожалуйста, загрузите изображение локации');
+                    return;
+                }
+                
+                // Create or update location
+                gameState.userResources.backgrounds[newName] = {
+                    name: newName,
+                    description: descriptionInput.value.trim(),
+                    image: preview.dataset.image || gameState.userResources.backgrounds[originalName]?.image
+                };
+            } else {
+                const originalKey = nameInput.dataset.originalKey;
+                
+                // Generate a key from the name
+                const newKey = newName.replace(/\s+/g, '');
+                
+                // If renaming, remove old entry
+                if (originalKey && originalKey !== newKey) {
+                    delete gameState.backgrounds[originalKey];
+                }
+                
+                // Create or update location
+                gameState.backgrounds[newKey] = {
+                    name: newName,
+                    description: descriptionInput.value.trim(),
+                    file: gameState.backgrounds[originalKey]?.file || `${newKey}.jpg`
+                };
             }
-            
-            // Create or update location
-            gameState.backgrounds[newKey] = {
-                name: newName,
-                description: descriptionInput.value.trim(),
-                file: gameState.backgrounds[originalKey]?.file || `${newKey}.jpg`
-            };
             
             updateLocationList();
             elements.locationModal.style.display = 'none';
@@ -1210,8 +1889,11 @@
             initializeGameContext();
         }
 
-        function setBackground(backgroundKey) {
-            if (gameState.backgrounds[backgroundKey]) {
+        function setBackground(backgroundKey, isUserResource = false) {
+            if (isUserResource && gameState.userResources.backgrounds[backgroundKey]) {
+                elements.background.style.backgroundImage = `url(${gameState.userResources.backgrounds[backgroundKey].image})`;
+                gameState.currentBackground = backgroundKey;
+            } else if (gameState.backgrounds[backgroundKey]) {
                 const bg = gameState.backgrounds[backgroundKey];
                 elements.background.style.backgroundImage = `url('backgrounds/${bg.file}')`;
                 gameState.currentBackground = backgroundKey;
@@ -1219,7 +1901,19 @@
         }
 
         function showCharacter(characterName, emotion = 'normal', position = 'center') {
-            if (!gameState.characters[characterName]) return;
+            let isUserResource = false;
+            let character;
+            
+            // Check if this is a user resource
+            if (gameState.userResources.characters[characterName]) {
+                character = gameState.userResources.characters[characterName];
+                isUserResource = true;
+            } else if (gameState.characters[characterName]) {
+                character = gameState.characters[characterName];
+            } else {
+                console.error('Character not found:', characterName);
+                return;
+            }
             
             // Check if character is already on screen
             let characterElement = document.querySelector(`.character[data-name="${characterName}"]`);
@@ -1240,17 +1934,21 @@
             characterElement.style.left = posX;
             characterElement.style.transform = 'translateX(-50%)';
             
-            // Set sprite
-            const character = gameState.characters[characterName];
-            let spriteFile = 'normal.png'; // Default
-            
-            if (character.sprites && character.sprites.includes(`${emotion}.png`)) {
-                spriteFile = `${emotion}.png`;
-            } else if (character.sprites && character.sprites.length > 0) {
-                spriteFile = character.sprites[0];
+            // Set sprite based on whether it's user resource or not
+            if (isUserResource) {
+                characterElement.style.backgroundImage = `url(${character.image})`;
+            } else {
+                let spriteFile = 'normal.png'; // Default
+                
+                if (character.sprites && character.sprites.includes(`${emotion}.png`)) {
+                    spriteFile = `${emotion}.png`;
+                } else if (character.sprites && character.sprites.length > 0) {
+                    spriteFile = character.sprites[0];
+                }
+                
+                characterElement.style.backgroundImage = `url('sprites/${characterName}/${spriteFile}')`;
             }
             
-            characterElement.style.backgroundImage = `url('sprites/${characterName}/${spriteFile}')`;
             characterElement.style.backgroundSize = 'contain';
             characterElement.style.backgroundPosition = 'bottom center';
             characterElement.style.backgroundRepeat = 'no-repeat';
@@ -1261,7 +1959,8 @@
             // Add to active characters
             gameState.activeCharacters[characterName] = {
                 emotion: emotion,
-                position: position
+                position: position,
+                isUserResource: isUserResource
             };
         }
 
@@ -1329,14 +2028,29 @@
         function generateSystemPrompt() {
             // Create the character list for the system prompt
             let charactersListText = '';
+            
+            // Add regular characters
             Object.values(gameState.characters).forEach(character => {
                 charactersListText += `${character.name}: ${character.description}\n`;
-                charactersListText += `Доступные эмоции: ${character.sprites.map(s => s.replace('.png', '')).join(', ')}\n\n`;
+                charactersListText += `Доступные эмоции: ${character.sprites ? character.sprites.map(s => s.replace('.png', '')).join(', ') : 'normal'}\n\n`;
+            });
+            
+            // Add user-uploaded characters
+            Object.values(gameState.userResources.characters).forEach(character => {
+                charactersListText += `${character.name}: ${character.description}\n`;
+                charactersListText += `Доступные эмоции: ${character.emotions ? character.emotions.join(', ') : 'normal'}\n\n`;
             });
             
             // Create the backgrounds list
             let backgroundsListText = '';
+            
+            // Add regular backgrounds
             Object.values(gameState.backgrounds).forEach(bg => {
+                backgroundsListText += `${bg.name}: ${bg.description}\n`;
+            });
+            
+            // Add user-uploaded backgrounds
+            Object.values(gameState.userResources.backgrounds).forEach(bg => {
                 backgroundsListText += `${bg.name}: ${bg.description}\n`;
             });
             
@@ -1363,64 +2077,20 @@
                 }
             }
             
-            // Put it all together
-            return `
-Ты являешься искусственным интеллектом, управляющим интерактивной визуальной новеллой. Твоя задача - создавать увлекательное повествование, управлять персонажами, сценами и развитием сюжета на основе выборов игрока.
-
-### ФОРМАТ ОТВЕТОВ
-
-Отвечай ИСКЛЮЧИТЕЛЬНО в JSON-формате:
-
-{
-  "messages": [
-    {
-      "text": "Текст диалога или повествования",
-      "speaker": "имя_персонажа или narrator",
-      "emotion": "эмоция_персонажа",
-      "background": "фон_если_меняется",
-      "sound": "звуковой_эффект_если_нужен",
-      "position": "left/center/right",
-      "choices": ["вариант1", "вариант2"]
-    }
-  ],
-  "internal_notes": "Заметки для себя, не показываются игроку"
-}
-
-### ДОСТУПНЫЕ РЕСУРСЫ
-
-## Персонажи
-${charactersListText}
-
-## Фоны
-${backgroundsListText}
-
-### ПАРАМЕТРЫ ИСТОРИИ
-
-Название: ${gameState.settings.storyTitle || 'Летние приключения'}
-Описание: ${gameState.settings.storyDescription || 'История о летнем отдыхе в пионерском лагере'}
-Текущий день: ${gameState.gameDay} ${gameState.settings.modes.story ? '(из 7)' : ''}
-
-${modeInstructions}
-
-### ПРАВИЛА ПОВЕСТВОВАНИЯ
-
-- Создавай эмоционально насыщенные диалоги, соответствующие характеру персонажей
-- Развивай историю последовательно, учитывая предыдущие выборы игрока
-- Предлагай выборы в ключевых моментах (не более 2-4 вариантов)
-- Используй смену фонов для обозначения перемещений между локациями
-- Меняй эмоции персонажей в соответствии с ситуацией
-- Персонажи могут находиться в разных позициях: left, center, right
-
-### НАЧАЛО ИСТОРИИ
-
-Начни историю с прибытия в пионерский лагерь. Представь главного персонажа (игрока) и хотя бы одного второстепенного персонажа. Опиши обстановку, создай интригу или цель, которая будет мотивировать игрока продолжать историю.
-
-### ОГРАНИЧЕНИЯ
-
-- Все персонажи старше 21 года
-- Не нарушай установленный сеттинг и жанр
-- Отвечай строго в указанном JSON-формате для корректной работы игры
-            `;
+            // Start with user-defined system prompt
+            let customPrompt = gameState.settings.systemPrompt;
+            
+            // Replace placeholders
+            customPrompt = customPrompt.replace('{{CHARACTERS_LIST}}', charactersListText);
+            customPrompt = customPrompt.replace('{{BACKGROUNDS_LIST}}', backgroundsListText);
+            customPrompt = customPrompt.replace('{{STORY_TITLE}}', gameState.settings.storyTitle || 'Летние приключения');
+            customPrompt = customPrompt.replace('{{STORY_DESCRIPTION}}', gameState.settings.storyDescription || 'История о летнем отдыхе в пионерском лагере');
+            customPrompt = customPrompt.replace('{{CURRENT_DAY}}', gameState.gameDay.toString());
+            customPrompt = customPrompt.replace('{{STORY_MODE_ENABLED}}', gameState.settings.modes.story ? '(из 7)' : '');
+            customPrompt = customPrompt.replace('{{MODE_INSTRUCTIONS}}', modeInstructions);
+            customPrompt = customPrompt.replace('{{COMPRESSED_HISTORY}}', gameState.compressedHistory || 'История только начинается.');
+            
+            return customPrompt;
         }
 
         async function sendSystemMessage(message) {
@@ -1660,11 +2330,23 @@ ${modeInstructions}
         }
 
         async function callLLM(systemPrompt = undefined, isSystemMessage = false, customContext = null) {
-            const apiKey = gameState.settings.apiKey;
-            if (!apiKey) {
-                alert('Пожалуйста, введите API ключ OpenRouter в настройках.');
+            // Get all API keys
+            const apiKeys = gameState.settings.apiKeys.filter(key => key.trim());
+            
+            if (apiKeys.length === 0) {
+                alert('Пожалуйста, введите хотя бы один API ключ OpenRouter в настройках.');
                 return null;
             }
+            
+            // Rotate through API keys
+            if (gameState.settings.currentKeyIndex >= apiKeys.length) {
+                gameState.settings.currentKeyIndex = 0;
+            }
+            
+            const apiKey = apiKeys[gameState.settings.currentKeyIndex];
+            
+            // Move to next key for next call
+            gameState.settings.currentKeyIndex = (gameState.settings.currentKeyIndex + 1) % apiKeys.length;
             
             try {
                 let messages = [];
@@ -1681,10 +2363,6 @@ ${modeInstructions}
                     } else {
                         // For regular messages, include compressed history and focus window
                         let contextPrompt = generateSystemPrompt();
-                        
-                        if (gameState.compressedHistory) {
-                            contextPrompt += '\n\n### СЖАТАЯ ИСТОРИЯ ПРЕДЫДУЩИХ СОБЫТИЙ\n' + gameState.compressedHistory;
-                        }
                         
                         messages = [
                             { role: 'system', content: contextPrompt },
@@ -1749,12 +2427,17 @@ ${modeInstructions}
                 for (const message of response.messages) {
                     // Set background if specified
                     if (message.background) {
-                        // Find the background key by name
-                        const backgroundKey = Object.keys(gameState.backgrounds).find(
-                            key => gameState.backgrounds[key].name === message.background
-                        ) || message.background;
-                        
-                        setBackground(backgroundKey);
+                        // Check if it's a user-uploaded background
+                        if (gameState.userResources.backgrounds[message.background]) {
+                            setBackground(message.background, true);
+                        } else {
+                            // Find the background key by name
+                            const backgroundKey = Object.keys(gameState.backgrounds).find(
+                                key => gameState.backgrounds[key].name === message.background
+                            ) || message.background;
+                            
+                            setBackground(backgroundKey);
+                        }
                     }
                     
                     // Update speaker name
@@ -1783,6 +2466,13 @@ ${modeInstructions}
                     
                     // Add a small delay between messages for readability
                     await new Promise(resolve => setTimeout(resolve, 500));
+                }
+                
+                // Check if there's a resource request
+                if (response.resource_request) {
+                    console.log('Resource request detected:', response.resource_request);
+                    // In a real implementation, we would handle the resource request
+                    // e.g., prompt the user to upload a new character or background
                 }
             } catch (error) {
                 console.error('Error processing LLM response:', error);
