@@ -612,6 +612,9 @@
         /* API keys management */
         .api-keys-container {
             margin-bottom: 1.5rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 1rem;
         }
 
         .api-key-item {
@@ -652,6 +655,18 @@
         #add-api-key-btn:hover {
             background: rgba(109, 74, 255, 0.4);
         }
+
+        /* Debug section */
+        #debug-section {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
     </style>
 </head>
 <body>
@@ -683,6 +698,7 @@
                 <button class="tab-btn" data-tab="locations">Локации</button>
                 <button class="tab-btn" data-tab="story">Сюжет</button>
                 <button class="tab-btn" data-tab="system">Системный промпт</button>
+                <button class="tab-btn" data-tab="debug">Отладка</button>
             </div>
             
             <div class="tab-content active" id="general-tab">
@@ -694,10 +710,7 @@
                 <div class="form-group">
                     <label>API Ключи OpenRouter (один на строку)</label>
                     <div class="api-keys-container" id="api-keys-container">
-                        <div class="api-key-item">
-                            <input type="text" class="api-key-input" placeholder="sk-or-...">
-                            <button class="remove-api-key-btn">✕</button>
-                        </div>
+                        <!-- API keys will be added here -->
                     </div>
                     <button id="add-api-key-btn">Добавить API ключ</button>
                 </div>
@@ -736,6 +749,7 @@
             <div class="tab-content" id="characters-tab">
                 <div class="resource-list" id="character-list">
                     <!-- Characters will be populated here -->
+                    <div id="character-loading">Загрузка персонажей...</div>
                 </div>
                 
                 <button class="btn" id="add-character-btn">Добавить персонажа</button>
@@ -745,6 +759,7 @@
             <div class="tab-content" id="locations-tab">
                 <div class="resource-list" id="location-list">
                     <!-- Locations will be populated here -->
+                    <div id="location-loading">Загрузка локаций...</div>
                 </div>
                 
                 <button class="btn" id="add-location-btn">Добавить локацию</button>
@@ -779,6 +794,19 @@
                     <textarea id="system-prompt" class="system-prompt-editor"></textarea>
                 </div>
                 <button class="btn" id="reset-prompt-btn">Сбросить к стандартному</button>
+            </div>
+            
+            <div class="tab-content" id="debug-tab">
+                <div class="form-group">
+                    <label>Журнал отладки</label>
+                    <div id="debug-log"></div>
+                </div>
+                <button class="btn" id="clear-debug-btn">Очистить журнал</button>
+                <button class="btn" id="test-image-scan-btn">Проверить доступ к изображениям</button>
+                <div id="debug-section">
+                    <h4>Результаты тестов:</h4>
+                    <div id="debug-results"></div>
+                </div>
             </div>
             
             <div style="text-align: center; margin-top: 2rem;">
@@ -995,6 +1023,10 @@
             userResources: {
                 characters: {},
                 backgrounds: {}
+            },
+            debug: {
+                logs: [],
+                testResults: {}
             }
         };
 
@@ -1021,6 +1053,8 @@
             locationList: document.getElementById('location-list'),
             eventsContainer: document.getElementById('events-container'),
             systemPrompt: document.getElementById('system-prompt'),
+            debugLog: document.getElementById('debug-log'),
+            debugResults: document.getElementById('debug-results'),
             
             // Game elements
             background: document.getElementById('background'),
@@ -1043,6 +1077,25 @@
             // Loading
             loading: document.getElementById('loading')
         };
+
+        // Debug function
+        function debugLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
+            gameState.debug.logs.push(logEntry);
+            
+            // Update UI if available
+            if (elements.debugLog) {
+                const logElement = document.createElement('div');
+                logElement.className = `log-entry log-${type}`;
+                logElement.textContent = logEntry;
+                elements.debugLog.appendChild(logElement);
+                elements.debugLog.scrollTop = elements.debugLog.scrollHeight;
+            }
+            
+            // Also log to console
+            console.log(logEntry);
+        }
 
         // Event Listeners
         document.getElementById('accept-btn').addEventListener('click', () => {
@@ -1137,8 +1190,13 @@
         });
 
         // Scan buttons
-        document.getElementById('scan-characters-btn').addEventListener('click', scanCharacters);
-        document.getElementById('scan-locations-btn').addEventListener('click', scanBackgrounds);
+        document.getElementById('scan-characters-btn').addEventListener('click', () => {
+            scanCharacters(true);
+        });
+        
+        document.getElementById('scan-locations-btn').addEventListener('click', () => {
+            scanBackgrounds(true);
+        });
 
         // Character file upload
         document.getElementById('character-upload').addEventListener('click', () => {
@@ -1187,6 +1245,48 @@
             locationDropZone.style.backgroundColor = '';
             handleLocationFileDrop(e);
         });
+
+        // Debug buttons
+        document.getElementById('clear-debug-btn')?.addEventListener('click', () => {
+            gameState.debug.logs = [];
+            elements.debugLog.innerHTML = '';
+        });
+
+        document.getElementById('test-image-scan-btn')?.addEventListener('click', () => {
+            testImageAccess();
+        });
+
+        // Image checking utility function
+        function checkImageExists(url) {
+            return new Promise(resolve => {
+                const img = new Image();
+                img.onload = () => resolve(true);
+                img.onerror = () => resolve(false);
+                img.src = url;
+            });
+        }
+
+        async function testImageAccess() {
+            debugLog('Начинаем тестирование доступа к изображениям...', 'test');
+            elements.debugResults.innerHTML = '<p>Проверка изображений...</p>';
+            
+            const tests = [
+                { name: 'Фон ВходВоротаВпионерлагерь', url: 'background/ВходВоротаВпионерлагерь.jpg' },
+                { name: 'Алиса/normal', url: 'sprites/Алиса/normal.png' },
+                { name: 'Нестандартный фон', url: 'background/beach.jpg' }
+            ];
+            
+            let results = '<ul>';
+            for (const test of tests) {
+                const exists = await checkImageExists(test.url);
+                results += `<li>${test.name}: ${exists ? '✓ Доступно' : '✗ Недоступно'} (${test.url})</li>`;
+                gameState.debug.testResults[test.name] = exists;
+                debugLog(`Тест ${test.name}: ${exists ? 'успешно' : 'неудачно'}`, exists ? 'success' : 'error');
+            }
+            results += '</ul>';
+            
+            elements.debugResults.innerHTML = results;
+        }
 
         // Functions
         function loadSettings() {
@@ -1327,138 +1427,183 @@
 
         async function scanResources() {
             try {
+                elements.characterList.innerHTML = '<div id="character-loading">Загрузка персонажей...</div>';
+                elements.locationList.innerHTML = '<div id="location-loading">Загрузка локаций...</div>';
+                
                 await scanBackgrounds();
                 await scanCharacters();
             } catch (error) {
                 console.error('Error scanning resources:', error);
+                debugLog('Ошибка при сканировании ресурсов: ' + error.message, 'error');
                 alert('Ошибка при сканировании ресурсов. Пожалуйста, проверьте консоль для деталей.');
             }
         }
 
-        async function scanBackgrounds() {
-            try {
-                // Fetch the list of backgrounds
-                const response = await fetch('backgrounds/');
-                
-                if (!response.ok) {
-                    throw new Error('Не удалось получить список фонов');
-                }
-                
-                const html = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                
-                // Extract file links
-                const links = Array.from(doc.querySelectorAll('a')).map(a => a.href);
-                
-                // Filter image files and extract filenames
-                const imageFiles = links
-                    .filter(link => /\.(jpg|jpeg|png|gif|webp)$/i.test(link))
-                    .map(link => {
-                        const parts = link.split('/');
-                        return parts[parts.length - 1];
-                    });
-                
-                // Add backgrounds
-                imageFiles.forEach(file => {
-                    const key = file.replace(/\.[^/.]+$/, ""); // Remove file extension
-                    const name = key.replace(/([A-Z])/g, ' $1').trim(); // Add spaces before capitals
-                    
-                    if (!gameState.backgrounds[key]) {
-                        gameState.backgrounds[key] = {
-                            name: name,
-                            description: `Фон: ${name}`,
-                            file: file
-                        };
+        // Direct access method for backgrounds
+        async function scanBackgrounds(showAlerts = false) {
+            debugLog('Начинаем сканирование фонов...', 'info');
+            
+            // Common background names to try
+            const commonBackgrounds = [
+                'ВходВоротаВпионерлагерь.jpg',
+                'Пляж.jpg',
+                'Столовая.jpg',
+                'ДомикОтряда.jpg',
+                'Лес.jpg',
+                'Площадь.jpg',
+                'Библиотека.jpg',
+                'Спортплощадка.jpg',
+                'Медпункт.jpg',
+                'Пристань.jpg',
+                'Костер.jpg',
+                'КомнатаГероя.jpg'
+            ];
+            
+            let foundBackgrounds = 0;
+            
+            // Try both potential paths
+            const folders = ['background/', 'backgrounds/'];
+            
+            for (const folder of folders) {
+                for (const bgFile of commonBackgrounds) {
+                    try {
+                        // Check if the image exists
+                        const exists = await checkImageExists(`${folder}${bgFile}`);
+                        
+                        if (exists) {
+                            debugLog(`Найден фон: ${folder}${bgFile}`, 'success');
+                            
+                            // Add to backgrounds if not already there
+                            const key = bgFile.replace(/\.[^/.]+$/, ""); // Remove file extension
+                            const name = key.replace(/([A-Z])/g, ' $1').trim(); // Add spaces before capitals
+                            
+                            if (!gameState.backgrounds[key]) {
+                                gameState.backgrounds[key] = {
+                                    name: name,
+                                    description: `Фон: ${name}`,
+                                    file: bgFile,
+                                    path: folder
+                                };
+                                foundBackgrounds++;
+                            }
+                        }
+                    } catch (error) {
+                        debugLog(`Ошибка при проверке ${folder}${bgFile}: ${error.message}`, 'error');
                     }
-                });
-                
-                updateLocationList();
-                return true;
-            } catch (error) {
-                console.error('Error scanning backgrounds:', error);
-                
-                // Fallback: add default background if scan fails
-                if (!gameState.backgrounds['ВходВоротаВпионерлагерь']) {
-                    gameState.backgrounds['ВходВоротаВпионерлагерь'] = {
-                        name: 'Вход в пионерлагерь',
-                        description: 'Ворота лагеря с яркой вывеской "Добро пожаловать!"',
-                        file: 'ВходВоротаВпионерлагерь.jpg'
-                    };
-                    updateLocationList();
                 }
-                
-                return false;
             }
+            
+            // Ensure the default background is available
+            if (!gameState.backgrounds['ВходВоротаВпионерлагерь']) {
+                debugLog('Добавляем стандартный фон входа', 'info');
+                
+                gameState.backgrounds['ВходВоротаВпионерлагерь'] = {
+                    name: 'Вход в пионерлагерь',
+                    description: 'Ворота лагеря с яркой вывеской "Добро пожаловать!"',
+                    file: 'ВходВоротаВпионерлагерь.jpg',
+                    path: 'background/'
+                };
+            }
+            
+            updateLocationList();
+            
+            debugLog(`Сканирование фонов завершено. Найдено: ${foundBackgrounds}`, 'info');
+            
+            if (showAlerts) {
+                alert(`Сканирование фонов завершено. Найдено: ${foundBackgrounds}`);
+            }
+            
+            return foundBackgrounds > 0;
         }
 
-        async function scanCharacters() {
-            try {
-                // Fetch the sprites directory
-                const response = await fetch('sprites/');
-                
-                if (!response.ok) {
-                    throw new Error('Не удалось получить список персонажей');
-                }
-                
-                const html = await response.text();
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                
-                // Extract directory links
-                const links = Array.from(doc.querySelectorAll('a'))
-                    .filter(a => a.href.endsWith('/') && !a.href.endsWith('../'))
-                    .map(a => {
-                        const href = a.href;
-                        return href.substring(href.indexOf('sprites/') + 8, href.length - 1);
-                    });
-                
-                // Scan each character directory
-                for (const charName of links) {
-                    try {
-                        // Only process if it's not already in our list
+        // Direct access method for character sprites
+        async function scanCharacters(showAlerts = false) {
+            debugLog('Начинаем сканирование персонажей...', 'info');
+            
+            // Define common character names and emotions
+            const characterNames = ['Алиса', 'Герой', 'Славя', 'Лена', 'Ульяна', 'Мику', 'Ольга'];
+            const emotions = ['normal', 'happy', 'angry', 'sad', 'surprised', 'scared', 'laugh'];
+            
+            let foundCharacters = 0;
+            let totalSprites = 0;
+            
+            // Try both potential paths
+            const baseFolders = ['sprites/', 'sprite/'];
+            
+            for (const baseFolder of baseFolders) {
+                for (const charName of characterNames) {
+                    let characterExists = false;
+                    let characterSprites = [];
+                    
+                    // Try each emotion for this character
+                    for (const emotion of emotions) {
+                        const spritePaths = [
+                            `${baseFolder}${charName}/${emotion}.png`,
+                            `${baseFolder}${charName.toLowerCase()}/${emotion}.png`
+                        ];
+                        
+                        for (const spritePath of spritePaths) {
+                            try {
+                                const exists = await checkImageExists(spritePath);
+                                
+                                if (exists) {
+                                    debugLog(`Найден спрайт: ${spritePath}`, 'success');
+                                    characterExists = true;
+                                    if (!characterSprites.includes(`${emotion}.png`)) {
+                                        characterSprites.push(`${emotion}.png`);
+                                        totalSprites++;
+                                    }
+                                }
+                            } catch (error) {
+                                debugLog(`Ошибка при проверке ${spritePath}: ${error.message}`, 'error');
+                            }
+                        }
+                    }
+                    
+                    if (characterExists) {
+                        // Add character to our list
                         if (!gameState.characters[charName]) {
-                            const charResponse = await fetch(`sprites/${charName}/`);
-                            const charHtml = await charResponse.text();
-                            const charDoc = parser.parseFromString(charHtml, 'text/html');
-                            
-                            // Extract sprite files
-                            const spriteLinks = Array.from(charDoc.querySelectorAll('a'))
-                                .filter(a => /\.(png|jpg|jpeg|gif|webp)$/i.test(a.href))
-                                .map(a => {
-                                    const href = a.href;
-                                    return href.substring(href.lastIndexOf('/') + 1);
-                                });
-                            
-                            // Add character
                             gameState.characters[charName] = {
                                 name: charName,
                                 description: `${charName} - персонаж визуальной новеллы`,
-                                sprites: spriteLinks
+                                sprites: characterSprites,
+                                path: baseFolder
                             };
+                            foundCharacters++;
+                        } else {
+                            // Update sprites if we found new ones
+                            for (const sprite of characterSprites) {
+                                if (!gameState.characters[charName].sprites.includes(sprite)) {
+                                    gameState.characters[charName].sprites.push(sprite);
+                                }
+                            }
+                            gameState.characters[charName].path = baseFolder;
                         }
-                    } catch (charError) {
-                        console.error(`Error scanning character ${charName}:`, charError);
                     }
                 }
-                
-                updateCharacterList();
-                return true;
-            } catch (error) {
-                console.error('Error scanning characters:', error);
-                
-                // Fallback: add default character if scan fails
-                if (!gameState.characters.Алиса) {
-                    gameState.characters.Алиса = {
-                        name: 'Алиса',
-                        description: 'Активная и энергичная девушка с рыжими волосами. Спортивная, немного вспыльчивая, но добрая.',
-                        sprites: ['normal.png', 'happy.png', 'angry.png', 'sad.png', 'surprised.png']
-                    };
-                    updateCharacterList();
-                }
-                
-                return false;
             }
+            
+            // Special case for Алиса, make sure she's there
+            if (!gameState.characters.Алиса) {
+                debugLog('Добавляем стандартного персонажа Алиса', 'info');
+                
+                gameState.characters.Алиса = {
+                    name: 'Алиса',
+                    description: 'Активная и энергичная девушка с рыжими волосами. Спортивная, немного вспыльчивая, но добрая.',
+                    sprites: ['normal.png', 'happy.png', 'angry.png', 'sad.png', 'surprised.png'],
+                    path: 'sprites/'
+                };
+            }
+            
+            updateCharacterList();
+            
+            debugLog(`Сканирование персонажей завершено. Найдено персонажей: ${foundCharacters}, спрайтов: ${totalSprites}`, 'info');
+            
+            if (showAlerts) {
+                alert(`Сканирование персонажей завершено. Найдено персонажей: ${foundCharacters}, спрайтов: ${totalSprites}`);
+            }
+            
+            return foundCharacters > 0;
         }
 
         function updateCharacterList() {
@@ -1468,7 +1613,7 @@
                 const item = document.createElement('div');
                 item.className = 'resource-item';
                 item.innerHTML = `
-                    <div class="resource-item-name">${character.name}</div>
+                    <div class="resource-item-name">${character.name} (${character.sprites?.length || 0} спрайтов)</div>
                     <div class="resource-controls">
                         <button class="edit-btn" data-name="${character.name}">✏️</button>
                         <button class="delete-btn" data-name="${character.name}">🗑️</button>
@@ -1612,7 +1757,7 @@
                         character.sprites.forEach(sprite => {
                             const spriteDiv = document.createElement('div');
                             spriteDiv.className = 'sprite-item';
-                            spriteDiv.style.backgroundImage = `url('sprites/${characterName}/${sprite}')`;
+                            spriteDiv.style.backgroundImage = `url('${character.path || 'sprites/'}${characterName}/${sprite}')`;
                             
                             const spriteName = document.createElement('div');
                             spriteName.className = 'sprite-item-name';
@@ -1684,7 +1829,7 @@
                         const location = gameState.backgrounds[locationKey];
                         nameInput.value = location.name;
                         descriptionInput.value = location.description;
-                        preview.style.backgroundImage = `url('backgrounds/${location.file}')`;
+                        preview.style.backgroundImage = `url('${location.path || 'background/'}${location.file}')`;
                         
                         // Store original data for update
                         nameInput.dataset.originalKey = locationKey;
@@ -1815,7 +1960,8 @@
                 gameState.characters[newName] = {
                     name: newName,
                     description: descriptionInput.value.trim(),
-                    sprites: gameState.characters[originalName]?.sprites || []
+                    sprites: gameState.characters[originalName]?.sprites || [],
+                    path: gameState.characters[originalName]?.path || 'sprites/'
                 };
             }
             
@@ -1870,7 +2016,8 @@
                 gameState.backgrounds[newKey] = {
                     name: newName,
                     description: descriptionInput.value.trim(),
-                    file: gameState.backgrounds[originalKey]?.file || `${newKey}.jpg`
+                    file: gameState.backgrounds[originalKey]?.file || `${newKey}.jpg`,
+                    path: gameState.backgrounds[originalKey]?.path || 'background/'
                 };
             }
             
@@ -1890,17 +2037,26 @@
         }
 
         function setBackground(backgroundKey, isUserResource = false) {
+            debugLog(`Установка фона: ${backgroundKey} (пользовательский: ${isUserResource})`, 'info');
+            
             if (isUserResource && gameState.userResources.backgrounds[backgroundKey]) {
                 elements.background.style.backgroundImage = `url(${gameState.userResources.backgrounds[backgroundKey].image})`;
                 gameState.currentBackground = backgroundKey;
+                debugLog(`Установлен пользовательский фон: ${backgroundKey}`, 'success');
             } else if (gameState.backgrounds[backgroundKey]) {
                 const bg = gameState.backgrounds[backgroundKey];
-                elements.background.style.backgroundImage = `url('backgrounds/${bg.file}')`;
+                const path = bg.path || 'background/';
+                elements.background.style.backgroundImage = `url('${path}${bg.file}')`;
                 gameState.currentBackground = backgroundKey;
+                debugLog(`Установлен фон: ${path}${bg.file}`, 'success');
+            } else {
+                debugLog(`Не удалось найти фон: ${backgroundKey}`, 'error');
             }
         }
 
         function showCharacter(characterName, emotion = 'normal', position = 'center') {
+            debugLog(`Отображение персонажа: ${characterName}, эмоция: ${emotion}, позиция: ${position}`, 'info');
+            
             let isUserResource = false;
             let character;
             
@@ -1908,10 +2064,13 @@
             if (gameState.userResources.characters[characterName]) {
                 character = gameState.userResources.characters[characterName];
                 isUserResource = true;
+                debugLog(`Найден пользовательский персонаж: ${characterName}`, 'info');
             } else if (gameState.characters[characterName]) {
                 character = gameState.characters[characterName];
+                debugLog(`Найден системный персонаж: ${characterName}`, 'info');
             } else {
                 console.error('Character not found:', characterName);
+                debugLog(`Персонаж не найден: ${characterName}`, 'error');
                 return;
             }
             
@@ -1924,6 +2083,7 @@
                 characterElement.className = 'character';
                 characterElement.dataset.name = characterName;
                 elements.characters.appendChild(characterElement);
+                debugLog(`Создан новый элемент персонажа для: ${characterName}`, 'info');
             }
             
             // Set position
@@ -1937,6 +2097,7 @@
             // Set sprite based on whether it's user resource or not
             if (isUserResource) {
                 characterElement.style.backgroundImage = `url(${character.image})`;
+                debugLog(`Установлено пользовательское изображение для: ${characterName}`, 'success');
             } else {
                 let spriteFile = 'normal.png'; // Default
                 
@@ -1946,7 +2107,9 @@
                     spriteFile = character.sprites[0];
                 }
                 
-                characterElement.style.backgroundImage = `url('sprites/${characterName}/${spriteFile}')`;
+                const path = character.path || 'sprites/';
+                characterElement.style.backgroundImage = `url('${path}${characterName}/${spriteFile}')`;
+                debugLog(`Установлен спрайт: ${path}${characterName}/${spriteFile}`, 'success');
             }
             
             characterElement.style.backgroundSize = 'contain';
@@ -1965,11 +2128,14 @@
         }
 
         function hideCharacter(characterName) {
+            debugLog(`Скрытие персонажа: ${characterName}`, 'info');
+            
             const characterElement = document.querySelector(`.character[data-name="${characterName}"]`);
             if (characterElement) {
                 characterElement.style.opacity = '0';
                 setTimeout(() => {
                     characterElement.remove();
+                    debugLog(`Персонаж ${characterName} удален со сцены`, 'info');
                 }, 500);
             }
             
@@ -2010,9 +2176,12 @@
                 });
                 elements.choices.appendChild(button);
             });
+            
+            debugLog(`Отображено ${choices.length} вариантов выбора`, 'info');
         }
 
         function selectChoice(choice) {
+            debugLog(`Выбрано: ${choice}`, 'info');
             elements.choices.innerHTML = '';
             sendMessage(choice);
         }
@@ -2090,12 +2259,14 @@
             customPrompt = customPrompt.replace('{{MODE_INSTRUCTIONS}}', modeInstructions);
             customPrompt = customPrompt.replace('{{COMPRESSED_HISTORY}}', gameState.compressedHistory || 'История только начинается.');
             
+            debugLog('Системный промпт сгенерирован', 'info');
             return customPrompt;
         }
 
         async function sendSystemMessage(message) {
             try {
                 elements.loading.style.display = 'flex';
+                debugLog('Отправка системного сообщения в LLM...', 'info');
                 
                 const response = await callLLM(message, true);
                 
@@ -2105,11 +2276,13 @@
                         role: 'assistant',
                         content: JSON.stringify(response)
                     });
+                    debugLog('Получен и обработан ответ от LLM', 'success');
                 }
                 
                 elements.loading.style.display = 'none';
             } catch (error) {
                 console.error('Error in system message:', error);
+                debugLog(`Ошибка при отправке системного сообщения: ${error.message}`, 'error');
                 elements.loading.style.display = 'none';
                 alert('Произошла ошибка при инициализации истории. Пожалуйста, проверьте API ключ и настройки.');
             }
@@ -2121,6 +2294,7 @@
             try {
                 gameState.waitingForResponse = true;
                 elements.loading.style.display = 'flex';
+                debugLog(`Отправка сообщения от пользователя: ${message}`, 'info');
                 
                 // Add user message to context
                 gameState.context.push({
@@ -2152,12 +2326,15 @@
                         role: 'assistant',
                         content: JSON.stringify(response)
                     });
+                    
+                    debugLog('Получен и обработан ответ от LLM', 'success');
                 }
                 
                 gameState.waitingForResponse = false;
                 elements.loading.style.display = 'none';
             } catch (error) {
                 console.error('Error in user message:', error);
+                debugLog(`Ошибка при отправке сообщения: ${error.message}`, 'error');
                 gameState.waitingForResponse = false;
                 elements.loading.style.display = 'none';
                 alert('Произошла ошибка при обработке сообщения.');
@@ -2178,6 +2355,7 @@
             try {
                 gameState.waitingForResponse = true;
                 elements.loading.style.display = 'flex';
+                debugLog('Перегенерация последнего ответа...', 'info');
                 
                 // Remove the last assistant message from context
                 if (gameState.context.length > 0 && gameState.context[gameState.context.length - 1].role === 'assistant') {
@@ -2207,12 +2385,15 @@
                         role: 'assistant',
                         content: JSON.stringify(response)
                     });
+                    
+                    debugLog('Получен и обработан перегенерированный ответ', 'success');
                 }
                 
                 gameState.waitingForResponse = false;
                 elements.loading.style.display = 'none';
             } catch (error) {
                 console.error('Error in regeneration:', error);
+                debugLog(`Ошибка при перегенерации: ${error.message}`, 'error');
                 gameState.waitingForResponse = false;
                 elements.loading.style.display = 'none';
                 alert('Произошла ошибка при перегенерации ответа.');
@@ -2229,6 +2410,7 @@
                 gameState.waitingForResponse = true;
                 elements.loading.style.display = 'flex';
                 elements.menuDropdown.style.display = 'none';
+                debugLog(`Отправка прямого запроса: ${input}`, 'info');
                 
                 // Add a special system message to guide the direct request
                 const directSystemPrompt = `
@@ -2273,6 +2455,8 @@
                         role: 'assistant',
                         content: JSON.stringify(response)
                     });
+                    
+                    debugLog('Получен и обработан ответ на прямой запрос', 'success');
                 }
                 
                 elements.directRequest.value = '';
@@ -2280,6 +2464,7 @@
                 elements.loading.style.display = 'none';
             } catch (error) {
                 console.error('Error in direct request:', error);
+                debugLog(`Ошибка при прямом запросе: ${error.message}`, 'error');
                 gameState.waitingForResponse = false;
                 elements.loading.style.display = 'none';
                 alert('Произошла ошибка при обработке прямого запроса.');
@@ -2326,6 +2511,8 @@
                     gameState.compressedHistory = gameState.compressedHistory.slice(-5000);
                     gameState.compressedHistory = "Сжатая история предыдущих событий:\n" + gameState.compressedHistory;
                 }
+                
+                debugLog(`Управление контекстом: сжато ${oldMessages.length} старых сообщений`, 'info');
             }
         }
 
@@ -2344,6 +2531,7 @@
             }
             
             const apiKey = apiKeys[gameState.settings.currentKeyIndex];
+            debugLog(`Использование API ключа #${gameState.settings.currentKeyIndex + 1}`, 'info');
             
             // Move to next key for next call
             gameState.settings.currentKeyIndex = (gameState.settings.currentKeyIndex + 1) % apiKeys.length;
@@ -2371,6 +2559,8 @@
                     }
                 }
                 
+                debugLog(`Отправка запроса к OpenRouter, модель: ${gameState.settings.model}`, 'info');
+                
                 const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: 'POST',
                     headers: {
@@ -2387,27 +2577,33 @@
                 
                 if (!response.ok) {
                     const errorData = await response.json();
+                    debugLog(`Ошибка API: ${JSON.stringify(errorData)}`, 'error');
                     throw new Error(`API Error: ${JSON.stringify(errorData)}`);
                 }
                 
                 const data = await response.json();
                 let content = data.choices[0].message.content;
                 
+                debugLog(`Получен ответ от OpenRouter, длина: ${content.length} символов`, 'success');
+                
                 try {
                     // Try to parse as JSON
                     return JSON.parse(content);
                 } catch (e) {
                     // If it's not valid JSON, try to extract JSON part
+                    debugLog(`Ошибка парсинга JSON, пытаемся извлечь JSON из ответа`, 'warning');
                     const jsonMatch = content.match(/\{[\s\S]*\}/);
                     if (jsonMatch) {
                         try {
                             return JSON.parse(jsonMatch[0]);
                         } catch (e2) {
                             console.error('Failed to parse JSON from response:', content);
+                            debugLog(`Не удалось извлечь JSON из ответа`, 'error');
                             throw new Error('Получен некорректный формат ответа от LLM.');
                         }
                     } else {
                         console.error('No JSON found in response:', content);
+                        debugLog(`JSON не найден в ответе`, 'error');
                         throw new Error('Получен некорректный формат ответа от LLM.');
                     }
                 }
@@ -2470,14 +2666,20 @@
                 
                 // Check if there's a resource request
                 if (response.resource_request) {
-                    console.log('Resource request detected:', response.resource_request);
+                    debugLog(`Запрос ресурса: ${JSON.stringify(response.resource_request)}`, 'info');
                     // In a real implementation, we would handle the resource request
                     // e.g., prompt the user to upload a new character or background
                 }
             } catch (error) {
                 console.error('Error processing LLM response:', error);
+                debugLog(`Ошибка обработки ответа LLM: ${error.message}`, 'error');
                 alert('Произошла ошибка при обработке ответа LLM.');
             }
+        }
+
+        // Add debug tab initialization
+        if (elements.debugLog) {
+            elements.debugLog.innerHTML = '<div>Журнал отладки инициализирован</div>';
         }
     </script>
 </body>
