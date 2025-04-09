@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claude Chat</title>
+    <title>LLM Chat</title>
     
     <!-- Подключение Puter.js -->
     <script src="https://js.puter.com/v2/"></script>
@@ -924,7 +924,7 @@
     <!-- Основной контент -->
     <div class="main-content">
         <div class="header">
-            <div class="title">Claude Chat</div>
+            <div class="title">LLM Chat</div>
             <div class="header-actions">
                 <div class="auto-scroll-container">
                     <label class="auto-scroll-label">
@@ -1772,7 +1772,7 @@
                 
                 const messageSender = document.createElement('div');
                 messageSender.className = 'message-sender';
-                messageSender.textContent = message.role === 'user' ? 'You' : 'Claude';
+                messageSender.textContent = message.role === 'user' ? 'You' : 'LLM';
                 
                 // Добавляем индикатор статуса, если есть
                 if (message.status && message.status !== MESSAGE_STATUS.NONE) {
