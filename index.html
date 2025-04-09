@@ -31,6 +31,8 @@
             --inline-code-bg: #f1f1f1;
             --blockquote-border: #dfe2e5;
             --table-border: #dfe2e5;
+            --sidebar-bg: #f8f9fa;
+            --active-chat-bg: rgba(110, 86, 207, 0.1);
         }
         
         body {
@@ -39,9 +41,129 @@
             padding: 0;
             color: var(--text-color);
             display: flex;
-            flex-direction: column;
             height: 100vh;
             background-color: #fafafa;
+            overflow: hidden;
+        }
+        
+        /* Чаты боковая панель */
+        .chats-sidebar {
+            width: 250px;
+            height: 100vh;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .chats-header {
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            background-color: white;
+        }
+        
+        .chats-header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .new-chat-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .new-chat-btn:hover {
+            opacity: 0.9;
+        }
+        
+        .chats-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+        
+        .chat-item {
+            padding: 10px 15px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-item:hover {
+            background-color: #f1f3f5;
+        }
+        
+        .chat-item.active {
+            background-color: var(--active-chat-bg);
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .chat-title {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            flex: 1;
+        }
+        
+        .chat-actions {
+            display: flex;
+            gap: 5px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .chat-item:hover .chat-actions {
+            opacity: 1;
+        }
+        
+        .chat-action-btn {
+            background: none;
+            border: none;
+            font-size: 0.9rem;
+            cursor: pointer;
+            color: var(--light-text);
+            padding: 2px;
+        }
+        
+        .chat-action-btn:hover {
+            color: var(--primary-color);
+        }
+        
+        .resize-handle {
+            position: absolute;
+            top: 0;
+            right: -5px;
+            width: 10px;
+            height: 100%;
+            cursor: col-resize;
+            z-index: 200;
+        }
+        
+        /* Главный контент */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
         }
         
         .header {
@@ -56,6 +178,29 @@
         .title {
             font-size: 1.2rem;
             font-weight: 600;
+        }
+        
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .auto-scroll-container {
+            display: flex;
+            align-items: center;
+            margin-right: 10px;
+        }
+        
+        .auto-scroll-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+        
+        .auto-scroll-label input {
+            margin-right: 5px;
         }
         
         .settings-btn {
@@ -89,6 +234,12 @@
             padding: 12px 16px;
             border-radius: 8px;
             position: relative;
+        }
+        
+        /* Подсветка сообщений в контексте */
+        .message.in-context {
+            border-left: 3px solid var(--primary-color);
+            box-shadow: 0 0 0 1px rgba(110, 86, 207, 0.1);
         }
         
         .message-header {
@@ -428,18 +579,6 @@
             opacity: 0.9;
         }
         
-        /* Дополнительные стили для адаптивности */
-        @media (max-width: 768px) {
-            .message {
-                max-width: 95%;
-            }
-            
-            .context-limit {
-                width: 40px;
-                padding: 10px 2px;
-            }
-        }
-        
         /* Стили для макросника */
         .macro-window {
             position: fixed;
@@ -556,43 +695,80 @@
             padding-top: 15px;
             margin-top: auto;
         }
+        
+        /* Адаптивные стили */
+        @media (max-width: 768px) {
+            .message {
+                max-width: 95%;
+            }
+            
+            .context-limit {
+                width: 40px;
+                padding: 10px 2px;
+            }
+            
+            .chats-sidebar {
+                width: 200px;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="title">Claude Chat</div>
-        <div class="header-actions">
-            <button id="macro-btn" title="Open Macro Tool" class="settings-btn">
-                <span>🤖</span> Макрос
-            </button>
-            <button id="download-btn" title="Download AI Responses" class="settings-btn">
-                <span>📥</span> Download
-            </button>
-            <button id="settings-btn" class="settings-btn">
-                <span>⚙️</span> Settings
-            </button>
+    <!-- Боковая панель с чатами -->
+    <div id="chats-sidebar" class="chats-sidebar">
+        <div class="chats-header">
+            <h2>Чаты</h2>
+            <button id="new-chat-btn" class="new-chat-btn" title="Создать новый чат">+</button>
         </div>
+        <div id="chats-list" class="chats-list">
+            <!-- Чаты будут добавлены динамически -->
+        </div>
+        <div id="resize-handle" class="resize-handle"></div>
     </div>
     
-    <div id="chat-container" class="chat-container">
-        <!-- Messages will be added here dynamically -->
-    </div>
-    
-    <div class="input-container">
-        <input id="context-limit" class="context-limit" type="text" value="-" title="Context window size (number of messages to include)">
-        <div class="input-wrapper">
-            <textarea id="message-input" class="message-input" placeholder="Type your message here..."></textarea>
+    <!-- Основной контент -->
+    <div class="main-content">
+        <div class="header">
+            <div class="title">Claude Chat</div>
+            <div class="header-actions">
+                <div class="auto-scroll-container">
+                    <label class="auto-scroll-label">
+                        <input type="checkbox" id="auto-scroll-toggle" checked>
+                        <span>Автопрокрутка</span>
+                    </label>
+                </div>
+                <button id="macro-btn" title="Open Macro Tool" class="settings-btn">
+                    <span>🤖</span> Макрос
+                </button>
+                <button id="download-btn" title="Download AI Responses" class="settings-btn">
+                    <span>📥</span> Download
+                </button>
+                <button id="settings-btn" class="settings-btn">
+                    <span>⚙️</span> Settings
+                </button>
+            </div>
         </div>
-        <div class="action-buttons">
-            <button id="send-btn" class="send-btn" title="Send message">
-                📤
-            </button>
-            <button id="stop-btn" class="stop-btn" title="Stop generating" disabled>
-                ⏹️
-            </button>
-            <button id="regenerate-btn" class="regenerate-btn" title="Regenerate last response" disabled>
-                🔄
-            </button>
+        
+        <div id="chat-container" class="chat-container">
+            <!-- Messages will be added here dynamically -->
+        </div>
+        
+        <div class="input-container">
+            <input id="context-limit" class="context-limit" type="text" value="-" title="Context window size (number of messages to include)">
+            <div class="input-wrapper">
+                <textarea id="message-input" class="message-input" placeholder="Type your message here..."></textarea>
+            </div>
+            <div class="action-buttons">
+                <button id="send-btn" class="send-btn" title="Send message">
+                    📤
+                </button>
+                <button id="stop-btn" class="stop-btn" title="Stop generating" disabled>
+                    ⏹️
+                </button>
+                <button id="regenerate-btn" class="regenerate-btn" title="Regenerate last response" disabled>
+                    🔄
+                </button>
+            </div>
         </div>
     </div>
     
@@ -723,11 +899,11 @@
         // Current configuration (will be loaded from localStorage if available)
         let config = { ...defaultConfig };
         
-        // Chat messages
-        let messages = [];
-        
-        // Controller for stopping generation
-        let abortController = null;
+        // Переменные для управления чатами
+        let chats = [];
+        let activeChat = null;
+        let isResizing = false;
+        let autoScroll = true;
         
         // DOM elements
         const chatContainer = document.getElementById('chat-container');
@@ -748,6 +924,11 @@
         const maxTokens = document.getElementById('max-tokens');
         const systemPrompt = document.getElementById('system-prompt');
         const saveSettingsBtn = document.getElementById('save-settings-btn');
+        const chatsSidebar = document.getElementById('chats-sidebar');
+        const resizeHandle = document.getElementById('resize-handle');
+        const autoScrollToggle = document.getElementById('auto-scroll-toggle');
+        const chatsListElement = document.getElementById('chats-list');
+        const newChatBtn = document.getElementById('new-chat-btn');
         
         // Макросник DOM элементы
         const macroBtn = document.getElementById('macro-btn');
@@ -785,6 +966,169 @@
         let dragOffsetX = 0;
         let dragOffsetY = 0;
         
+        // Создание нового чата
+        function createChat(title = "Новый чат") {
+            const chatId = Date.now().toString();
+            const newChat = {
+                id: chatId,
+                title: title,
+                messages: [],
+                abortController: null,
+                contextLimit: "-"
+            };
+            
+            chats.push(newChat);
+            saveChats();
+            
+            return newChat;
+        }
+        
+        // Сохранение чатов в localStorage
+        function saveChats() {
+            const chatsToSave = chats.map(chat => {
+                const { abortController, ...chatToSave } = chat;
+                return chatToSave;
+            });
+            
+            localStorage.setItem('claudeChats', JSON.stringify(chatsToSave));
+        }
+        
+        // Загрузка чатов из localStorage
+        function loadChats() {
+            const savedChats = localStorage.getItem('claudeChats');
+            if (savedChats) {
+                try {
+                    chats = JSON.parse(savedChats).map(chat => ({
+                        ...chat,
+                        abortController: null
+                    }));
+                    
+                    if (chats.length > 0) {
+                        activeChat = chats[0];
+                    } else {
+                        activeChat = createChat();
+                    }
+                    
+                } catch (e) {
+                    console.error('Error loading chats:', e);
+                    chats = [];
+                    activeChat = createChat();
+                }
+            } else {
+                activeChat = createChat();
+            }
+            
+            renderChatsList();
+            
+            // Устанавливаем значение контекстного лимита
+            if (activeChat) {
+                contextLimit.value = activeChat.contextLimit || "-";
+                renderMessages();
+            }
+        }
+        
+        // Рендеринг списка чатов
+        function renderChatsList() {
+            chatsListElement.innerHTML = '';
+            
+            chats.forEach(chat => {
+                const chatItem = document.createElement('div');
+                chatItem.className = `chat-item ${chat.id === activeChat.id ? 'active' : ''}`;
+                chatItem.dataset.id = chat.id;
+                
+                const chatTitle = document.createElement('div');
+                chatTitle.className = 'chat-title';
+                chatTitle.textContent = chat.title;
+                
+                const chatActions = document.createElement('div');
+                chatActions.className = 'chat-actions';
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'chat-action-btn';
+                editBtn.innerHTML = '✏️';
+                editBtn.title = 'Переименовать чат';
+                editBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const newTitle = prompt('Введите новое название чата:', chat.title);
+                    if (newTitle !== null && newTitle.trim() !== '') {
+                        chat.title = newTitle.trim();
+                        saveChats();
+                        renderChatsList();
+                    }
+                });
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'chat-action-btn';
+                deleteBtn.innerHTML = '🗑️';
+                deleteBtn.title = 'Удалить чат';
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (confirm(`Удалить чат "${chat.title}"?`)) {
+                        const index = chats.findIndex(c => c.id === chat.id);
+                        if (index !== -1) {
+                            // Остановить генерацию, если она активна
+                            if (chat.abortController) {
+                                chat.abortController.abort();
+                            }
+                            
+                            chats.splice(index, 1);
+                            
+                            // Если удалили активный чат, переключаемся на другой или создаем новый
+                            if (chat.id === activeChat.id) {
+                                if (chats.length > 0) {
+                                    activeChat = chats[0];
+                                } else {
+                                    activeChat = createChat();
+                                }
+                                renderMessages();
+                            }
+                            
+                            saveChats();
+                            renderChatsList();
+                        }
+                    }
+                });
+                
+                chatActions.appendChild(editBtn);
+                chatActions.appendChild(deleteBtn);
+                
+                chatItem.appendChild(chatTitle);
+                chatItem.appendChild(chatActions);
+                
+                chatItem.addEventListener('click', () => {
+                    switchChat(chat.id);
+                });
+                
+                chatsListElement.appendChild(chatItem);
+            });
+        }
+        
+        // Переключение между чатами
+        function switchChat(chatId) {
+            if (activeChat && activeChat.id === chatId) return;
+            
+            // Сохраняем текущее значение контекстного лимита
+            if (activeChat) {
+                activeChat.contextLimit = contextLimit.value;
+            }
+            
+            // Находим новый активный чат
+            const newActiveChat = chats.find(chat => chat.id === chatId);
+            if (!newActiveChat) return;
+            
+            activeChat = newActiveChat;
+            
+            // Обновляем интерфейс
+            renderChatsList();
+            renderMessages();
+            
+            // Устанавливаем значение контекстного лимита
+            contextLimit.value = activeChat.contextLimit || "-";
+            
+            // Сохраняем чаты
+            saveChats();
+        }
+        
         // Load configuration from localStorage
         function loadConfig() {
             const savedConfig = localStorage.getItem('claudeChatConfig');
@@ -803,7 +1147,13 @@
                         modelSelect.value = config.model;
                     } else {
                         modelSelect.value = 'custom';
-                        customModel.value = config.model;
+                        // Загружаем сохраненное значение кастомной модели
+                        const savedCustomModelValue = localStorage.getItem('customModelValue');
+                        if (savedCustomModelValue) {
+                            customModel.value = savedCustomModelValue;
+                        } else {
+                            customModel.value = config.model;
+                        }
                         customModelContainer.style.display = 'block';
                     }
                 } catch (e) {
@@ -818,51 +1168,52 @@
             localStorage.setItem('claudeChatConfig', JSON.stringify(config));
         }
         
-        // Load messages from localStorage
-        function loadMessages() {
-            const savedMessages = localStorage.getItem('claudeChatMessages');
-            if (savedMessages) {
-                try {
-                    messages = JSON.parse(savedMessages);
-                    renderMessages();
-                } catch (e) {
-                    console.error('Error loading messages:', e);
-                    messages = [];
-                }
-            }
-        }
-        
-        // Save messages to localStorage
-        function saveMessages() {
-            localStorage.setItem('claudeChatMessages', JSON.stringify(messages));
-        }
-        
         // Add a new message to the chat
         function addMessage(role, content, isStreaming = false) {
             const messageId = Date.now().toString();
-            messages.push({
+            
+            // Убедимся, что у активного чата есть массив сообщений
+            if (!activeChat.messages) {
+                activeChat.messages = [];
+            }
+            
+            activeChat.messages.push({
                 id: messageId,
                 role,
                 content,
                 timestamp: new Date().toISOString()
             });
             
-            renderMessage(messages[messages.length - 1], isStreaming);
-            saveMessages();
+            // Определяем, находится ли сообщение в контексте
+            const contextMessages = prepareContextWindow();
+            const isInContext = contextMessages.some(msg => msg.id === messageId);
+            
+            renderMessage(activeChat.messages[activeChat.messages.length - 1], isStreaming, isInContext);
+            saveChats();
             
             return messageId;
         }
         
         // Update an existing message
         function updateMessage(id, content) {
-            const index = messages.findIndex(m => m.id === id);
+            const index = activeChat.messages.findIndex(m => m.id === id);
             if (index !== -1) {
-                messages[index].content = content;
+                activeChat.messages[index].content = content;
+                
+                // Определяем, находится ли сообщение в контексте
+                const contextMessages = prepareContextWindow();
+                const isInContext = contextMessages.some(msg => msg.id === id);
                 
                 const messageElement = document.getElementById(`message-${id}`);
                 if (messageElement) {
+                    // Обновляем класс контекста
+                    if (isInContext) {
+                        messageElement.classList.add('in-context');
+                    } else {
+                        messageElement.classList.remove('in-context');
+                    }
+                    
                     const contentElement = messageElement.querySelector('.message-content');
-                    // Рендерим содержимое с Markdown
                     contentElement.innerHTML = marked.parse(content);
                     
                     // Добавляем кнопки копирования к блокам кода
@@ -873,23 +1224,43 @@
                     charCountElement.textContent = `${content.length} characters`;
                 }
                 
-                saveMessages();
+                saveChats();
             }
         }
         
         // Delete a message
         function deleteMessage(id) {
-            const index = messages.findIndex(m => m.id === id);
+            const index = activeChat.messages.findIndex(m => m.id === id);
             if (index !== -1) {
-                messages.splice(index, 1);
+                activeChat.messages.splice(index, 1);
                 
                 const messageElement = document.getElementById(`message-${id}`);
                 if (messageElement) {
                     messageElement.remove();
                 }
                 
-                saveMessages();
+                saveChats();
+                updateContextHighlighting();
             }
+        }
+        
+        // Обновление подсветки контекста
+        function updateContextHighlighting() {
+            if (!activeChat || !activeChat.messages) return;
+            
+            const contextMessages = prepareContextWindow();
+            const contextMessageIds = contextMessages.map(msg => msg.id);
+            
+            activeChat.messages.forEach(message => {
+                const messageElement = document.getElementById(`message-${message.id}`);
+                if (messageElement) {
+                    if (contextMessageIds.includes(message.id)) {
+                        messageElement.classList.add('in-context');
+                    } else {
+                        messageElement.classList.remove('in-context');
+                    }
+                }
+            });
         }
         
         // Добавляет кнопки копирования к блокам кода
@@ -942,20 +1313,29 @@
         // Render all messages
         function renderMessages() {
             chatContainer.innerHTML = '';
-            messages.forEach(message => {
-                renderMessage(message);
+            
+            if (!activeChat || !activeChat.messages || activeChat.messages.length === 0) {
+                return;
+            }
+            
+            // Определяем сообщения, которые будут в контексте
+            const contextMessages = prepareContextWindow();
+            const contextMessageIds = contextMessages.map(msg => msg.id);
+            
+            activeChat.messages.forEach(message => {
+                renderMessage(message, false, contextMessageIds.includes(message.id));
             });
         }
         
         // Render a single message
-        function renderMessage(message, isStreaming = false) {
+        function renderMessage(message, isStreaming = false, isInContext = false) {
             let messageElement = document.getElementById(`message-${message.id}`);
             const isNewMessage = !messageElement;
             
             if (isNewMessage) {
                 messageElement = document.createElement('div');
                 messageElement.id = `message-${message.id}`;
-                messageElement.className = `message ${message.role === 'user' ? 'user-message' : 'bot-message'}`;
+                messageElement.className = `message ${message.role === 'user' ? 'user-message' : 'bot-message'} ${isInContext ? 'in-context' : ''}`;
                 
                 const messageHeader = document.createElement('div');
                 messageHeader.className = 'message-header';
@@ -1022,22 +1402,51 @@
                 // Добавляем кнопки копирования к блокам кода
                 addCopyButtonsToCodeBlocks(messageContent);
                 
-            } else if (!isStreaming) {
-                // Update existing message
-                const contentElement = messageElement.querySelector('.message-content');
-                contentElement.innerHTML = marked.parse(message.content);
+            } else {
+                // Обновляем класс контекста
+                if (isInContext) {
+                    messageElement.classList.add('in-context');
+                } else {
+                    messageElement.classList.remove('in-context');
+                }
                 
-                // Добавляем кнопки копирования к блокам кода
-                addCopyButtonsToCodeBlocks(contentElement);
-                
-                const charCountElement = messageElement.querySelector('.char-count');
-                charCountElement.textContent = `${message.content.length} characters`;
+                if (!isStreaming) {
+                    // Update existing message
+                    const contentElement = messageElement.querySelector('.message-content');
+                    contentElement.innerHTML = marked.parse(message.content);
+                    
+                    // Добавляем кнопки копирования к блокам кода
+                    addCopyButtonsToCodeBlocks(contentElement);
+                    
+                    const charCountElement = messageElement.querySelector('.char-count');
+                    charCountElement.textContent = `${message.content.length} characters`;
+                }
             }
             
-            // Scroll to the latest message
-            if (isNewMessage) {
+            // Scroll to the latest message only if auto-scroll is enabled
+            if (isNewMessage && autoScroll) {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }
+        }
+        
+        // Prepare the context window based on the limit setting
+        function prepareContextWindow() {
+            if (!activeChat || !activeChat.messages) return [];
+            
+            const limit = contextLimit.value.trim();
+            
+            if (limit === '-' || limit === '') {
+                // Return all messages
+                return [...activeChat.messages];
+            }
+            
+            const numericLimit = parseInt(limit);
+            if (isNaN(numericLimit) || numericLimit <= 0) {
+                return [...activeChat.messages];
+            }
+            
+            // Return the last N messages
+            return activeChat.messages.slice(-numericLimit);
         }
         
         // Send message to the LLM
@@ -1067,7 +1476,7 @@
             regenerateBtn.disabled = true;
             
             let fullResponse = '';
-            abortController = new AbortController();
+            activeChat.abortController = new AbortController();
             
             // Для макроса: начать отсчет времени ожидания ответа
             if (macroRunning) {
@@ -1102,7 +1511,7 @@
                         temperature: parseFloat(config.temperature),
                         max_tokens: parseInt(config.maxTokens),
                         stream: true,
-                        signal: abortController.signal
+                        signal: activeChat.abortController.signal
                     }
                 );
                 
@@ -1110,18 +1519,32 @@
                 for await (const part of response) {
                     if (part?.text) {
                         fullResponse += part.text;
-                        botMessageContent.innerHTML = marked.parse(fullResponse);
                         
-                        // Добавляем кнопки копирования к новым блокам кода
-                        addCopyButtonsToCodeBlocks(botMessageContent);
+                        // Ищем сообщение по ID (на случай, если переключили чат)
+                        const currentBotMessage = document.getElementById(`message-${botMessageId}`);
+                        if (currentBotMessage) {
+                            const currentBotMessageContent = currentBotMessage.querySelector('.message-content');
+                            currentBotMessageContent.innerHTML = marked.parse(fullResponse);
+                            
+                            // Добавляем кнопки копирования к новым блокам кода
+                            addCopyButtonsToCodeBlocks(currentBotMessageContent);
+                            
+                            currentBotMessage.querySelector('.char-count').textContent = `${fullResponse.length} characters`;
+                            
+                            // Прокручиваем только если включен автоскролл
+                            if (autoScroll) {
+                                currentBotMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                            }
+                        }
                         
-                        botMessage.querySelector('.char-count').textContent = `${fullResponse.length} characters`;
-                        botMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                        // Обновляем сообщение в активном чате
+                        const messageIndex = activeChat.messages.findIndex(m => m.id === botMessageId);
+                        if (messageIndex !== -1) {
+                            activeChat.messages[messageIndex].content = fullResponse;
+                            saveChats();
+                        }
                     }
                 }
-                
-                // Update message with full response
-                updateMessage(botMessageId, fullResponse);
                 
                 // Для макроса: увеличиваем счетчик ответов
                 if (macroRunning) {
@@ -1161,7 +1584,21 @@
                     console.log('Request was aborted');
                 } else {
                     console.error('Error calling LLM:', error);
-                    updateMessage(botMessageId, `Error: ${error.message}`);
+                    
+                    // Обновляем сообщение об ошибке в активном чате
+                    const messageIndex = activeChat.messages.findIndex(m => m.id === botMessageId);
+                    if (messageIndex !== -1) {
+                        activeChat.messages[messageIndex].content = `Error: ${error.message}`;
+                        saveChats();
+                        
+                        // Обновляем UI если сообщение видимо
+                        const currentBotMessage = document.getElementById(`message-${botMessageId}`);
+                        if (currentBotMessage) {
+                            const currentBotMessageContent = currentBotMessage.querySelector('.message-content');
+                            currentBotMessageContent.innerHTML = `Error: ${error.message}`;
+                            currentBotMessage.querySelector('.char-count').textContent = `${(`Error: ${error.message}`).length} characters`;
+                        }
+                    }
                 }
                 
                 if (macroRunning) {
@@ -1169,41 +1606,25 @@
                 }
             } finally {
                 // Reset UI state
-                abortController = null;
+                activeChat.abortController = null;
                 sendBtn.disabled = false;
                 stopBtn.disabled = true;
                 regenerateBtn.disabled = false;
             }
         }
         
-        // Prepare the context window based on the limit setting
-        function prepareContextWindow() {
-            const limit = contextLimit.value.trim();
-            
-            if (limit === '-' || limit === '') {
-                // Return all messages
-                return [...messages];
-            }
-            
-            const numericLimit = parseInt(limit);
-            if (isNaN(numericLimit) || numericLimit <= 0) {
-                return [...messages];
-            }
-            
-            // Return the last N messages
-            return messages.slice(-numericLimit);
-        }
-        
         // Regenerate the last bot response
         async function regenerateLastResponse() {
+            if (!activeChat || !activeChat.messages) return;
+            
             // Find the last bot message
-            const lastBotMessageIndex = [...messages].reverse().findIndex(m => m.role === 'assistant');
+            const lastBotMessageIndex = [...activeChat.messages].reverse().findIndex(m => m.role === 'assistant');
             if (lastBotMessageIndex === -1) return;
             
-            const lastBotMessage = messages[messages.length - 1 - lastBotMessageIndex];
+            const lastBotMessage = activeChat.messages[activeChat.messages.length - 1 - lastBotMessageIndex];
             
             // Prepare context up to the last user message
-            const contextMessages = messages.slice(0, messages.length - 1 - lastBotMessageIndex);
+            const contextMessages = activeChat.messages.slice(0, activeChat.messages.length - 1 - lastBotMessageIndex);
             
             // Delete last bot message
             deleteMessage(lastBotMessage.id);
@@ -1219,7 +1640,7 @@
             const botMessageContent = botMessage.querySelector('.message-content');
             
             let fullResponse = '';
-            abortController = new AbortController();
+            activeChat.abortController = new AbortController();
             
             try {
                 // Build messages array for API
@@ -1249,7 +1670,7 @@
                         temperature: parseFloat(config.temperature),
                         max_tokens: parseInt(config.maxTokens),
                         stream: true,
-                        signal: abortController.signal
+                        signal: activeChat.abortController.signal
                     }
                 );
                 
@@ -1257,28 +1678,56 @@
                 for await (const part of response) {
                     if (part?.text) {
                         fullResponse += part.text;
-                        botMessageContent.innerHTML = marked.parse(fullResponse);
                         
-                        // Добавляем кнопки копирования к блокам кода
-                        addCopyButtonsToCodeBlocks(botMessageContent);
+                        // Ищем сообщение по ID (на случай, если переключили чат)
+                        const currentBotMessage = document.getElementById(`message-${botMessageId}`);
+                        if (currentBotMessage) {
+                            const currentBotMessageContent = currentBotMessage.querySelector('.message-content');
+                            currentBotMessageContent.innerHTML = marked.parse(fullResponse);
+                            
+                            // Добавляем кнопки копирования к блокам кода
+                            addCopyButtonsToCodeBlocks(currentBotMessageContent);
+                            
+                            currentBotMessage.querySelector('.char-count').textContent = `${fullResponse.length} characters`;
+                            
+                            // Прокручиваем только если включен автоскролл
+                            if (autoScroll) {
+                                currentBotMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                            }
+                        }
                         
-                        botMessage.querySelector('.char-count').textContent = `${fullResponse.length} characters`;
-                        botMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                        // Обновляем сообщение в активном чате
+                        const messageIndex = activeChat.messages.findIndex(m => m.id === botMessageId);
+                        if (messageIndex !== -1) {
+                            activeChat.messages[messageIndex].content = fullResponse;
+                            saveChats();
+                        }
                     }
                 }
-                
-                // Update message with full response
-                updateMessage(botMessageId, fullResponse);
             } catch (error) {
                 if (error.name === 'AbortError') {
                     console.log('Request was aborted');
                 } else {
                     console.error('Error calling LLM:', error);
-                    updateMessage(botMessageId, `Error: ${error.message}`);
+                    
+                    // Обновляем сообщение об ошибке в активном чате
+                    const messageIndex = activeChat.messages.findIndex(m => m.id === botMessageId);
+                    if (messageIndex !== -1) {
+                        activeChat.messages[messageIndex].content = `Error: ${error.message}`;
+                        saveChats();
+                        
+                        // Обновляем UI если сообщение видимо
+                        const currentBotMessage = document.getElementById(`message-${botMessageId}`);
+                        if (currentBotMessage) {
+                            const currentBotMessageContent = currentBotMessage.querySelector('.message-content');
+                            currentBotMessageContent.innerHTML = `Error: ${error.message}`;
+                            currentBotMessage.querySelector('.char-count').textContent = `${(`Error: ${error.message}`).length} characters`;
+                        }
+                    }
                 }
             } finally {
                 // Reset UI state
-                abortController = null;
+                activeChat.abortController = null;
                 sendBtn.disabled = false;
                 stopBtn.disabled = true;
                 regenerateBtn.disabled = false;
@@ -1287,9 +1736,9 @@
         
         // Stop generation
         function stopGeneration() {
-            if (abortController) {
-                abortController.abort();
-                abortController = null;
+            if (activeChat && activeChat.abortController) {
+                activeChat.abortController.abort();
+                activeChat.abortController = null;
                 stopBtn.disabled = true;
                 sendBtn.disabled = false;
                 regenerateBtn.disabled = false;
@@ -1298,8 +1747,13 @@
         
         // Download AI responses as HTML
         function downloadAIResponses() {
+            if (!activeChat || !activeChat.messages) {
+                alert('No messages to download.');
+                return;
+            }
+            
             // Filter only assistant messages
-            const aiResponses = messages.filter(msg => msg.role === 'assistant');
+            const aiResponses = activeChat.messages.filter(msg => msg.role === 'assistant');
             
             if (aiResponses.length === 0) {
                 alert('No AI responses to download.');
@@ -1312,7 +1766,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Responses</title>
+    <title>AI Responses - ${activeChat.title}</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -1370,7 +1824,7 @@
     </style>
 </head>
 <body>
-    <h1>AI Responses</h1>`;
+    <h1>AI Responses - ${activeChat.title}</h1>`;
             
             // Add each response
             aiResponses.forEach((response, index) => {
@@ -1389,7 +1843,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `ai-responses-${new Date().toISOString().slice(0, 10)}.html`;
+            a.download = `ai-responses-${activeChat.title}-${new Date().toISOString().slice(0, 10)}.html`;
             document.body.appendChild(a);
             a.click();
             
@@ -1400,11 +1854,19 @@
             }, 0);
         }
         
-        // Очистка чата (для макроса)
+        // Очистка активного чата
         function clearChat() {
-            messages = [];
-            chatContainer.innerHTML = '';
-            saveMessages();
+            if (!activeChat) return;
+            
+            // Останавливаем генерацию, если она активна
+            if (activeChat.abortController) {
+                activeChat.abortController.abort();
+                activeChat.abortController = null;
+            }
+            
+            activeChat.messages = [];
+            saveChats();
+            renderMessages();
         }
         
         // -------------------- Функции макросника --------------------
@@ -1619,6 +2081,12 @@
             document.body.style.userSelect = '';
         }
         
+        // Функция для изменения ширины боковой панели
+        function handleResize(e) {
+            const newWidth = Math.max(200, Math.min(600, e.clientX));
+            chatsSidebar.style.width = newWidth + 'px';
+        }
+        
         // Загрузка сохраненных настроек макроса
         function loadMacroSettings() {
             templateTextArea.value = loadTextFromLocalStorage('macroTemplateText', '');
@@ -1676,8 +2144,12 @@
             // Handle model selection
             if (modelSelect.value === 'custom') {
                 config.model = customModel.value.trim();
+                // Сохраняем значение кастомной модели отдельно
+                localStorage.setItem('customModelValue', customModel.value.trim());
             } else {
                 config.model = modelSelect.value;
+                // Если выбрана не кастомная модель, очищаем сохраненное значение
+                localStorage.removeItem('customModelValue');
             }
             
             // Save config and close modal
@@ -1686,6 +2158,47 @@
         });
         
         downloadBtn.addEventListener('click', downloadAIResponses);
+        
+        // Управление размером боковой панели
+        let isResizingSidebar = false;
+        
+        resizeHandle.addEventListener('mousedown', (e) => {
+            isResizingSidebar = true;
+            document.body.style.cursor = 'col-resize';
+            document.addEventListener('mousemove', handleResize);
+            e.preventDefault();
+        });
+        
+        document.addEventListener('mouseup', () => {
+            if (isResizingSidebar) {
+                isResizingSidebar = false;
+                document.body.style.cursor = '';
+                document.removeEventListener('mousemove', handleResize);
+            }
+        });
+        
+        // Переключение автопрокрутки
+        autoScrollToggle.addEventListener('change', () => {
+            autoScroll = autoScrollToggle.checked;
+            localStorage.setItem('autoScroll', autoScroll);
+        });
+        
+        // Изменение контекстного лимита
+        contextLimit.addEventListener('change', () => {
+            if (activeChat) {
+                activeChat.contextLimit = contextLimit.value;
+                saveChats();
+                updateContextHighlighting();
+            }
+        });
+        
+        // Новый чат
+        newChatBtn.addEventListener('click', () => {
+            activeChat = createChat();
+            renderChatsList();
+            renderMessages();
+            contextLimit.value = "-";
+        });
         
         // Click outside modal to close
         window.addEventListener('click', (e) => {
@@ -1759,14 +2272,18 @@
         
         // Initialization
         loadConfig();
-        loadMessages();
+        loadChats();
         
-        // If there are no messages, add a welcome message
-        if (messages.length === 0) {
+        // Загрузка настройки автопрокрутки
+        autoScroll = localStorage.getItem('autoScroll') !== 'false';
+        autoScrollToggle.checked = autoScroll;
+        
+        // Если нет чатов, добавляем приветственное сообщение
+        if (activeChat && (!activeChat.messages || activeChat.messages.length === 0)) {
             addMessage('assistant', "# Hello! I'm Claude.\n\nI can help you with various tasks. Here are some of my capabilities:\n\n- Answering questions and providing information\n- Writing and editing content\n- Analyzing data and solving problems\n- Programming assistance and code generation\n- Creative writing and brainstorming\n\nHow can I assist you today?");
         }
         
-        console.log('Приложение Claude Chat с макросником инициализировано.');
+        console.log('Приложение Claude Chat с чатами и макросником инициализировано.');
     </script>
 </body>
 </html>
