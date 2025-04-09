@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM Chat</title>
+    <title>Claude Chat</title>
     
     <!-- Подключение Puter.js -->
     <script src="https://js.puter.com/v2/"></script>
@@ -924,7 +924,7 @@
     <!-- Основной контент -->
     <div class="main-content">
         <div class="header">
-            <div class="title">LLM Chat</div>
+            <div class="title">Claude Chat</div>
             <div class="header-actions">
                 <div class="auto-scroll-container">
                     <label class="auto-scroll-label">
@@ -1081,9 +1081,8 @@
             </div>
         </div>
     </div>
-
-        <script>
-        // **Перемещаем блок marked.setOptions сюда, после загрузки highlight.js**
+    
+    <script>
         // Настройка библиотеки marked для Markdown
         marked.setOptions({
             renderer: new marked.Renderer(),
@@ -1097,7 +1096,7 @@
             headerIds: false,              // отключаем автоматические ID для заголовков
             sanitize: false                // не санитайзим HTML (marked обрабатывает это безопасно)
         });
-
+        
         // Configuration object with default settings
         const defaultConfig = {
             model: "openrouter:anthropic/claude-3.7-sonnet:thinking",
@@ -1105,10 +1104,10 @@
             maxTokens: 4096,
             systemPrompt: ""
         };
-
+        
         // Current configuration (will be loaded from localStorage if available)
         let config = { ...defaultConfig };
-
+        
         // Объект для отладочной информации
         let debugInfo = {
             model: "",
@@ -1119,7 +1118,7 @@
             endTime: null,
             totalTokens: 0
         };
-
+        
         // Статусы сообщений
         const MESSAGE_STATUS = {
             SENDING: "sending",
@@ -1128,13 +1127,13 @@
             ERROR: "error",
             NONE: ""
         };
-
+        
         // Переменные для управления чатами
         let chats = [];
         let activeChat = null;
         let isResizing = false;
         let autoScroll = true;
-
+        
         // DOM elements
         const chatContainer = document.getElementById('chat-container');
         const messageInput = document.getElementById('message-input');
@@ -1163,7 +1162,7 @@
         const autoScrollToggle = document.getElementById('auto-scroll-toggle');
         const chatsListElement = document.getElementById('chats-list');
         const newChatBtn = document.getElementById('new-chat-btn');
-
+        
         // Макросник DOM элементы
         const macroBtn = document.getElementById('macro-btn');
         const macroWindow = document.getElementById('macro-window');
@@ -1183,7 +1182,7 @@
         const variableCounterDisplay = document.getElementById('macro-variable-counter');
         const saveHistoryCheckbox = document.getElementById('macro-save-history-checkbox');
         const saveIntervalInput = document.getElementById('macro-save-interval-input');
-
+        
         // Переменные для макросника
         let macroRunning = false;
         let macroPaused = false;
@@ -1194,12 +1193,12 @@
         let stopwatchInterval = null;
         let totalVariablesCount = 0;
         let llmResponsesCounter = 0;
-
+        
         // Переменные для перетаскивания окна
         let isDragging = false;
         let dragOffsetX = 0;
         let dragOffsetY = 0;
-
+        
         // Создание нового чата
         function createChat(title = "Новый чат") {
             const chatId = Date.now().toString();
@@ -1210,23 +1209,23 @@
                 abortController: null,
                 contextLimit: "-"
             };
-
+            
             chats.push(newChat);
             saveChats();
-
+            
             return newChat;
         }
-
+        
         // Сохранение чатов в localStorage
         function saveChats() {
             const chatsToSave = chats.map(chat => {
                 const { abortController, ...chatToSave } = chat;
                 return chatToSave;
             });
-
+            
             localStorage.setItem('claudeChats', JSON.stringify(chatsToSave));
         }
-
+        
         // Загрузка чатов из localStorage
         function loadChats() {
             const savedChats = localStorage.getItem('claudeChats');
@@ -1236,13 +1235,13 @@
                         ...chat,
                         abortController: null
                     }));
-
+                    
                     if (chats.length > 0) {
                         activeChat = chats[0];
                     } else {
                         activeChat = createChat();
                     }
-
+                    
                 } catch (e) {
                     console.error('Error loading chats:', e);
                     chats = [];
@@ -1251,32 +1250,32 @@
             } else {
                 activeChat = createChat();
             }
-
+            
             renderChatsList();
-
+            
             // Устанавливаем значение контекстного лимита
             if (activeChat) {
                 contextLimit.value = activeChat.contextLimit || "-";
                 renderMessages();
             }
         }
-
+        
         // Рендеринг списка чатов
         function renderChatsList() {
             chatsListElement.innerHTML = '';
-
+            
             chats.forEach(chat => {
                 const chatItem = document.createElement('div');
                 chatItem.className = `chat-item ${chat.id === activeChat.id ? 'active' : ''}`;
                 chatItem.dataset.id = chat.id;
-
+                
                 const chatTitle = document.createElement('div');
                 chatTitle.className = 'chat-title';
                 chatTitle.textContent = chat.title;
-
+                
                 const chatActions = document.createElement('div');
                 chatActions.className = 'chat-actions';
-
+                
                 const editBtn = document.createElement('button');
                 editBtn.className = 'chat-action-btn';
                 editBtn.innerHTML = '✏️';
@@ -1290,7 +1289,7 @@
                         renderChatsList();
                     }
                 });
-
+                
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'chat-action-btn';
                 deleteBtn.innerHTML = '🗑️';
@@ -1304,9 +1303,9 @@
                             if (chat.abortController) {
                                 chat.abortController.abort();
                             }
-
+                            
                             chats.splice(index, 1);
-
+                            
                             // Если удалили активный чат, переключаемся на другой или создаем новый
                             if (chat.id === activeChat.id) {
                                 if (chats.length > 0) {
@@ -1316,56 +1315,56 @@
                                 }
                                 renderMessages();
                             }
-
+                            
                             saveChats();
                             renderChatsList();
                         }
                     }
                 });
-
+                
                 chatActions.appendChild(editBtn);
                 chatActions.appendChild(deleteBtn);
-
+                
                 chatItem.appendChild(chatTitle);
                 chatItem.appendChild(chatActions);
-
+                
                 chatItem.addEventListener('click', () => {
                     switchChat(chat.id);
                 });
-
+                
                 chatsListElement.appendChild(chatItem);
             });
         }
-
+        
         // Переключение между чатами
         function switchChat(chatId) {
             if (activeChat && activeChat.id === chatId) return;
-
+            
             // Сохраняем текущее значение контекстного лимита
             if (activeChat) {
                 activeChat.contextLimit = contextLimit.value;
             }
-
+            
             // Находим новый активный чат
             const newActiveChat = chats.find(chat => chat.id === chatId);
             if (!newActiveChat) return;
-
+            
             activeChat = newActiveChat;
-
+            
             // Обновляем интерфейс
             renderChatsList();
             renderMessages();
-
+            
             // Устанавливаем значение контекстного лимита
             contextLimit.value = activeChat.contextLimit || "-";
-
+            
             // Обновляем состояние кнопок в соответствии с текущим чатом
             updateButtonState();
-
+            
             // Сохраняем чаты
             saveChats();
         }
-
+        
         // Обновление состояния кнопок в зависимости от текущего чата
         function updateButtonState() {
             if (activeChat && activeChat.abortController) {
@@ -1375,33 +1374,33 @@
             } else {
                 sendBtn.disabled = false;
                 stopBtn.disabled = true;
-                regenerateBtn.disabled = activeChat && activeChat.messages &&
+                regenerateBtn.disabled = activeChat && activeChat.messages && 
                                         activeChat.messages.some(m => m.role === 'assistant') ? false : true;
             }
         }
-
+        
         // Load configuration from localStorage
         function loadConfig() {
             const savedConfig = localStorage.getItem('claudeChatConfig');
             if (savedConfig) {
                 try {
                     config = { ...defaultConfig, ...JSON.parse(savedConfig) };
-
+                    
                     // Update UI with loaded settings
                     temperature.value = config.temperature;
                     temperatureValue.textContent = config.temperature;
                     maxTokens.value = config.maxTokens;
                     systemPrompt.value = config.systemPrompt || '';
-
+                    
                     // Handle custom model
                     const savedCustomModelValue = localStorage.getItem('customModelValue');
-
+                    
                     if (modelSelect.querySelector(`option[value="${config.model}"]`)) {
                         modelSelect.value = config.model;
                     } else {
                         modelSelect.value = 'custom';
                         customModelContainer.style.display = 'block';
-
+                        
                         if (savedCustomModelValue) {
                             customModel.value = savedCustomModelValue;
                         } else {
@@ -1414,56 +1413,56 @@
                 }
             }
         }
-
+        
         // Save configuration to localStorage
         function saveConfig() {
             localStorage.setItem('claudeChatConfig', JSON.stringify(config));
         }
-
+        
         // Обновление дебаг-панели
         function updateDebugPanel() {
             if (debugPanel.style.display !== 'flex') return;
-
+            
             let content = '';
-
+            
             // Базовая информация
             content += `<div class="debug-info">
                 <span class="debug-label">Model:</span>
                 <span class="debug-value">${debugInfo.model || config.model}</span>
             </div>`;
-
+            
             content += `<div class="debug-info">
                 <span class="debug-label">Status:</span>
                 <span class="debug-value">${debugInfo.status}</span>
             </div>`;
-
+            
             if (debugInfo.startTime) {
                 content += `<div class="debug-info">
                     <span class="debug-label">Started:</span>
                     <span class="debug-value">${new Date(debugInfo.startTime).toLocaleTimeString()}</span>
                 </div>`;
             }
-
+            
             if (debugInfo.endTime) {
                 content += `<div class="debug-info">
                     <span class="debug-label">Completed:</span>
                     <span class="debug-value">${new Date(debugInfo.endTime).toLocaleTimeString()}</span>
                 </div>`;
-
+                
                 const duration = (debugInfo.endTime - debugInfo.startTime) / 1000;
                 content += `<div class="debug-info">
                     <span class="debug-label">Duration:</span>
                     <span class="debug-value">${duration.toFixed(2)} seconds</span>
                 </div>`;
             }
-
+            
             if (debugInfo.error) {
                 content += `<div class="debug-info">
                     <span class="debug-label">Error:</span>
                     <span class="debug-value error">${debugInfo.error}</span>
                 </div>`;
             }
-
+            
             // Последний чанк данных
             if (debugInfo.lastChunk) {
                 content += `<div class="debug-info">
@@ -1471,36 +1470,36 @@
                     <div class="debug-raw">${JSON.stringify(debugInfo.lastChunk, null, 2)}</div>
                 </div>`;
             }
-
+            
             debugContent.innerHTML = content;
         }
-
+        
         // Установка статуса сообщения
         function setMessageStatus(messageId, status) {
             const messageElement = document.getElementById(`message-${messageId}`);
             if (!messageElement) return;
-
+            
             // Удаляем все старые индикаторы статуса
             const oldIndicator = messageElement.querySelector('.status-indicator');
             if (oldIndicator) oldIndicator.remove();
-
+            
             const oldStatusText = messageElement.querySelector('.status-text');
             if (oldStatusText) oldStatusText.remove();
-
+            
             // Если нет статуса, выходим
             if (!status || status === MESSAGE_STATUS.NONE) return;
-
+            
             // Создаем новый индикатор статуса
             const messageSender = messageElement.querySelector('.message-sender');
-
+            
             const statusIndicator = document.createElement('span');
             statusIndicator.className = `status-indicator ${status}`;
             messageSender.appendChild(statusIndicator);
-
+            
             // Добавляем текстовое описание статуса
             const statusText = document.createElement('span');
             statusText.className = 'status-text';
-
+            
             switch (status) {
                 case MESSAGE_STATUS.SENDING:
                     statusText.textContent = 'Отправка...';
@@ -1515,19 +1514,19 @@
                     statusText.textContent = 'Ошибка';
                     break;
             }
-
+            
             messageSender.appendChild(statusText);
         }
-
+        
         // Add a new message to the chat
         function addMessage(role, content, isStreaming = false, status = MESSAGE_STATUS.NONE) {
             const messageId = Date.now().toString();
-
+            
             // Убедимся, что у активного чата есть массив сообщений
             if (!activeChat.messages) {
                 activeChat.messages = [];
             }
-
+            
             activeChat.messages.push({
                 id: messageId,
                 role,
@@ -1535,32 +1534,32 @@
                 timestamp: new Date().toISOString(),
                 status: status
             });
-
+            
             // Определяем, находится ли сообщение в контексте
             const contextMessages = prepareContextWindow();
             const isInContext = contextMessages.some(msg => msg.id === messageId);
-
+            
             renderMessage(activeChat.messages[activeChat.messages.length - 1], isStreaming, isInContext);
             saveChats();
-
+            
             return messageId;
         }
-
+        
         // Update an existing message
         function updateMessage(id, content, status = null) {
             const index = activeChat.messages.findIndex(m => m.id === id);
             if (index !== -1) {
                 activeChat.messages[index].content = content;
-
+                
                 // Обновляем статус, если он передан
                 if (status !== null) {
                     activeChat.messages[index].status = status;
                 }
-
+                
                 // Определяем, находится ли сообщение в контексте
                 const contextMessages = prepareContextWindow();
                 const isInContext = contextMessages.some(msg => msg.id === id);
-
+                
                 const messageElement = document.getElementById(`message-${id}`);
                 if (messageElement) {
                     // Обновляем класс контекста
@@ -1569,50 +1568,50 @@
                     } else {
                         messageElement.classList.remove('in-context');
                     }
-
+                    
                     const contentElement = messageElement.querySelector('.message-content');
                     contentElement.innerHTML = marked.parse(content);
-
+                    
                     // Добавляем кнопки копирования к блокам кода
                     addCopyButtonsToCodeBlocks(contentElement);
-
+                    
                     // Обновляем счетчик символов
                     const charCountElement = messageElement.querySelector('.char-count');
                     charCountElement.textContent = `${content.length} characters`;
-
+                    
                     // Обновляем статус сообщения, если он был передан
                     if (status !== null) {
                         setMessageStatus(id, status);
                     }
                 }
-
+                
                 saveChats();
             }
         }
-
+        
         // Delete a message
         function deleteMessage(id) {
             const index = activeChat.messages.findIndex(m => m.id === id);
             if (index !== -1) {
                 activeChat.messages.splice(index, 1);
-
+                
                 const messageElement = document.getElementById(`message-${id}`);
                 if (messageElement) {
                     messageElement.remove();
                 }
-
+                
                 saveChats();
                 updateContextHighlighting();
             }
         }
-
+        
         // Обновление подсветки контекста
         function updateContextHighlighting() {
             if (!activeChat || !activeChat.messages) return;
-
+            
             const contextMessages = prepareContextWindow();
             const contextMessageIds = contextMessages.map(msg => msg.id);
-
+            
             activeChat.messages.forEach(message => {
                 const messageElement = document.getElementById(`message-${message.id}`);
                 if (messageElement) {
@@ -1624,85 +1623,85 @@
                 }
             });
         }
-
+        
         // Редактирование сообщения в интерфейсе
         function editMessageInUI(messageId) {
             const messageElement = document.getElementById(`message-${messageId}`);
             if (!messageElement) return;
-
+            
             const messageIndex = activeChat.messages.findIndex(m => m.id === messageId);
             if (messageIndex === -1) return;
-
+            
             const message = activeChat.messages[messageIndex];
             const contentElement = messageElement.querySelector('.message-content');
-
+            
             // Сохраняем текущий контент для отмены
             const originalContent = message.content;
-
+            
             // Создаем контейнер для редактирования
             const editContainer = document.createElement('div');
             editContainer.className = 'message-edit-container';
-
+            
             // Создаем текстовое поле для редактирования
             const editTextarea = document.createElement('textarea');
             editTextarea.className = 'message-edit-textarea';
             editTextarea.value = originalContent;
-
+            
             // Создаем контейнер для кнопок
             const editActions = document.createElement('div');
             editActions.className = 'message-edit-actions';
-
+            
             // Кнопка сохранения
             const saveButton = document.createElement('button');
             saveButton.className = 'message-edit-save';
             saveButton.textContent = 'Сохранить';
-
+            
             // Кнопка отмены
             const cancelButton = document.createElement('button');
             cancelButton.className = 'message-edit-cancel';
             cancelButton.textContent = 'Отмена';
-
+            
             // Собираем все элементы
             editActions.appendChild(saveButton);
             editActions.appendChild(cancelButton);
             editContainer.appendChild(editTextarea);
             editContainer.appendChild(editActions);
-
+            
             // Скрываем оригинальный контент и добавляем редактор
             contentElement.style.display = 'none';
             messageElement.insertBefore(editContainer, messageElement.querySelector('.char-count'));
-
+            
             // Фокус на текстовом поле
             editTextarea.focus();
-
+            
             // Обработчики событий
             saveButton.addEventListener('click', () => {
                 const newContent = editTextarea.value.trim();
                 if (newContent) {
                     updateMessage(messageId, newContent);
                 }
-
+                
                 // Удаляем редактор
                 contentElement.style.display = '';
                 editContainer.remove();
             });
-
+            
             cancelButton.addEventListener('click', () => {
                 // Отменяем редактирование
                 contentElement.style.display = '';
                 editContainer.remove();
             });
         }
-
+        
         // Добавляет кнопки копирования к блокам кода
         function addCopyButtonsToCodeBlocks(element) {
             // Находим все блоки pre>code
             const codeBlocks = element.querySelectorAll('pre > code');
-
+            
             codeBlocks.forEach((codeBlock, index) => {
                 // Получаем родительский pre-элемент
                 const preBlock = codeBlock.parentNode;
-
+                
                 // Проверяем, есть ли уже кнопка копирования
                 if (!preBlock.querySelector('.copy-code-btn')) {
                     // Создаем кнопку копирования
@@ -1710,12 +1709,12 @@
                     copyButton.className = 'copy-code-btn';
                     copyButton.textContent = 'Copy';
                     copyButton.setAttribute('aria-label', 'Copy code to clipboard');
-
+                    
                     // Добавляем обработчик события клика
                     copyButton.addEventListener('click', function() {
                         // Получаем текст кода
                         const code = codeBlock.textContent;
-
+                        
                         // Копируем в буфер обмена
                         navigator.clipboard.writeText(code)
                             .then(() => {
@@ -1734,56 +1733,56 @@
                                 }, 2000);
                             });
                     });
-
+                    
                     // Добавляем кнопку к блоку pre
                     preBlock.appendChild(copyButton);
                 }
             });
         }
-
+        
         // Render all messages
         function renderMessages() {
             chatContainer.innerHTML = '';
-
+            
             if (!activeChat || !activeChat.messages || activeChat.messages.length === 0) {
                 return;
             }
-
+            
             // Определяем сообщения, которые будут в контексте
             const contextMessages = prepareContextWindow();
             const contextMessageIds = contextMessages.map(msg => msg.id);
-
+            
             activeChat.messages.forEach(message => {
                 renderMessage(message, false, contextMessageIds.includes(message.id));
             });
         }
-
+        
         // Render a single message
         function renderMessage(message, isStreaming = false, isInContext = false) {
             let messageElement = document.getElementById(`message-${message.id}`);
             const isNewMessage = !messageElement;
-
+            
             if (isNewMessage) {
                 messageElement = document.createElement('div');
                 messageElement.id = `message-${message.id}`;
                 messageElement.className = `message ${message.role === 'user' ? 'user-message' : 'bot-message'} ${isInContext ? 'in-context' : ''}`;
-
+                
                 const messageHeader = document.createElement('div');
                 messageHeader.className = 'message-header';
-
+                
                 const messageSender = document.createElement('div');
                 messageSender.className = 'message-sender';
-                messageSender.textContent = message.role === 'user' ? 'You' : 'LLM';
-
+                messageSender.textContent = message.role === 'user' ? 'You' : 'Claude';
+                
                 // Добавляем индикатор статуса, если есть
                 if (message.status && message.status !== MESSAGE_STATUS.NONE) {
                     const statusIndicator = document.createElement('span');
                     statusIndicator.className = `status-indicator ${message.status}`;
                     messageSender.appendChild(statusIndicator);
-
+                    
                     const statusText = document.createElement('span');
                     statusText.className = 'status-text';
-
+                    
                     switch (message.status) {
                         case MESSAGE_STATUS.SENDING:
                             statusText.textContent = 'Отправка...';
@@ -1798,13 +1797,13 @@
                             statusText.textContent = 'Ошибка';
                             break;
                     }
-
+                    
                     messageSender.appendChild(statusText);
                 }
-
+                
                 const messageActions = document.createElement('div');
                 messageActions.className = 'message-actions';
-
+                
                 const editBtn = document.createElement('button');
                 editBtn.className = 'action-btn';
                 editBtn.textContent = '✏️';
@@ -1812,7 +1811,7 @@
                 editBtn.addEventListener('click', () => {
                     editMessageInUI(message.id);
                 });
-
+                
                 const copyBtn = document.createElement('button');
                 copyBtn.className = 'action-btn';
                 copyBtn.textContent = '📋';
@@ -1820,7 +1819,7 @@
                 copyBtn.addEventListener('click', () => {
                     navigator.clipboard.writeText(message.content);
                 });
-
+                
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'action-btn';
                 deleteBtn.textContent = '🗑️';
@@ -1830,33 +1829,33 @@
                         deleteMessage(message.id);
                     }
                 });
-
+                
                 messageActions.appendChild(editBtn);
                 messageActions.appendChild(copyBtn);
                 messageActions.appendChild(deleteBtn);
-
+                
                 messageHeader.appendChild(messageSender);
                 messageHeader.appendChild(messageActions);
-
+                
                 const messageContent = document.createElement('div');
                 messageContent.className = 'message-content';
-
+                
                 // Используем marked для рендеринга Markdown
                 messageContent.innerHTML = marked.parse(message.content);
-
+                
                 const charCount = document.createElement('div');
                 charCount.className = 'char-count';
                 charCount.textContent = `${message.content.length} characters`;
-
+                
                 messageElement.appendChild(messageHeader);
                 messageElement.appendChild(messageContent);
                 messageElement.appendChild(charCount);
-
+                
                 chatContainer.appendChild(messageElement);
-
+                
                 // Добавляем кнопки копирования к блокам кода
                 addCopyButtonsToCodeBlocks(messageContent);
-
+                
             } else {
                 // Обновляем класс контекста
                 if (isInContext) {
@@ -1864,75 +1863,75 @@
                 } else {
                     messageElement.classList.remove('in-context');
                 }
-
+                
                 if (!isStreaming) {
                     // Update existing message
                     const contentElement = messageElement.querySelector('.message-content');
                     contentElement.innerHTML = marked.parse(message.content);
-
+                    
                     // Добавляем кнопки копирования к блокам кода
                     addCopyButtonsToCodeBlocks(contentElement);
-
+                    
                     const charCountElement = messageElement.querySelector('.char-count');
                     charCountElement.textContent = `${message.content.length} characters`;
                 }
             }
-
+            
             // Scroll to the latest message only if auto-scroll is enabled
             if (isNewMessage && autoScroll) {
                 chatContainer.scrollTop = chatContainer.scrollHeight;
             }
         }
-
+        
         // Prepare the context window based on the limit setting
         function prepareContextWindow() {
             if (!activeChat || !activeChat.messages) return [];
-
+            
             const limit = contextLimit.value.trim();
-
+            
             if (limit === '-' || limit === '') {
                 // Return all messages
                 return [...activeChat.messages];
             }
-
+            
             const numericLimit = parseInt(limit);
             if (isNaN(numericLimit) || numericLimit <= 0) {
                 return [...activeChat.messages];
             }
-
+            
             // Return the last N messages
             return activeChat.messages.slice(-numericLimit);
         }
-
+        
         // Send message to the LLM
         async function sendMessage(messageContent = null) {
             const userInput = messageContent || messageInput.value.trim();
             if (!userInput) return;
-
+            
             // Add user message to chat
             addMessage('user', userInput);
-
+            
             // Clear input
             if (!messageContent) {
                 messageInput.value = '';
             }
-
+            
             // Prepare context window for API call
             const contextWindow = prepareContextWindow();
-
+            
             // Add an empty bot message (for streaming) со статусом "отправка"
             const botMessageId = addMessage('assistant', '', true, MESSAGE_STATUS.SENDING);
             const botMessage = document.getElementById(`message-${botMessageId}`);
             const botMessageContent = botMessage.querySelector('.message-content');
-
+            
             // Enable stop button, disable send and regenerate
             sendBtn.disabled = true;
             stopBtn.disabled = false;
             regenerateBtn.disabled = true;
-
+            
             let fullResponse = '';
             activeChat.abortController = new AbortController();
-
+            
             // Сбрасываем отладочную информацию
             debugInfo = {
                 model: config.model,
@@ -1944,16 +1943,16 @@
                 totalTokens: 0
             };
             updateDebugPanel();
-
+            
             // Для макроса: начать отсчет времени ожидания ответа
             if (macroRunning) {
                 startStopwatch();
             }
-
+            
             try {
                 // Build messages array for API
                 const apiMessages = [];
-
+                
                 // Add system prompt if set
                 if (config.systemPrompt) {
                     apiMessages.push({
@@ -1961,7 +1960,7 @@
                         content: config.systemPrompt
                     });
                 }
-
+                
                 // Add context messages
                 contextWindow.forEach(msg => {
                     apiMessages.push({
@@ -1969,15 +1968,15 @@
                         content: msg.content
                     });
                 });
-
+                
                 // Изменяем статус сообщения на "ожидание"
                 updateMessage(botMessageId, '', MESSAGE_STATUS.WAITING);
                 debugInfo.status = 'waiting';
                 updateDebugPanel();
-
+                
                 // Call LLM API with streaming
                 const response = await puter.ai.chat(
-                    apiMessages.length === 0 ? userInput : apiMessages,
+                    apiMessages.length === 0 ? userInput : apiMessages, 
                     {
                         model: config.model,
                         temperature: parseFloat(config.temperature),
@@ -1986,12 +1985,12 @@
                         signal: activeChat.abortController.signal
                     }
                 );
-
+                
                 // Process streaming response
                 for await (const part of response) {
                     // Сохраняем последний чанк для отладки
                     debugInfo.lastChunk = part;
-
+                    
                     // Проверяем, содержит ли ответ thinking или reasoning
                     if (part?.thinking || part?.reasoning) {
                         if (debugInfo.status !== 'thinking') {
@@ -1999,27 +1998,27 @@
                             updateMessage(botMessageId, fullResponse, MESSAGE_STATUS.THINKING);
                         }
                     }
-
+                    
                     if (part?.text) {
                         fullResponse += part.text;
-
+                        
                         // Ищем сообщение по ID (на случай, если переключили чат)
                         const currentBotMessage = document.getElementById(`message-${botMessageId}`);
                         if (currentBotMessage) {
                             const currentBotMessageContent = currentBotMessage.querySelector('.message-content');
                             currentBotMessageContent.innerHTML = marked.parse(fullResponse);
-
+                            
                             // Добавляем кнопки копирования к новым блокам кода
                             addCopyButtonsToCodeBlocks(currentBotMessageContent);
-
+                            
                             currentBotMessage.querySelector('.char-count').textContent = `${fullResponse.length} characters`;
-
+                            
                             // Прокручиваем только если включен автоскролл
                             if (autoScroll) {
                                 currentBotMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
                             }
                         }
-
+                        
                         // Обновляем сообщение в активном чате
                         const messageIndex = activeChat.messages.findIndex(m => m.id === botMessageId);
                         if (messageIndex !== -1) {
@@ -2027,41 +2026,41 @@
                             saveChats();
                         }
                     }
-
+                    
                     // Обновляем отладочную панель
                     updateDebugPanel();
                 }
-
+                
                 // Стримминг закончен, убираем статус
                 debugInfo.status = 'completed';
                 debugInfo.endTime = Date.now();
                 updateMessage(botMessageId, fullResponse, MESSAGE_STATUS.NONE);
                 updateDebugPanel();
-
+                
                 // Для макроса: увеличиваем счетчик ответов
                 if (macroRunning) {
                     llmResponsesCounter++;
                     stopStopwatch();
-
+                    
                     // Проверяем необходимость автосохранения
                     if (saveHistoryCheckbox.checked) {
                         const interval = parseInt(saveIntervalInput.value);
                         if (llmResponsesCounter >= interval) {
                             downloadAIResponses();
                             llmResponsesCounter = 0;
-
+                            
                             // Очищаем историю после сохранения
                             setTimeout(() => {
                                 clearChat();
                             }, 1000);
                         }
                     }
-
+                    
                     // Переходим к следующему сообщению в макросе
                     if (templateTextArea.value.includes('[]')) {
                         currentVariableIndex++;
                     }
-
+                    
                     // Проверяем, есть ли еще переменные для отправки
                     if (templateTextArea.value.includes('[]') && currentVariableIndex >= variableLines.length) {
                         stopMacro();
@@ -2082,14 +2081,14 @@
                     debugInfo.status = 'error';
                     debugInfo.endTime = Date.now();
                     debugInfo.error = error.message;
-
+                    
                     // Обновляем сообщение об ошибке в активном чате
                     const messageIndex = activeChat.messages.findIndex(m => m.id === botMessageId);
                     if (messageIndex !== -1) {
                         activeChat.messages[messageIndex].content = `Error: ${error.message}`;
                         activeChat.messages[messageIndex].status = MESSAGE_STATUS.ERROR;
                         saveChats();
-
+                        
                         // Обновляем UI если сообщение видимо
                         const currentBotMessage = document.getElementById(`message-${botMessageId}`);
                         if (currentBotMessage) {
@@ -2100,9 +2099,9 @@
                         }
                     }
                 }
-
+                
                 updateDebugPanel();
-
+                
                 if (macroRunning) {
                     stopStopwatch();
                 }
@@ -2114,31 +2113,31 @@
                 regenerateBtn.disabled = false;
             }
         }
-
+        
         // Regenerate the last bot response
         async function regenerateLastResponse() {
             if (!activeChat || !activeChat.messages) return;
-
+            
             // Find the last bot message
             const lastBotMessageIndex = [...activeChat.messages].reverse().findIndex(m => m.role === 'assistant');
             if (lastBotMessageIndex === -1) return;
-
+            
             const lastBotMessage = activeChat.messages[activeChat.messages.length - 1 - lastBotMessageIndex];
-
+            
             // Prepare context up to the last user message
             const contextMessages = activeChat.messages.slice(0, activeChat.messages.length - 1 - lastBotMessageIndex);
-
+            
             // Delete last bot message
             deleteMessage(lastBotMessage.id);
-
+            
             // Disable buttons
             sendBtn.disabled = true;
             regenerateBtn.disabled = true;
             stopBtn.disabled = false;
-
+            
             // Add an empty bot message (for streaming) со статусом "отправка"
             const botMessageId = addMessage('assistant', '', true, MESSAGE_STATUS.SENDING);
-
+            
             // Сбрасываем отладочную информацию
             debugInfo = {
                 model: config.model,
@@ -2150,14 +2149,14 @@
                 totalTokens: 0
             };
             updateDebugPanel();
-
+            
             let fullResponse = '';
             activeChat.abortController = new AbortController();
-
+            
             try {
                 // Build messages array for API
                 const apiMessages = [];
-
+                
                 // Add system prompt if set
                 if (config.systemPrompt) {
                     apiMessages.push({
@@ -2165,7 +2164,7 @@
                         content: config.systemPrompt
                     });
                 }
-
+                
                 // Add context messages
                 contextMessages.forEach(msg => {
                     apiMessages.push({
@@ -2173,15 +2172,15 @@
                         content: msg.content
                     });
                 });
-
+                
                 // Изменяем статус сообщения на "ожидание"
                 updateMessage(botMessageId, '', MESSAGE_STATUS.WAITING);
                 debugInfo.status = 'waiting';
                 updateDebugPanel();
-
+                
                 // Call LLM API with streaming
                 const response = await puter.ai.chat(
-                    apiMessages,
+                    apiMessages, 
                     {
                         model: config.model,
                         temperature: parseFloat(config.temperature),
@@ -2190,12 +2189,12 @@
                         signal: activeChat.abortController.signal
                     }
                 );
-
+                
                 // Process streaming response
                 for await (const part of response) {
                     // Сохраняем последний чанк для отладки
                     debugInfo.lastChunk = part;
-
+                    
                     // Проверяем, содержит ли ответ thinking или reasoning
                     if (part?.thinking || part?.reasoning) {
                         if (debugInfo.status !== 'thinking') {
@@ -2203,27 +2202,27 @@
                             updateMessage(botMessageId, fullResponse, MESSAGE_STATUS.THINKING);
                         }
                     }
-
+                    
                     if (part?.text) {
                         fullResponse += part.text;
-
+                        
                         // Ищем сообщение по ID (на случай, если переключили чат)
                         const currentBotMessage = document.getElementById(`message-${botMessageId}`);
                         if (currentBotMessage) {
                             const currentBotMessageContent = currentBotMessage.querySelector('.message-content');
                             currentBotMessageContent.innerHTML = marked.parse(fullResponse);
-
+                            
                             // Добавляем кнопки копирования к блокам кода
                             addCopyButtonsToCodeBlocks(currentBotMessageContent);
-
+                            
                             currentBotMessage.querySelector('.char-count').textContent = `${fullResponse.length} characters`;
-
+                            
                             // Прокручиваем только если включен автоскролл
                             if (autoScroll) {
                                 currentBotMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
                             }
                         }
-
+                        
                         // Обновляем сообщение в активном чате
                         const messageIndex = activeChat.messages.findIndex(m => m.id === botMessageId);
                         if (messageIndex !== -1) {
@@ -2231,17 +2230,17 @@
                             saveChats();
                         }
                     }
-
+                    
                     // Обновляем отладочную панель
                     updateDebugPanel();
                 }
-
+                
                 // Стримминг закончен, убираем статус
                 debugInfo.status = 'completed';
                 debugInfo.endTime = Date.now();
                 updateMessage(botMessageId, fullResponse, MESSAGE_STATUS.NONE);
                 updateDebugPanel();
-
+                
             } catch (error) {
                 if (error.name === 'AbortError') {
                     console.log('Request was aborted');
@@ -2253,14 +2252,14 @@
                     debugInfo.status = 'error';
                     debugInfo.endTime = Date.now();
                     debugInfo.error = error.message;
-
+                    
                     // Обновляем сообщение об ошибке в активном чате
                     const messageIndex = activeChat.messages.findIndex(m => m.id === botMessageId);
                     if (messageIndex !== -1) {
                         activeChat.messages[messageIndex].content = `Error: ${error.message}`;
                         activeChat.messages[messageIndex].status = MESSAGE_STATUS.ERROR;
                         saveChats();
-
+                        
                         // Обновляем UI если сообщение видимо
                         const currentBotMessage = document.getElementById(`message-${botMessageId}`);
                         if (currentBotMessage) {
@@ -2271,7 +2270,7 @@
                         }
                     }
                 }
-
+                
                 updateDebugPanel();
             } finally {
                 // Reset UI state
@@ -2281,7 +2280,7 @@
                 regenerateBtn.disabled = false;
             }
         }
-
+        
         // Stop generation
         function stopGeneration() {
             if (activeChat && activeChat.abortController) {
@@ -2295,22 +2294,22 @@
                 }
             }
         }
-
+        
         // Download AI responses as HTML
         function downloadAIResponses() {
             if (!activeChat || !activeChat.messages) {
                 alert('No messages to download.');
                 return;
             }
-
+            
             // Filter only assistant messages
             const aiResponses = activeChat.messages.filter(msg => msg.role === 'assistant');
-
+            
             if (aiResponses.length === 0) {
                 alert('No AI responses to download.');
                 return;
             }
-
+            
             // Create HTML content
             let htmlContent = `<!DOCTYPE html>
 <html>
@@ -2376,7 +2375,7 @@
 </head>
 <body>
     <h1>AI Responses - ${activeChat.title}</h1>`;
-
+            
             // Add each response
             aiResponses.forEach((response, index) => {
                 htmlContent += `
@@ -2384,11 +2383,11 @@
         ${marked.parse(response.content)}
     </div>`;
             });
-
+            
             htmlContent += `
 </body>
 </html>`;
-
+            
             // Create download link
             const blob = new Blob([htmlContent], { type: 'text/html' });
             const url = URL.createObjectURL(blob);
@@ -2397,31 +2396,31 @@
             a.download = `ai-responses-${activeChat.title}-${new Date().toISOString().slice(0, 10)}.html`;
             document.body.appendChild(a);
             a.click();
-
+            
             // Clean up
             setTimeout(() => {
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
             }, 0);
         }
-
+        
         // Очистка активного чата
         function clearChat() {
             if (!activeChat) return;
-
+            
             // Останавливаем генерацию, если она активна
             if (activeChat.abortController) {
                 activeChat.abortController.abort();
                 activeChat.abortController = null;
             }
-
+            
             activeChat.messages = [];
             saveChats();
             renderMessages();
         }
-
+        
         // -------------------- Функции макросника --------------------
-
+        
         // Сохранение текста в localStorage
         function saveTextToLocalStorage(key, text) {
             localStorage.setItem(key, text);
@@ -2431,7 +2430,7 @@
         function loadTextFromLocalStorage(key, defaultText = '') {
             return localStorage.getItem(key) || defaultText;
         }
-
+        
         // Запуск секундомера
         function startStopwatch() {
             lastMessageTime = new Date();
@@ -2472,17 +2471,17 @@
             if (min > max) return min;
             return Math.floor(Math.random() * (max - min + 1)) + min;
         }
-
+        
         // Запуск макроса
         function startMacro() {
             if (macroRunning) {
                 alert('Макрос уже запущен.');
                 return;
             }
-
+            
             // Сброс счетчика при новом запуске
             llmResponsesCounter = 0;
-
+            
             macroRunning = true;
             macroPaused = false;
             startButton.disabled = true;
@@ -2510,7 +2509,7 @@
             updateVariableCounter();
             sendNextMessage();
         }
-
+        
         // Отправка следующего сообщения
         function sendNextMessage() {
             if (!macroRunning) return;
@@ -2552,20 +2551,20 @@
             // Отправляем сообщение через основную функцию
             sendMessage(messageContent);
         }
-
+        
         // Пауза макроса
         function pauseMacro() {
             if (!macroRunning || macroPaused) return;
-
+            
             macroPaused = true;
             pauseButton.disabled = true;
             startButton.disabled = false;
-
+            
             if (stopwatchInterval) {
                 stopStopwatch();
             }
         }
-
+        
         // Остановка макроса
         function stopMacro() {
             macroRunning = false;
@@ -2582,11 +2581,11 @@
             numberRangeMaxInput.disabled = false;
             saveHistoryCheckbox.disabled = false;
             saveIntervalInput.disabled = false;
-
+            
             stopStopwatch();
             updateVariableCounter(true);
         }
-
+        
         // Обновление счетчика переменных
         function updateVariableCounter(hide = false) {
             if (variableCounterDisplay) {
@@ -2598,46 +2597,46 @@
                 }
             }
         }
-
+        
         // Функции для управления перетаскиванием окна
         function startDrag(e) {
             isDragging = true;
-
+            
             // Сохраняем начальное положение мыши относительно окна
             const rect = macroWindow.getBoundingClientRect();
             dragOffsetX = e.clientX - rect.left;
             dragOffsetY = e.clientY - rect.top;
-
+            
             // Предотвращаем выделение текста при перетаскивании
             document.body.style.userSelect = 'none';
         }
-
+        
         function drag(e) {
             if (!isDragging) return;
-
+            
             // Вычисляем новые координаты окна
             const newLeft = e.clientX - dragOffsetX;
             const newTop = e.clientY - dragOffsetY;
-
+            
             // Ограничиваем перемещение пределами видимой области
             const maxX = window.innerWidth - macroWindow.offsetWidth;
             const maxY = window.innerHeight - macroWindow.offsetHeight;
-
+            
             macroWindow.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
             macroWindow.style.top = Math.max(0, Math.min(newTop, maxY)) + 'px';
         }
-
+        
         function stopDrag() {
             isDragging = false;
             document.body.style.userSelect = '';
         }
-
+        
         // Функция для изменения ширины боковой панели
         function handleResize(e) {
             const newWidth = Math.max(200, Math.min(600, e.clientX));
             chatsSidebar.style.width = newWidth + 'px';
         }
-
+        
         // Загрузка сохраненных настроек макроса
         function loadMacroSettings() {
             templateTextArea.value = loadTextFromLocalStorage('macroTemplateText', '');
@@ -2651,39 +2650,39 @@
             saveIntervalInput.value = loadTextFromLocalStorage('macroSaveInterval', '5');
             saveIntervalInput.disabled = !saveHistoryCheckbox.checked;
         }
-
+        
         // Event Listeners
         sendBtn.addEventListener('click', () => sendMessage());
-
+        
         messageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
             }
         });
-
+        
         stopBtn.addEventListener('click', stopGeneration);
-
+        
         regenerateBtn.addEventListener('click', regenerateLastResponse);
-
+        
         settingsBtn.addEventListener('click', () => {
             settingsModal.style.display = 'flex';
         });
-
+        
         closeModalBtn.addEventListener('click', () => {
             settingsModal.style.display = 'none';
         });
-
+        
         // Отладочная панель
         debugBtn.addEventListener('click', () => {
             debugPanel.style.display = debugPanel.style.display === 'flex' ? 'none' : 'flex';
             updateDebugPanel();
         });
-
+        
         debugClose.addEventListener('click', () => {
             debugPanel.style.display = 'none';
         });
-
+        
         modelSelect.addEventListener('change', () => {
             if (modelSelect.value === 'custom') {
                 customModelContainer.style.display = 'block';
@@ -2691,17 +2690,17 @@
                 customModelContainer.style.display = 'none';
             }
         });
-
+        
         temperature.addEventListener('input', () => {
             temperatureValue.textContent = temperature.value;
         });
-
+        
         saveSettingsBtn.addEventListener('click', () => {
             // Get values from form
             config.temperature = parseFloat(temperature.value);
             config.maxTokens = parseInt(maxTokens.value);
             config.systemPrompt = systemPrompt.value.trim();
-
+            
             // Handle model selection
             if (modelSelect.value === 'custom') {
                 config.model = customModel.value.trim();
@@ -2710,24 +2709,24 @@
             } else {
                 config.model = modelSelect.value;
             }
-
+            
             // Save config and close modal
             saveConfig();
             settingsModal.style.display = 'none';
         });
-
+        
         downloadBtn.addEventListener('click', downloadAIResponses);
-
+        
         // Управление размером боковой панели
         let isResizingSidebar = false;
-
+        
         resizeHandle.addEventListener('mousedown', (e) => {
             isResizingSidebar = true;
             document.body.style.cursor = 'col-resize';
             document.addEventListener('mousemove', handleResize);
             e.preventDefault();
         });
-
+        
         document.addEventListener('mouseup', () => {
             if (isResizingSidebar) {
                 isResizingSidebar = false;
@@ -2735,13 +2734,13 @@
                 document.removeEventListener('mousemove', handleResize);
             }
         });
-
+        
         // Переключение автопрокрутки
         autoScrollToggle.addEventListener('change', () => {
             autoScroll = autoScrollToggle.checked;
             localStorage.setItem('autoScroll', autoScroll);
         });
-
+        
         // Изменение контекстного лимита
         contextLimit.addEventListener('change', () => {
             if (activeChat) {
@@ -2750,7 +2749,7 @@
                 updateContextHighlighting();
             }
         });
-
+        
         // Новый чат
         newChatBtn.addEventListener('click', () => {
             activeChat = createChat();
@@ -2758,14 +2757,14 @@
             renderMessages();
             contextLimit.value = "-";
         });
-
+        
         // Click outside modal to close
         window.addEventListener('click', (e) => {
             if (e.target === settingsModal) {
                 settingsModal.style.display = 'none';
             }
         });
-
+        
         // Handle ESC key to close modal
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -2777,76 +2776,77 @@
                 }
             }
         });
-
+        
         // Обработчики событий для макросника
         macroBtn.addEventListener('click', () => {
             macroWindow.style.display = 'flex';
             // Загрузка сохраненных настроек
             loadMacroSettings();
         });
-
+        
         macroCloseBtn.addEventListener('click', () => {
             macroWindow.style.display = 'none';
         });
-
+        
         macroHeader.addEventListener('mousedown', startDrag);
         document.addEventListener('mousemove', drag);
         document.addEventListener('mouseup', stopDrag);
-
+        
         startButton.addEventListener('click', startMacro);
         pauseButton.addEventListener('click', pauseMacro);
         stopButton.addEventListener('click', stopMacro);
-
+        
         templateTextArea.addEventListener('input', () => {
             saveTextToLocalStorage('macroTemplateText', templateTextArea.value);
         });
-
+        
         variablesTextArea.addEventListener('input', () => {
             saveTextToLocalStorage('macroVariablesText', variablesTextArea.value);
         });
-
+        
         keywordsTextArea.addEventListener('input', () => {
             saveTextToLocalStorage('macroKeywordsText', keywordsTextArea.value);
         });
-
+        
         keywordsCountMinInput.addEventListener('input', () => {
             saveTextToLocalStorage('macroKeywordsCountMin', keywordsCountMinInput.value);
         });
-
+        
         keywordsCountMaxInput.addEventListener('input', () => {
             saveTextToLocalStorage('macroKeywordsCountMax', keywordsCountMaxInput.value);
         });
-
+        
         numberRangeMinInput.addEventListener('input', () => {
             saveTextToLocalStorage('macroNumberRangeMin', numberRangeMinInput.value);
         });
-
+        
         numberRangeMaxInput.addEventListener('input', () => {
             saveTextToLocalStorage('macroNumberRangeMax', numberRangeMaxInput.value);
         });
-
+        
         saveHistoryCheckbox.addEventListener('change', function() {
             saveIntervalInput.disabled = !this.checked;
             saveTextToLocalStorage('macroSaveHistoryEnabled', this.checked);
         });
-
+        
         saveIntervalInput.addEventListener('input', function() {
             saveTextToLocalStorage('macroSaveInterval', this.value);
         });
-
+        
         // Initialization
         loadConfig();
         loadChats();
-
+        
         // Загрузка настройки автопрокрутки
         autoScroll = localStorage.getItem('autoScroll') !== 'false';
         autoScrollToggle.checked = autoScroll;
-
+        
         // Если нет чатов, добавляем приветственное сообщение
         if (activeChat && (!activeChat.messages || activeChat.messages.length === 0)) {
             addMessage('assistant', "# Hello! I'm Claude.\n\nI can help you with various tasks. Here are some of my capabilities:\n\n- Answering questions and providing information\n- Writing and editing content\n- Analyzing data and solving problems\n- Programming assistance and code generation\n- Creative writing and brainstorming\n\nHow can I assist you today?");
         }
-
+        
         console.log('Приложение Claude Chat с чатами, макросником и отладочной панелью инициализировано.');
     </script>
+</body>
 </html>
