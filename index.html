@@ -428,65 +428,53 @@
             opacity: 0.9;
         }
         
-        /* Дополнительные стили для адаптивности */
-        @media (max-width: 768px) {
-            .message {
-                max-width: 95%;
-            }
-            
-            .context-limit {
-                width: 40px;
-                padding: 10px 2px;
-            }
-        }
-        
-        /* Стили для макросника */
-        .macro-window {
+        /* Стили для аддона-макросника */
+        .macro-addon-window {
             position: fixed;
-            top: 100px;
-            left: 100px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             width: 500px;
+            height: 620px;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            display: none;
+            resize: both;
+            overflow: auto;
             min-width: 350px;
             min-height: 500px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-            z-index: 1100;
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-            resize: both;
         }
         
-        .macro-header {
-            padding: 15px;
+        .macro-addon-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 10px 15px;
             border-bottom: 1px solid var(--border-color);
-            cursor: move;
-            background-color: var(--primary-color);
-            color: white;
         }
         
-        .macro-title {
+        .macro-addon-title {
             font-size: 1.2rem;
             font-weight: 600;
         }
         
-        .macro-close-btn {
+        .macro-addon-close {
             background: none;
             border: none;
-            color: white;
             font-size: 1.5rem;
             cursor: pointer;
         }
         
-        .macro-content {
+        .macro-addon-container {
             display: flex;
             flex-direction: column;
-            flex: 1;
             padding: 15px;
+            font-family: 'Arial', sans-serif;
+            color: #333;
+            height: calc(100% - 55px);
             overflow-y: auto;
         }
         
@@ -512,7 +500,6 @@
         }
         
         .macro-addon-textarea {
-            flex-grow: 1;
             min-height: 100px;
         }
         
@@ -554,7 +541,35 @@
         .macro-addon-autosave {
             border-top: 1px solid #ccc;
             padding-top: 15px;
-            margin-top: auto;
+            margin-top: 15px;
+        }
+        
+        #macro-stopwatch {
+            font-weight: normal;
+        }
+        
+        #macro-variable-counter {
+            margin-left: 10px;
+            display: none;
+            font-size: 0.9em;
+            color: #777;
+        }
+        
+        /* Дополнительные стили для адаптивности */
+        @media (max-width: 768px) {
+            .message {
+                max-width: 95%;
+            }
+            
+            .context-limit {
+                width: 40px;
+                padding: 10px 2px;
+            }
+            
+            .macro-addon-window {
+                width: 95%;
+                height: 90%;
+            }
         }
     </style>
 </head>
@@ -562,7 +577,7 @@
     <div class="header">
         <div class="title">Claude Chat</div>
         <div class="header-actions">
-            <button id="macro-btn" title="Open Macro Tool" class="settings-btn">
+            <button id="macro-btn" title="Открыть макросник" class="settings-btn">
                 <span>🤖</span> Макрос
             </button>
             <button id="download-btn" title="Download AI Responses" class="settings-btn">
@@ -635,24 +650,24 @@
         </div>
     </div>
     
-    <!-- Macro Window -->
-    <div id="macro-window" class="macro-window">
-        <div id="macro-header" class="macro-header">
-            <div class="macro-title">Аддон-макросник</div>
-            <button id="macro-close-btn" class="macro-close-btn">&times;</button>
+    <!-- Macro Addon Window -->
+    <div id="macro-addon-window" class="macro-addon-window">
+        <div class="macro-addon-header">
+            <div class="macro-addon-title">Аддон-макросник</div>
+            <button id="close-macro-btn" class="macro-addon-close">&times;</button>
         </div>
-        <div class="macro-content">
+        <div class="macro-addon-container">
             <div class="macro-addon-group">
                 <label for="macro-template-textarea" class="macro-addon-label"><b>Текст-шаблон:</b></label>
-                <textarea id="macro-template-textarea" class="macro-addon-textarea" placeholder="Введите текст сообщения. Используйте [] для переменных, {} для ключевых слов и <> для случайных чисел."></textarea>
+                <textarea id="macro-template-textarea" class="macro-addon-textarea" placeholder="Введите текст шаблона с символами [] для подстановки переменных, {} для ключевых слов, <> для случайных чисел"></textarea>
             </div>
             <div class="macro-addon-group">
                 <label for="macro-variables-textarea" class="macro-addon-label"><b>Переменные ([]):</b></label>
-                <textarea id="macro-variables-textarea" class="macro-addon-textarea" placeholder="Введите переменные, по одной на строку. Они будут вставлены вместо []"></textarea>
+                <textarea id="macro-variables-textarea" class="macro-addon-textarea" placeholder="Каждая строка - отдельная переменная для подстановки"></textarea>
             </div>
             <div class="macro-addon-group">
                 <label for="macro-keywords-textarea" class="macro-addon-label"><b>Ключевые слова ({}):</b></label>
-                <textarea id="macro-keywords-textarea" class="macro-addon-textarea" placeholder="Введите ключевые слова, по одному на строку. Случайный набор будет вставлен вместо {}"></textarea>
+                <textarea id="macro-keywords-textarea" class="macro-addon-textarea" placeholder="Каждая строка - отдельное ключевое слово"></textarea>
             </div>
             <div class="macro-addon-group">
                 <label class="macro-addon-label"><b>Количество ключевых слов:</b></label>
@@ -748,42 +763,6 @@
         const maxTokens = document.getElementById('max-tokens');
         const systemPrompt = document.getElementById('system-prompt');
         const saveSettingsBtn = document.getElementById('save-settings-btn');
-        
-        // Макросник DOM элементы
-        const macroBtn = document.getElementById('macro-btn');
-        const macroWindow = document.getElementById('macro-window');
-        const macroCloseBtn = document.getElementById('macro-close-btn');
-        const macroHeader = document.getElementById('macro-header');
-        const templateTextArea = document.getElementById('macro-template-textarea');
-        const variablesTextArea = document.getElementById('macro-variables-textarea');
-        const keywordsTextArea = document.getElementById('macro-keywords-textarea');
-        const keywordsCountMinInput = document.getElementById('macro-keywords-count-min-input');
-        const keywordsCountMaxInput = document.getElementById('macro-keywords-count-max-input');
-        const numberRangeMinInput = document.getElementById('macro-number-range-min-input');
-        const numberRangeMaxInput = document.getElementById('macro-number-range-max-input');
-        const startButton = document.getElementById('macro-start-button');
-        const pauseButton = document.getElementById('macro-pause-button');
-        const stopButton = document.getElementById('macro-stop-button');
-        const stopwatchDisplay = document.getElementById('macro-stopwatch');
-        const variableCounterDisplay = document.getElementById('macro-variable-counter');
-        const saveHistoryCheckbox = document.getElementById('macro-save-history-checkbox');
-        const saveIntervalInput = document.getElementById('macro-save-interval-input');
-        
-        // Переменные для макросника
-        let macroRunning = false;
-        let macroPaused = false;
-        let variableLines = [];
-        let currentVariableIndex = 0;
-        let messageCheckInterval = null;
-        let lastMessageTime = null;
-        let stopwatchInterval = null;
-        let totalVariablesCount = 0;
-        let llmResponsesCounter = 0;
-        
-        // Переменные для перетаскивания окна
-        let isDragging = false;
-        let dragOffsetX = 0;
-        let dragOffsetY = 0;
         
         // Load configuration from localStorage
         function loadConfig() {
@@ -1041,17 +1020,15 @@
         }
         
         // Send message to the LLM
-        async function sendMessage(messageContent = null) {
-            const userInput = messageContent || messageInput.value.trim();
+        async function sendMessage() {
+            const userInput = messageInput.value.trim();
             if (!userInput) return;
             
             // Add user message to chat
             addMessage('user', userInput);
             
             // Clear input
-            if (!messageContent) {
-                messageInput.value = '';
-            }
+            messageInput.value = '';
             
             // Prepare context window for API call
             const contextWindow = prepareContextWindow();
@@ -1068,11 +1045,6 @@
             
             let fullResponse = '';
             abortController = new AbortController();
-            
-            // Для макроса: начать отсчет времени ожидания ответа
-            if (macroRunning) {
-                startStopwatch();
-            }
             
             try {
                 // Build messages array for API
@@ -1122,50 +1094,12 @@
                 
                 // Update message with full response
                 updateMessage(botMessageId, fullResponse);
-                
-                // Для макроса: увеличиваем счетчик ответов
-                if (macroRunning) {
-                    llmResponsesCounter++;
-                    stopStopwatch();
-                    
-                    // Проверяем необходимость автосохранения
-                    if (saveHistoryCheckbox.checked) {
-                        const interval = parseInt(saveIntervalInput.value);
-                        if (llmResponsesCounter >= interval) {
-                            downloadAIResponses();
-                            llmResponsesCounter = 0;
-                            
-                            // Очищаем историю после сохранения
-                            setTimeout(() => {
-                                clearChat();
-                            }, 1000);
-                        }
-                    }
-                    
-                    // Переходим к следующему сообщению в макросе
-                    if (templateTextArea.value.includes('[]')) {
-                        currentVariableIndex++;
-                    }
-                    
-                    // Проверяем, есть ли еще переменные для отправки
-                    if (templateTextArea.value.includes('[]') && currentVariableIndex >= variableLines.length) {
-                        stopMacro();
-                        alert('Макрос завершил отправку всех сообщений.');
-                    } else if (macroRunning && !macroPaused) {
-                        // Отправляем следующее сообщение
-                        setTimeout(sendNextMessage, 1000);
-                    }
-                }
             } catch (error) {
                 if (error.name === 'AbortError') {
                     console.log('Request was aborted');
                 } else {
                     console.error('Error calling LLM:', error);
                     updateMessage(botMessageId, `Error: ${error.message}`);
-                }
-                
-                if (macroRunning) {
-                    stopStopwatch();
                 }
             } finally {
                 // Reset UI state
@@ -1398,243 +1332,12 @@
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
             }, 0);
-        }
-        
-        // Очистка чата (для макроса)
-        function clearChat() {
-            messages = [];
-            chatContainer.innerHTML = '';
-            saveMessages();
-        }
-        
-        // -------------------- Функции макросника --------------------
-        
-        // Сохранение текста в localStorage
-        function saveTextToLocalStorage(key, text) {
-            localStorage.setItem(key, text);
-        }
-
-        // Загрузка текста из localStorage
-        function loadTextFromLocalStorage(key, defaultText = '') {
-            return localStorage.getItem(key) || defaultText;
-        }
-        
-        // Запуск секундомера
-        function startStopwatch() {
-            lastMessageTime = new Date();
-            stopwatchDisplay.textContent = '0 сек';
-            stopwatchInterval = setInterval(updateStopwatch, 1000);
-        }
-
-        // Обновление секундомера
-        function updateStopwatch() {
-            if (!lastMessageTime) return;
-            const currentTime = new Date();
-            const elapsedSeconds = Math.round((currentTime - lastMessageTime) / 1000);
-            stopwatchDisplay.textContent = elapsedSeconds + ' сек';
-        }
-
-        // Остановка секундомера
-        function stopStopwatch() {
-            clearInterval(stopwatchInterval);
-            stopwatchInterval = null;
-            lastMessageTime = null;
-            stopwatchDisplay.textContent = '0 сек';
-        }
-
-        // Получение случайных ключевых слов
-        function getRandomKeywords(keywordsText, count) {
-            const keywords = keywordsText.split('\n').filter(line => line.trim() !== '');
-            if (keywords.length === 0) return '';
-            if (count > keywords.length) count = keywords.length;
-            const shuffledKeywords = keywords.sort(() => 0.5 - Math.random());
-            return shuffledKeywords.slice(0, count).join(', ');
-        }
-
-        // Получение случайного числа в диапазоне
-        function getRandomNumberInRange(min, max) {
-            min = parseInt(min, 10);
-            max = parseInt(max, 10);
-            if (isNaN(min) || isNaN(max)) return 1;
-            if (min > max) return min;
-            return Math.floor(Math.random() * (max - min + 1)) + min;
-        }
-        
-        // Запуск макроса
-        function startMacro() {
-            if (macroRunning) {
-                alert('Макрос уже запущен.');
-                return;
-            }
             
-            // Сброс счетчика при новом запуске
-            llmResponsesCounter = 0;
-            
-            macroRunning = true;
-            macroPaused = false;
-            startButton.disabled = true;
-            pauseButton.disabled = false;
-            stopButton.disabled = false;
-            templateTextArea.disabled = true;
-            variablesTextArea.disabled = true;
-            keywordsTextArea.disabled = true;
-            keywordsCountMinInput.disabled = true;
-            keywordsCountMaxInput.disabled = true;
-            numberRangeMinInput.disabled = true;
-            numberRangeMaxInput.disabled = true;
-            saveHistoryCheckbox.disabled = true;
-            saveIntervalInput.disabled = true;
-
-            variableLines = variablesTextArea.value.split('\n').filter(line => line.trim() !== '');
-            currentVariableIndex = 0;
-            totalVariablesCount = variableLines.length;
-
-            if (variableLines.length === 0 && templateTextArea.value.includes('[]')) {
-                alert('Нет переменных для отправки, но в шаблоне используется плейсхолдер [].');
-                stopMacro();
-                return;
-            }
-            updateVariableCounter();
-            sendNextMessage();
-        }
-        
-        // Отправка следующего сообщения
-        function sendNextMessage() {
-            if (!macroRunning) return;
-            if (macroPaused) return;
-
-            if (templateTextArea.value.includes('[]') && currentVariableIndex >= variableLines.length) {
-                stopMacro();
-                alert('Макрос завершил отправку всех сообщений.');
-                return;
-            }
-
-            let template = templateTextArea.value;
-            let messageContent = template;
-
-            if (template.includes('{}')) {
-                const minKeywords = keywordsCountMinInput.value;
-                const maxKeywords = keywordsCountMaxInput.value;
-                const keywordsCount = getRandomNumberInRange(minKeywords, maxKeywords);
-                const randomKeywords = getRandomKeywords(keywordsTextArea.value, keywordsCount);
-                messageContent = messageContent.replace('{}', randomKeywords);
-            }
-
-            if (template.includes('<>')) {
-                const minRange = numberRangeMinInput.value;
-                const maxRange = numberRangeMaxInput.value;
-                const randomNumber = getRandomNumberInRange(minRange, maxRange);
-                messageContent = messageContent.replace('<>', randomNumber);
-            }
-
-            if (template.includes('[]')) {
-                if (variableLines.length > 0 && currentVariableIndex < variableLines.length) {
-                    messageContent = messageContent.replace('[]', variableLines[currentVariableIndex]);
-                }
-                updateVariableCounter();
-            } else {
-                updateVariableCounter(true);
-            }
-
-            // Отправляем сообщение через основную функцию
-            sendMessage(messageContent);
-        }
-        
-        // Пауза макроса
-        function pauseMacro() {
-            if (!macroRunning || macroPaused) return;
-            
-            macroPaused = true;
-            pauseButton.disabled = true;
-            startButton.disabled = false;
-            
-            if (stopwatchInterval) {
-                stopStopwatch();
-            }
-        }
-        
-        // Остановка макроса
-        function stopMacro() {
-            macroRunning = false;
-            macroPaused = false;
-            startButton.disabled = false;
-            pauseButton.disabled = true;
-            stopButton.disabled = true;
-            templateTextArea.disabled = false;
-            variablesTextArea.disabled = false;
-            keywordsTextArea.disabled = false;
-            keywordsCountMinInput.disabled = false;
-            keywordsCountMaxInput.disabled = false;
-            numberRangeMinInput.disabled = false;
-            numberRangeMaxInput.disabled = false;
-            saveHistoryCheckbox.disabled = false;
-            saveIntervalInput.disabled = false;
-            
-            stopStopwatch();
-            updateVariableCounter(true);
-        }
-        
-        // Обновление счетчика переменных
-        function updateVariableCounter(hide = false) {
-            if (variableCounterDisplay) {
-                if (hide) {
-                    variableCounterDisplay.style.display = 'none';
-                } else {
-                    variableCounterDisplay.style.display = 'inline';
-                    variableCounterDisplay.textContent = `(${currentVariableIndex + 1}/${totalVariablesCount})`;
-                }
-            }
-        }
-        
-        // Функции для управления перетаскиванием окна
-        function startDrag(e) {
-            isDragging = true;
-            
-            // Сохраняем начальное положение мыши относительно окна
-            const rect = macroWindow.getBoundingClientRect();
-            dragOffsetX = e.clientX - rect.left;
-            dragOffsetY = e.clientY - rect.top;
-            
-            // Предотвращаем выделение текста при перетаскивании
-            document.body.style.userSelect = 'none';
-        }
-        
-        function drag(e) {
-            if (!isDragging) return;
-            
-            // Вычисляем новые координаты окна
-            const newLeft = e.clientX - dragOffsetX;
-            const newTop = e.clientY - dragOffsetY;
-            
-            // Ограничиваем перемещение пределами видимой области
-            const maxX = window.innerWidth - macroWindow.offsetWidth;
-            const maxY = window.innerHeight - macroWindow.offsetHeight;
-            
-            macroWindow.style.left = Math.max(0, Math.min(newLeft, maxX)) + 'px';
-            macroWindow.style.top = Math.max(0, Math.min(newTop, maxY)) + 'px';
-        }
-        
-        function stopDrag() {
-            isDragging = false;
-            document.body.style.userSelect = '';
-        }
-        
-        // Загрузка сохраненных настроек макроса
-        function loadMacroSettings() {
-            templateTextArea.value = loadTextFromLocalStorage('macroTemplateText', '');
-            variablesTextArea.value = loadTextFromLocalStorage('macroVariablesText', '');
-            keywordsTextArea.value = loadTextFromLocalStorage('macroKeywordsText', '');
-            keywordsCountMinInput.value = loadTextFromLocalStorage('macroKeywordsCountMin', '1');
-            keywordsCountMaxInput.value = loadTextFromLocalStorage('macroKeywordsCountMax', '3');
-            numberRangeMinInput.value = loadTextFromLocalStorage('macroNumberRangeMin', '1000');
-            numberRangeMaxInput.value = loadTextFromLocalStorage('macroNumberRangeMax', '2000');
-            saveHistoryCheckbox.checked = loadTextFromLocalStorage('macroSaveHistoryEnabled', 'false') === 'true';
-            saveIntervalInput.value = loadTextFromLocalStorage('macroSaveInterval', '5');
-            saveIntervalInput.disabled = !saveHistoryCheckbox.checked;
+            return url; // Возвращаем URL для использования в аддоне-макроснике
         }
         
         // Event Listeners
-        sendBtn.addEventListener('click', () => sendMessage());
+        sendBtn.addEventListener('click', sendMessage);
         
         messageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
@@ -1701,62 +1404,6 @@
             }
         });
         
-        // Обработчики событий для макросника
-        macroBtn.addEventListener('click', () => {
-            macroWindow.style.display = 'flex';
-            // Загрузка сохраненных настроек
-            loadMacroSettings();
-        });
-        
-        macroCloseBtn.addEventListener('click', () => {
-            macroWindow.style.display = 'none';
-        });
-        
-        macroHeader.addEventListener('mousedown', startDrag);
-        document.addEventListener('mousemove', drag);
-        document.addEventListener('mouseup', stopDrag);
-        
-        startButton.addEventListener('click', startMacro);
-        pauseButton.addEventListener('click', pauseMacro);
-        stopButton.addEventListener('click', stopMacro);
-        
-        templateTextArea.addEventListener('input', () => {
-            saveTextToLocalStorage('macroTemplateText', templateTextArea.value);
-        });
-        
-        variablesTextArea.addEventListener('input', () => {
-            saveTextToLocalStorage('macroVariablesText', variablesTextArea.value);
-        });
-        
-        keywordsTextArea.addEventListener('input', () => {
-            saveTextToLocalStorage('macroKeywordsText', keywordsTextArea.value);
-        });
-        
-        keywordsCountMinInput.addEventListener('input', () => {
-            saveTextToLocalStorage('macroKeywordsCountMin', keywordsCountMinInput.value);
-        });
-        
-        keywordsCountMaxInput.addEventListener('input', () => {
-            saveTextToLocalStorage('macroKeywordsCountMax', keywordsCountMaxInput.value);
-        });
-        
-        numberRangeMinInput.addEventListener('input', () => {
-            saveTextToLocalStorage('macroNumberRangeMin', numberRangeMinInput.value);
-        });
-        
-        numberRangeMaxInput.addEventListener('input', () => {
-            saveTextToLocalStorage('macroNumberRangeMax', numberRangeMaxInput.value);
-        });
-        
-        saveHistoryCheckbox.addEventListener('change', function() {
-            saveIntervalInput.disabled = !this.checked;
-            saveTextToLocalStorage('macroSaveHistoryEnabled', this.checked);
-        });
-        
-        saveIntervalInput.addEventListener('input', function() {
-            saveTextToLocalStorage('macroSaveInterval', this.value);
-        });
-        
         // Initialization
         loadConfig();
         loadMessages();
@@ -1766,7 +1413,309 @@
             addMessage('assistant', "# Hello! I'm Claude.\n\nI can help you with various tasks. Here are some of my capabilities:\n\n- Answering questions and providing information\n- Writing and editing content\n- Analyzing data and solving problems\n- Programming assistance and code generation\n- Creative writing and brainstorming\n\nHow can I assist you today?");
         }
         
-        console.log('Приложение Claude Chat с макросником инициализировано.');
+        // ==========================================
+        // Код аддона-макросника
+        // ==========================================
+        
+        // Глобальные переменные для макросника
+        let macroRunning = false;
+        let macroPaused = false;
+        let variableLines = [];
+        let currentVariableIndex = 0;
+        let messageCheckInterval = null;
+        let lastMessageTime = null;
+        let stopwatchInterval = null;
+        let totalVariablesCount = 0;
+        let llmResponsesCounter = 0;
+        
+        // DOM элементы макросника
+        const macroBtn = document.getElementById('macro-btn');
+        const macroWindow = document.getElementById('macro-addon-window');
+        const closeMacroBtn = document.getElementById('close-macro-btn');
+        const templateTextArea = document.getElementById('macro-template-textarea');
+        const variablesTextArea = document.getElementById('macro-variables-textarea');
+        const keywordsTextArea = document.getElementById('macro-keywords-textarea');
+        const keywordsCountMinInput = document.getElementById('macro-keywords-count-min-input');
+        const keywordsCountMaxInput = document.getElementById('macro-keywords-count-max-input');
+        const numberRangeMinInput = document.getElementById('macro-number-range-min-input');
+        const numberRangeMaxInput = document.getElementById('macro-number-range-max-input');
+        const startButton = document.getElementById('macro-start-button');
+        const pauseButton = document.getElementById('macro-pause-button');
+        const stopButton = document.getElementById('macro-stop-button');
+        const stopwatchDisplay = document.getElementById('macro-stopwatch');
+        const variableCounterDisplay = document.getElementById('macro-variable-counter');
+        const saveHistoryCheckbox = document.getElementById('macro-save-history-checkbox');
+        const saveIntervalInput = document.getElementById('macro-save-interval-input');
+        
+        // Вспомогательные функции для макросника
+        function saveTextToLocalStorage(key, text) {
+            localStorage.setItem(key, text);
+        }
+        
+        function loadTextFromLocalStorage(key, defaultText = '') {
+            return localStorage.getItem(key) || defaultText;
+        }
+        
+        function startStopwatch() {
+            lastMessageTime = new Date();
+            stopwatchDisplay.textContent = '0 сек';
+            stopwatchInterval = setInterval(updateStopwatch, 1000);
+        }
+        
+        function updateStopwatch() {
+            if (!lastMessageTime) return;
+            const currentTime = new Date();
+            const elapsedSeconds = Math.round((currentTime - lastMessageTime) / 1000);
+            stopwatchDisplay.textContent = elapsedSeconds + ' сек';
+        }
+        
+        function stopStopwatch() {
+            clearInterval(stopwatchInterval);
+            stopwatchInterval = null;
+            lastMessageTime = null;
+            stopwatchDisplay.textContent = '0 сек';
+        }
+        
+        function getRandomKeywords(keywordsText, count) {
+            const keywords = keywordsText.split('\n').filter(line => line.trim() !== '');
+            if (keywords.length === 0) return '';
+            if (count > keywords.length) count = keywords.length;
+            const shuffledKeywords = keywords.sort(() => 0.5 - Math.random());
+            return shuffledKeywords.slice(0, count).join(', ');
+        }
+        
+        function getRandomNumberInRange(min, max) {
+            min = parseInt(min, 10);
+            max = parseInt(max, 10);
+            if (isNaN(min) || isNaN(max)) return 1;
+            if (min > max) return min;
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        
+        // Функция очистки чата
+        function clearChatHistory() {
+            // Очищаем чат-контейнер
+            chatContainer.innerHTML = '';
+            // Сбрасываем массив сообщений
+            messages = [];
+            saveMessages();
+            console.log('История чата очищена');
+        }
+        
+        function startMacro() {
+            if (macroRunning) {
+                alert('Макрос уже запущен.');
+                return;
+            }
+            
+            // Сброс счетчика при новом запуске
+            llmResponsesCounter = 0;
+            
+            macroRunning = true;
+            macroPaused = false;
+            startButton.disabled = true;
+            pauseButton.disabled = false;
+            stopButton.disabled = false;
+            variablesTextArea.disabled = true;
+            templateTextArea.disabled = true;
+            keywordsTextArea.disabled = true;
+            keywordsCountMinInput.disabled = true;
+            keywordsCountMaxInput.disabled = true;
+            numberRangeMinInput.disabled = true;
+            numberRangeMaxInput.disabled = true;
+            saveHistoryCheckbox.disabled = true;
+            saveIntervalInput.disabled = true;
+            
+            variableLines = variablesTextArea.value.split('\n').filter(line => line.trim() !== '');
+            currentVariableIndex = 0;
+            totalVariablesCount = variableLines.length;
+            
+            if (variableLines.length === 0 && templateTextArea.value.includes('[]')) {
+                alert('Нет переменных для отправки, но в шаблоне используется плейсхолдер [].');
+                stopMacro();
+                return;
+            }
+            
+            updateVariableCounter();
+            sendNextMessage();
+        }
+        
+        async function sendNextMessage() {
+            if (!macroRunning) return;
+            if (macroPaused) return;
+            
+            // Проверка и выполнение автосохранения
+            if (saveHistoryCheckbox.checked) {
+                const interval = parseInt(saveIntervalInput.value);
+                if (llmResponsesCounter >= interval) {
+                    downloadAIResponses();
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    clearChatHistory();
+                    llmResponsesCounter = 0;
+                }
+            }
+            
+            if (templateTextArea.value.includes('[]') && currentVariableIndex >= variableLines.length) {
+                stopMacro();
+                alert('Макрос завершил отправку всех сообщений.');
+                return;
+            }
+            
+            let template = templateTextArea.value;
+            let messageContent = template;
+            
+            if (template.includes('{}')) {
+                const minKeywords = keywordsCountMinInput.value;
+                const maxKeywords = keywordsCountMaxInput.value;
+                const keywordsCount = getRandomNumberInRange(minKeywords, maxKeywords);
+                const randomKeywords = getRandomKeywords(keywordsTextArea.value, keywordsCount);
+                messageContent = messageContent.replace('{}', randomKeywords);
+            }
+            
+            if (template.includes('<>')) {
+                const minRange = numberRangeMinInput.value;
+                const maxRange = numberRangeMaxInput.value;
+                const randomNumber = getRandomNumberInRange(minRange, maxRange);
+                messageContent = messageContent.replace('<>', randomNumber);
+            }
+            
+            if (template.includes('[]')) {
+                if (variableLines.length > 0 && currentVariableIndex < variableLines.length) {
+                    messageContent = messageContent.replace('[]', variableLines[currentVariableIndex]);
+                }
+                updateVariableCounter();
+            } else {
+                updateVariableCounter(true);
+            }
+            
+            // Отправляем сообщение через существующий интерфейс
+            messageInput.value = messageContent;
+            await sendMessage();
+            
+            llmResponsesCounter++;
+            startStopwatch();
+            startMessageStatusCheck();
+        }
+        
+        function startMessageStatusCheck() {
+            messageCheckInterval = setInterval(checkLastAssistantMessageStatus, 500);
+        }
+        
+        function checkLastAssistantMessageStatus() {
+            // Проверяем, есть ли активный контроллер, что означает, что генерация в процессе
+            if (!abortController) {
+                clearInterval(messageCheckInterval);
+                messageCheckInterval = null;
+                stopStopwatch();
+                if (templateTextArea.value.includes('[]')) {
+                    currentVariableIndex++;
+                }
+                setTimeout(sendNextMessage, 1000); // Небольшая задержка перед отправкой следующего сообщения
+            }
+        }
+        
+        function pauseMacro() {
+            if (!macroRunning || macroPaused) return;
+            macroPaused = true;
+            pauseButton.disabled = true;
+            startButton.disabled = false;
+            if (messageCheckInterval) {
+                clearInterval(messageCheckInterval);
+                messageCheckInterval = null;
+            }
+            stopStopwatch();
+        }
+        
+        function stopMacro() {
+            macroRunning = false;
+            macroPaused = false;
+            startButton.disabled = false;
+            pauseButton.disabled = true;
+            stopButton.disabled = true;
+            variablesTextArea.disabled = false;
+            templateTextArea.disabled = false;
+            keywordsTextArea.disabled = false;
+            keywordsCountMinInput.disabled = false;
+            keywordsCountMaxInput.disabled = false;
+            numberRangeMinInput.disabled = false;
+            numberRangeMaxInput.disabled = false;
+            saveHistoryCheckbox.disabled = false;
+            saveIntervalInput.disabled = false;
+            if (messageCheckInterval) {
+                clearInterval(messageCheckInterval);
+                messageCheckInterval = null;
+            }
+            stopStopwatch();
+            updateVariableCounter(true);
+        }
+        
+        function updateVariableCounter(hide = false) {
+            if (variableCounterDisplay) {
+                if (hide) {
+                    variableCounterDisplay.style.display = 'none';
+                } else {
+                    variableCounterDisplay.style.display = 'inline';
+                    variableCounterDisplay.textContent = `(${currentVariableIndex + 1}/${totalVariablesCount})`;
+                }
+            }
+        }
+        
+        // Инициализация элементов макросника
+        function initMacroAddon() {
+            // Загрузка сохраненных данных
+            templateTextArea.value = loadTextFromLocalStorage('macroTemplateText', '');
+            variablesTextArea.value = loadTextFromLocalStorage('macroVariablesText', '');
+            keywordsTextArea.value = loadTextFromLocalStorage('macroKeywordsText', '');
+            keywordsCountMinInput.value = loadTextFromLocalStorage('macroKeywordsCountMin', '1');
+            keywordsCountMaxInput.value = loadTextFromLocalStorage('macroKeywordsCountMax', '3');
+            numberRangeMinInput.value = loadTextFromLocalStorage('macroNumberRangeMin', '1000');
+            numberRangeMaxInput.value = loadTextFromLocalStorage('macroNumberRangeMax', '2000');
+            saveHistoryCheckbox.checked = localStorage.getItem('macroSaveHistoryEnabled') === 'true';
+            saveIntervalInput.value = loadTextFromLocalStorage('macroSaveInterval', '5');
+            saveIntervalInput.disabled = !saveHistoryCheckbox.checked;
+            
+            // Добавляем обработчики событий
+            macroBtn.addEventListener('click', () => {
+                macroWindow.style.display = 'block';
+            });
+            
+            closeMacroBtn.addEventListener('click', () => {
+                macroWindow.style.display = 'none';
+            });
+            
+            startButton.addEventListener('click', startMacro);
+            pauseButton.addEventListener('click', pauseMacro);
+            stopButton.addEventListener('click', stopMacro);
+            
+            templateTextArea.addEventListener('input', () => saveTextToLocalStorage('macroTemplateText', templateTextArea.value));
+            variablesTextArea.addEventListener('input', () => saveTextToLocalStorage('macroVariablesText', variablesTextArea.value));
+            keywordsTextArea.addEventListener('input', () => saveTextToLocalStorage('macroKeywordsText', keywordsTextArea.value));
+            keywordsCountMinInput.addEventListener('input', () => saveTextToLocalStorage('macroKeywordsCountMin', keywordsCountMinInput.value));
+            keywordsCountMaxInput.addEventListener('input', () => saveTextToLocalStorage('macroKeywordsCountMax', keywordsCountMaxInput.value));
+            numberRangeMinInput.addEventListener('input', () => saveTextToLocalStorage('macroNumberRangeMin', numberRangeMinInput.value));
+            numberRangeMaxInput.addEventListener('input', () => saveTextToLocalStorage('macroNumberRangeMax', numberRangeMaxInput.value));
+            
+            saveHistoryCheckbox.addEventListener('change', function() {
+                saveIntervalInput.disabled = !this.checked;
+                localStorage.setItem('macroSaveHistoryEnabled', this.checked);
+            });
+            
+            saveIntervalInput.addEventListener('input', function() {
+                localStorage.setItem('macroSaveInterval', this.value);
+            });
+            
+            // Закрытие окна макросника по ESC
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && macroWindow.style.display === 'block') {
+                    macroWindow.style.display = 'none';
+                }
+            });
+            
+            console.log('Аддон "Макросник" инициализирован.');
+        }
+        
+        // Запускаем инициализацию макросника
+        initMacroAddon();
     </script>
 </body>
 </html>
