@@ -1,3053 +1,1217 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM Визуальная Новелла</title>
+    <title>Claude Chat</title>
+    
+    <!-- Подключение Puter.js -->
+    <script src="https://js.puter.com/v2/"></script>
+    
+    <!-- Подключение библиотеки для Markdown -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@4.3.0/marked.min.js"></script>
+    
+    <!-- Подключение библиотеки для подсветки кода -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
+    
+    <!-- Стили для интерфейса -->
     <style>
         :root {
-            --primary-color: #6d4aff;
-            --secondary-color: #ff6e9f;
-            --dark-color: #2d2b55;
-            --light-color: #f8f8f2;
-            --shadow-color: rgba(0,0,0,0.3);
+            --primary-color: #6e56cf;
+            --secondary-color: #f0f0f0;
+            --border-color: #e0e0e0;
+            --text-color: #333;
+            --light-text: #666;
+            --user-msg-bg: #f1f5f9;
+            --ai-msg-bg: #ffffff;
+            --hover-color: #f5f5f5;
+            --error-color: #e74c3c;
+            --code-bg: #f6f8fa;
+            --inline-code-bg: #f1f1f1;
+            --blockquote-border: #dfe2e5;
+            --table-border: #dfe2e5;
         }
-
-        * {
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
             margin: 0;
             padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            color: var(--light-color);
-            min-height: 100vh;
-            overflow: hidden;
-        }
-
-        /* Disclaimer Screen */
-        #disclaimer {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
+            color: var(--text-color);
             display: flex;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            padding: 2rem;
+            height: 100vh;
+            background-color: #fafafa;
         }
-
-        .disclaimer-content {
-            background: var(--dark-color);
-            border-radius: 15px;
-            padding: 2rem;
-            max-width: 600px;
-            box-shadow: 0 10px 25px var(--shadow-color);
-            text-align: center;
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .disclaimer-content h2 {
-            color: var(--secondary-color);
-            margin-bottom: 1.5rem;
-            font-size: 2rem;
-        }
-
-        .disclaimer-content p {
-            margin-bottom: 1rem;
-            line-height: 1.6;
-        }
-
-        /* Settings Screen */
-        #settings {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #1a1a2e, #16213e);
-            display: none;
-            z-index: 900;
-            overflow-y: auto;
-            padding: 2rem;
-        }
-
-        .settings-container {
-            max-width: 1000px;
-            margin: 0 auto;
-            background: rgba(45, 43, 85, 0.8);
-            border-radius: 15px;
-            padding: 2rem;
-            box-shadow: 0 10px 25px var(--shadow-color);
-        }
-
-        .settings-header {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .settings-header h2 {
-            color: var(--secondary-color);
-            font-size: 2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .settings-tabs {
-            display: flex;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            margin-bottom: 2rem;
-        }
-
-        .tab-btn {
-            padding: 0.8rem 1.5rem;
-            background: none;
-            border: none;
-            color: var(--light-color);
-            font-size: 1rem;
-            cursor: pointer;
-            opacity: 0.6;
-            transition: opacity 0.3s, border-bottom 0.3s;
-            border-bottom: 3px solid transparent;
-        }
-
-        .tab-btn.active {
-            opacity: 1;
-            border-bottom: 3px solid var(--secondary-color);
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-            animation: fadeIn 0.3s ease-out;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-
-        .form-group input[type="text"],
-        .form-group input[type="number"],
-        .form-group textarea,
-        .form-group select {
-            width: 100%;
-            padding: 0.8rem;
-            border-radius: 5px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.2);
-            color: var(--light-color);
-            font-size: 1rem;
-        }
-
-        .form-group input[type="range"] {
-            width: 100%;
-            margin-top: 0.5rem;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            margin-right: 0.5rem;
-        }
-
-        /* Game Screen */
-        #game {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            overflow: hidden;
-        }
-
-        #background {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-size: cover;
-            background-position: center;
-            transition: opacity 1s ease;
-        }
-
-        #characters {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        .character {
-            position: absolute;
-            bottom: 20%;
-            height: 70%;
-            transition: all 0.5s ease-out;
-            transform-origin: bottom center;
-        }
-
-        #dialogue-box {
-            position: absolute;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 900px;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
-            border-radius: 15px;
-            padding: 1.5rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            z-index: 100;
-        }
-
-        #speaker {
-            color: var(--secondary-color);
-            font-weight: bold;
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        #dialogue-text {
-            font-size: 1.1rem;
-            line-height: 1.6;
-            margin-bottom: 1rem;
-            min-height: 3rem;
-        }
-
-        #choices {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.8rem;
-            margin-top: 1rem;
-        }
-
-        .choice-btn {
-            background: rgba(109, 74, 255, 0.2);
-            border: 1px solid var(--primary-color);
-            border-radius: 5px;
-            padding: 0.7rem 1.2rem;
-            color: var(--light-color);
-            cursor: pointer;
-            transition: all 0.3s;
-            flex-grow: 1;
-        }
-
-        .choice-btn:hover {
-            background: rgba(109, 74, 255, 0.4);
-        }
-
-        #user-input-container {
-            display: flex;
-            margin-top: 1rem;
-        }
-
-        #user-input {
-            flex-grow: 1;
-            padding: 0.8rem;
-            border-radius: 5px 0 0 5px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.2);
-            color: var(--light-color);
-            font-size: 1rem;
-        }
-
-        #send-btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 0 5px 5px 0;
-            padding: 0.8rem 1.5rem;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        #send-btn:hover {
-            background: #5536e0;
-        }
-
-        #regenerate-btn {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            background: rgba(255, 110, 159, 0.2);
-            border: 1px solid var(--secondary-color);
-            color: var(--light-color);
-            border-radius: 5px;
-            padding: 0.5rem 1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        #regenerate-btn:hover {
-            background: rgba(255, 110, 159, 0.4);
-        }
-
-        /* Menu */
-        #menu-button {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 40px;
-            height: 40px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 50%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            cursor: pointer;
-            z-index: 200;
-            transition: background 0.3s;
-        }
-
-        #menu-button:hover {
-            background: rgba(0,0,0,0.8);
-        }
-
-        #menu-dropdown {
-            position: absolute;
-            top: 70px;
-            right: 20px;
-            background: rgba(0,0,0,0.8);
-            backdrop-filter: blur(10px);
-            border-radius: 10px;
-            width: 300px;
-            padding: 1rem;
-            z-index: 300;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            display: none;
-        }
-
-        #direct-request {
-            width: 100%;
-            height: 80px;
-            background: rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 5px;
-            color: var(--light-color);
-            padding: 0.8rem;
-            resize: none;
-            margin-bottom: 0.8rem;
-        }
-
-        #send-direct-btn {
-            width: 100%;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 0.7rem;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        /* Loading indicator */
-        #loading {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            display: none;
-        }
-
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: var(--secondary-color);
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        /* Buttons */
-        .btn {
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 5px;
-            padding: 0.8rem 1.5rem;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.3s;
-            box-shadow: 0 3px 5px rgba(0,0,0,0.2);
-        }
-
-        .btn:hover {
-            background: #5536e0;
-        }
-
-        .btn-secondary {
-            background: var(--secondary-color);
-        }
-
-        .btn-secondary:hover {
-            background: #e84e8a;
-        }
-
-        /* Animations */
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        /* Character and resource management */
-        .resource-list {
-            background: rgba(0,0,0,0.2);
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 1.5rem;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-
-        .resource-item {
+        
+        .header {
+            padding: 15px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0.8rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
+            border-bottom: 1px solid var(--border-color);
+            background-color: white;
         }
-
-        .resource-item:last-child {
-            border-bottom: none;
-        }
-
-        .resource-item-name {
+        
+        .title {
+            font-size: 1.2rem;
             font-weight: 600;
         }
-
-        .resource-controls {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .edit-btn, .delete-btn {
+        
+        .settings-btn {
             background: none;
-            border: none;
-            color: var(--light-color);
+            border: 1px solid var(--border-color);
+            padding: 5px 10px;
+            border-radius: 4px;
             cursor: pointer;
-            opacity: 0.6;
-            transition: opacity 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
-
-        .edit-btn:hover, .delete-btn:hover {
+        
+        .settings-btn:hover {
+            background-color: var(--hover-color);
+        }
+        
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .message {
+            display: flex;
+            flex-direction: column;
+            max-width: 90%;
+            padding: 12px 16px;
+            border-radius: 8px;
+            position: relative;
+        }
+        
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .message-sender {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .message-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        .message:hover .message-actions {
             opacity: 1;
         }
-
-        /* Modal */
+        
+        .action-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--light-text);
+            padding: 2px;
+            font-size: 0.9rem;
+        }
+        
+        .action-btn:hover {
+            color: var(--primary-color);
+        }
+        
+        .message-content {
+            line-height: 1.5;
+        }
+        
+        /* Markdown styles */
+        .message-content p {
+            margin: 0.75em 0;
+        }
+        
+        .message-content img {
+            max-width: 100%;
+            border-radius: 4px;
+        }
+        
+        .message-content h1, 
+        .message-content h2, 
+        .message-content h3, 
+        .message-content h4, 
+        .message-content h5, 
+        .message-content h6 {
+            margin-top: 1.5em;
+            margin-bottom: 0.75em;
+            font-weight: 600;
+            line-height: 1.25;
+        }
+        
+        .message-content h1 {
+            font-size: 1.75em;
+        }
+        
+        .message-content h2 {
+            font-size: 1.5em;
+        }
+        
+        .message-content h3 {
+            font-size: 1.25em;
+        }
+        
+        .message-content h4 {
+            font-size: 1em;
+        }
+        
+        .message-content ul, 
+        .message-content ol {
+            padding-left: 2em;
+            margin: 0.75em 0;
+        }
+        
+        .message-content li {
+            margin: 0.375em 0;
+        }
+        
+        .message-content blockquote {
+            border-left: 3px solid var(--blockquote-border);
+            margin: 0.75em 0;
+            padding: 0 0 0 1em;
+            color: var(--light-text);
+        }
+        
+        .message-content table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        
+        .message-content th, 
+        .message-content td {
+            border: 1px solid var(--table-border);
+            padding: 0.375em 0.75em;
+            text-align: left;
+        }
+        
+        .message-content th {
+            background-color: #f9f9f9;
+            font-weight: 600;
+        }
+        
+        .message-content pre {
+            position: relative;
+            background-color: var(--code-bg);
+            border-radius: 6px;
+            padding: 1em;
+            margin: 0.75em 0;
+            overflow: auto;
+        }
+        
+        .message-content code {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.9em;
+        }
+        
+        .message-content p > code {
+            background-color: var(--inline-code-bg);
+            padding: 0.2em 0.4em;
+            border-radius: 3px;
+            font-size: 0.9em;
+        }
+        
+        .copy-code-btn {
+            position: absolute;
+            top: 7px;
+            right: 7px;
+            background-color: rgba(255, 255, 255, 0.8);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        
+        pre:hover .copy-code-btn {
+            opacity: 1;
+        }
+        
+        .copy-code-btn:hover {
+            background-color: white;
+        }
+        
+        .user-message {
+            background-color: var(--user-msg-bg);
+            align-self: flex-end;
+        }
+        
+        .bot-message {
+            background-color: var(--ai-msg-bg);
+            align-self: flex-start;
+            border: 1px solid var(--border-color);
+        }
+        
+        .char-count {
+            font-size: 0.8rem;
+            color: var(--light-text);
+            margin-top: 5px;
+            text-align: right;
+        }
+        
+        .input-container {
+            padding: 15px;
+            background-color: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+        
+        .context-limit {
+            width: 60px;
+            text-align: center;
+            padding: 10px 5px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        
+        .input-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .message-input {
+            width: 100%;
+            min-height: 56px;
+            max-height: 200px;
+            padding: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            resize: vertical;
+            font-family: inherit;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+        
+        .message-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .send-btn, .stop-btn, .regenerate-btn {
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 40px;
+            height: 56px;
+        }
+        
+        .send-btn {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .send-btn:hover {
+            opacity: 0.9;
+        }
+        
+        .stop-btn, .regenerate-btn {
+            background-color: var(--secondary-color);
+        }
+        
+        .stop-btn:hover, .regenerate-btn:hover {
+            background-color: var(--border-color);
+        }
+        
+        /* Стили для модального окна настроек */
         .modal {
+            display: none;
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
-            display: flex;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
             justify-content: center;
             align-items: center;
-            z-index: 1200;
-            display: none;
         }
-
+        
         .modal-content {
-            background: var(--dark-color);
-            border-radius: 15px;
-            padding: 2rem;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
             width: 90%;
             max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
         }
-
+        
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 20px;
         }
-
-        .modal-header h3 {
-            color: var(--secondary-color);
+        
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 600;
         }
-
-        .close-modal {
+        
+        .close-btn {
             background: none;
             border: none;
-            color: var(--light-color);
             font-size: 1.5rem;
             cursor: pointer;
         }
-
-        /* File upload styles */
-        .file-upload {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 1.5rem;
-            background: rgba(0,0,0,0.2);
-            border: 2px dashed rgba(255,255,255,0.3);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-bottom: 1.5rem;
+        
+        .form-group {
+            margin-bottom: 15px;
         }
-
-        .file-upload:hover {
-            background: rgba(0,0,0,0.3);
-            border-color: rgba(255,255,255,0.5);
-        }
-
-        .file-upload p {
-            margin-top: 0.5rem;
-            color: rgba(255,255,255,0.7);
-        }
-
-        .image-preview {
-            width: 100%;
-            height: 200px;
-            background-size: contain;
-            background-position: center;
-            background-repeat: no-repeat;
-            border-radius: 10px;
-            margin-top: 1rem;
-            background-color: rgba(0,0,0,0.2);
-        }
-
-        .system-prompt-editor {
-            width: 100%;
-            height: 300px;
-            font-family: monospace;
-            line-height: 1.4;
-            font-size: 0.9rem;
-        }
-
-        /* Sprite gallery */
-        .sprite-gallery {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 1rem;
-        }
-
-        .sprite-item {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            background-size: contain;
-            background-position: center;
-            background-repeat: no-repeat;
-            border-radius: 5px;
-            border: 2px solid rgba(255,255,255,0.2);
-            overflow: hidden;
-        }
-
-        .sprite-item-name {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            font-size: 0.8rem;
-            padding: 3px;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .background-item {
-            position: relative;
-            width: 100%;
-            height: 150px;
-            margin-bottom: 10px;
-            background-size: cover;
-            background-position: center;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        .background-item-name {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 8px;
-            font-weight: bold;
-        }
-
-        /* API keys management */
-        .api-keys-container {
-            margin-bottom: 1.5rem;
-            background: rgba(0,0,0,0.2);
-            border-radius: 10px;
-            padding: 1rem;
-        }
-
-        .api-key-item {
-            display: flex;
-            margin-bottom: 0.5rem;
-        }
-
-        .api-key-item input {
-            flex-grow: 1;
-            padding: 0.8rem;
-            border-radius: 5px 0 0 5px;
-            border: 1px solid rgba(255,255,255,0.1);
-            background: rgba(0,0,0,0.2);
-            color: var(--light-color);
-        }
-
-        .api-key-item button {
-            background: rgba(255, 110, 159, 0.2);
-            border: none;
-            border-radius: 0 5px 5px 0;
-            padding: 0.8rem;
-            color: var(--light-color);
-            cursor: pointer;
-        }
-
-        #add-api-key-btn {
-            width: 100%;
-            background: rgba(109, 74, 255, 0.2);
-            border: 1px solid var(--primary-color);
-            border-radius: 5px;
-            padding: 0.7rem;
-            color: var(--light-color);
-            cursor: pointer;
-            transition: all 0.3s;
-            margin-top: 0.5rem;
-        }
-
-        #add-api-key-btn:hover {
-            background: rgba(109, 74, 255, 0.4);
-        }
-
-        /* Debug section */
-        #debug-section {
-            margin-top: 1rem;
-            padding: 1rem;
-            background: rgba(0,0,0,0.3);
-            border-radius: 5px;
-            font-family: monospace;
-            font-size: 0.8rem;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .log-entry {
+        
+        .form-label {
+            display: block;
             margin-bottom: 5px;
-            padding: 3px;
-            border-radius: 3px;
+            font-weight: 500;
         }
-
-        .log-info {
-            background: rgba(0, 0, 255, 0.1);
+        
+        .form-input, .form-textarea, .form-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            font-family: inherit;
         }
-
-        .log-success {
-            background: rgba(0, 255, 0, 0.1);
+        
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
         }
-
-        .log-warning {
-            background: rgba(255, 255, 0, 0.1);
-        }
-
-        .log-error {
-            background: rgba(255, 0, 0, 0.1);
-        }
-
-        .log-test {
-            background: rgba(128, 0, 128, 0.1);
-        }
-
-        /* Scanned resources */
-        .scanned-resources {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 1rem;
-        }
-
-        .resource-thumbnail {
-            width: 100px;
-            height: 100px;
-            background-size: contain;
-            background-position: center;
+        
+        .form-select {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23333' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
             background-repeat: no-repeat;
-            border-radius: 5px;
-            border: 2px solid rgba(255,255,255,0.2);
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
+            background-position: right 8px center;
+            background-size: 16px;
+            padding-right: 30px;
         }
-
-        .resource-thumbnail:hover {
-            border-color: var(--secondary-color);
-        }
-
-        .resource-thumbnail-name {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: rgba(0,0,0,0.7);
+        
+        .save-settings-btn {
+            background-color: var(--primary-color);
             color: white;
-            font-size: 0.8rem;
-            padding: 3px;
-            text-align: center;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .save-settings-btn:hover {
+            opacity: 0.9;
+        }
+        
+        /* Дополнительные стили для адаптивности */
+        @media (max-width: 768px) {
+            .message {
+                max-width: 95%;
+            }
+            
+            .context-limit {
+                width: 40px;
+                padding: 10px 2px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Disclaimer Screen -->
-    <div id="disclaimer">
-        <div class="disclaimer-content">
-            <h2>Пользовательское соглашение</h2>
-            <p>Добро пожаловать в LLM Визуальную Новеллу!</p>
-            <p>Разработчик этого приложения не является профессиональным программистом. Большая часть кода была написана с помощью искусственного интеллекта Claude 3.7 от Anthropic.</p>
-            <p>Разработчик не несёт ответственности за содержание, генерируемое LLM, возможные технические проблемы или любые другие последствия использования данного приложения.</p>
-            <p>Все персонажи в игре старше 21 года. При добавлении собственных персонажей вы обязуетесь использовать изображения только совершеннолетних персонажей.</p>
-            <p>Используя это приложение, вы подтверждаете, что не будете использовать его для создания или распространения незаконного или неприемлемого контента.</p>
-            <p>Это некоммерческий проект, созданный исключительно в развлекательных и образовательных целях.</p>
-            <button class="btn btn-secondary" id="accept-btn">Затерпеть</button>
+    <div class="header">
+        <div class="title">Claude Chat</div>
+        <div class="header-actions">
+            <button id="download-btn" title="Download AI Responses" class="settings-btn">
+                <span>📥</span> Download
+            </button>
+            <button id="settings-btn" class="settings-btn">
+                <span>⚙️</span> Settings
+            </button>
         </div>
     </div>
-
-    <!-- Settings Screen -->
-    <div id="settings">
-        <div class="settings-container">
-            <div class="settings-header">
-                <h2>Настройки новеллы</h2>
-                <p>Настройте параметры игры перед началом</p>
-            </div>
-            
-            <div class="settings-tabs">
-                <button class="tab-btn active" data-tab="general">Основные</button>
-                <button class="tab-btn" data-tab="characters">Персонажи</button>
-                <button class="tab-btn" data-tab="locations">Локации</button>
-                <button class="tab-btn" data-tab="story">Сюжет</button>
-                <button class="tab-btn" data-tab="system">Системный промпт</button>
-                <button class="tab-btn" data-tab="debug">Отладка</button>
-            </div>
-            
-            <div class="tab-content active" id="general-tab">
-                <div class="form-group">
-                    <label for="model-select">Модель LLM (в формате OpenRouter)</label>
-                    <input type="text" id="model-select" value="google/gemini-2.0-flash-thinking-exp:free">
-                </div>
-                
-                <div class="form-group">
-                    <label>API Ключи OpenRouter (один на строку)</label>
-                    <div class="api-keys-container" id="api-keys-container">
-                        <!-- API keys will be added here -->
-                    </div>
-                    <button id="add-api-key-btn">Добавить API ключ</button>
-                </div>
-                
-                <div class="form-group">
-                    <label for="temperature">Креативность (температура): <span id="temp-value">0.2</span></label>
-                    <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.2">
-                </div>
-                
-                <div class="form-group">
-                    <label for="max-tokens">Максимальное количество токенов в ответе</label>
-                    <input type="number" id="max-tokens" value="30000" min="1000" max="100000">
-                </div>
-                
-                <div class="form-group">
-                    <label>Режимы игры</label>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="romance-mode">
-                        <label for="romance-mode">Романтика</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="cute-mode">
-                        <label for="cute-mode">Милота</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="cringe-mode">
-                        <label for="cringe-mode">Кринжовый режим</label>
-                    </div>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="story-mode">
-                        <label for="story-mode">Сюжетный режим (7 дней)</label>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="tab-content" id="characters-tab">
-                <div class="form-group">
-                    <label>Доступные спрайты персонажей</label>
-                    <div id="characters-loading">Сканирование спрайтов...</div>
-                    <div id="characters-scanned" class="scanned-resources"></div>
-                    <button id="scan-characters-btn" class="btn">Сканировать спрайты</button>
-                </div>
-                
-                <div class="resource-list" id="character-list">
-                    <!-- Characters will be populated here -->
-                    <div id="character-loading">Нет персонажей</div>
-                </div>
-                
-                <button class="btn" id="add-character-btn">Добавить пользовательского персонажа</button>
-            </div>
-            
-            <div class="tab-content" id="locations-tab">
-                <div class="form-group">
-                    <label>Доступные фоны</label>
-                    <div id="backgrounds-loading">Сканирование фонов...</div>
-                    <div id="backgrounds-scanned" class="scanned-resources"></div>
-                    <button id="scan-locations-btn" class="btn">Сканировать фоны</button>
-                </div>
-                
-                <div class="resource-list" id="location-list">
-                    <!-- Locations will be populated here -->
-                    <div id="location-loading">Нет локаций</div>
-                </div>
-                
-                <button class="btn" id="add-location-btn">Добавить пользовательскую локацию</button>
-            </div>
-            
-            <div class="tab-content" id="story-tab">
-                <div class="form-group">
-                    <label for="story-title">Название истории</label>
-                    <input type="text" id="story-title" placeholder="Летний лагерь">
-                </div>
-                
-                <div class="form-group">
-                    <label for="story-description">Описание сюжета</label>
-                    <textarea id="story-description" rows="4" placeholder="Опишите основную идею сюжета..."></textarea>
-                </div>
-                
-                <div class="form-group">
-                    <label>Ключевые события (для сюжетного режима)</label>
-                    <div id="events-container">
-                        <div class="form-group">
-                            <input type="text" class="story-event" placeholder="Событие, которое должно произойти...">
-                        </div>
-                    </div>
-                    <button class="btn" id="add-event-btn">Добавить событие</button>
-                </div>
-            </div>
-            
-            <div class="tab-content" id="system-tab">
-                <div class="form-group">
-                    <label for="system-prompt">Системный промпт</label>
-                    <textarea id="system-prompt" class="system-prompt-editor"></textarea>
-                </div>
-                <button class="btn" id="reset-prompt-btn">Сбросить к стандартному</button>
-            </div>
-            
-            <div class="tab-content" id="debug-tab">
-                <div class="form-group">
-                    <label>Журнал отладки</label>
-                    <div id="debug-log" style="max-height: 300px; overflow-y: auto; background: rgba(0,0,0,0.2); padding: 10px; font-family: monospace; margin-bottom: 1rem; border-radius: 5px;"></div>
-                </div>
-                
-                <div id="debug-section">
-                    <h4>Сведения о ресурсах:</h4>
-                    <div id="debug-results"></div>
-                </div>
-                
-                <button class="btn" id="clear-debug-btn">Очистить журнал</button>
-            </div>
-            
-            <div style="text-align: center; margin-top: 2rem;">
-                <button class="btn btn-secondary" id="start-game-btn">Начать игру</button>
-            </div>
+    
+    <div id="chat-container" class="chat-container">
+        <!-- Messages will be added here dynamically -->
+    </div>
+    
+    <div class="input-container">
+        <input id="context-limit" class="context-limit" type="text" value="-" title="Context window size (number of messages to include)">
+        <div class="input-wrapper">
+            <textarea id="message-input" class="message-input" placeholder="Type your message here..."></textarea>
+        </div>
+        <div class="action-buttons">
+            <button id="send-btn" class="send-btn" title="Send message">
+                📤
+            </button>
+            <button id="stop-btn" class="stop-btn" title="Stop generating" disabled>
+                ⏹️
+            </button>
+            <button id="regenerate-btn" class="regenerate-btn" title="Regenerate last response" disabled>
+                🔄
+            </button>
         </div>
     </div>
-
-    <!-- Game Screen -->
-    <div id="game">
-        <div id="background"></div>
-        <div id="characters"></div>
-        
-        <div id="dialogue-box">
-            <div id="speaker"></div>
-            <div id="dialogue-text"></div>
-            <div id="choices"></div>
-            
-            <div id="user-input-container">
-                <input type="text" id="user-input" placeholder="Введите свой ответ...">
-                <button id="send-btn">Отправить</button>
-            </div>
-            
-            <button id="regenerate-btn">Перегенерировать</button>
-        </div>
-        
-        <div id="menu-button">☰</div>
-        <div id="menu-dropdown">
-            <textarea id="direct-request" placeholder="Прямой запрос к LLM..."></textarea>
-            <button id="send-direct-btn">Отправить запрос</button>
-        </div>
-    </div>
-
-    <!-- Character Modal -->
-    <div class="modal" id="character-modal">
+    
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Редактирование персонажа</h3>
-                <button class="close-modal">&times;</button>
+                <h2 class="modal-title">Settings</h2>
+                <button id="close-modal-btn" class="close-btn">&times;</button>
             </div>
-            
             <div class="form-group">
-                <label for="character-name">Имя персонажа</label>
-                <input type="text" id="character-name">
+                <label for="model-select" class="form-label">Model</label>
+                <select id="model-select" class="form-select">
+                    <option value="openrouter:anthropic/claude-3.7-sonnet:thinking">Claude 3.7 Sonnet (Thinking)</option>
+                    <option value="openrouter:anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
+                    <option value="openrouter:anthropic/claude-3-opus">Claude 3 Opus</option>
+                    <option value="openrouter:openai/gpt-4o">GPT-4o</option>
+                    <option value="openrouter:google/gemini-pro">Gemini Pro</option>
+                    <option value="openrouter:meta-llama/llama-3-70b-instruct">Llama 3 70B</option>
+                    <option value="custom">Custom model...</option>
+                </select>
             </div>
-            
+            <div id="custom-model-container" class="form-group" style="display: none;">
+                <label for="custom-model" class="form-label">Custom Model Name</label>
+                <input id="custom-model" class="form-input" type="text" placeholder="e.g. openrouter:anthropic/claude-3-haiku">
+            </div>
             <div class="form-group">
-                <label for="character-description">Описание персонажа</label>
-                <textarea id="character-description" rows="4"></textarea>
+                <label for="temperature" class="form-label">Temperature: <span id="temperature-value">0.7</span></label>
+                <input id="temperature" class="form-input" type="range" min="0" max="1" step="0.1" value="0.7">
             </div>
-            
             <div class="form-group">
-                <label>Загрузить изображение персонажа</label>
-                <div class="file-upload" id="character-upload">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                    <p>Нажмите или перетащите файл</p>
-                </div>
-                <input type="file" id="character-file" style="display: none" accept="image/*" multiple>
-                <div class="image-preview" id="character-preview"></div>
+                <label for="max-tokens" class="form-label">Max Tokens</label>
+                <input id="max-tokens" class="form-input" type="number" min="100" max="100000" value="4096">
             </div>
-            
             <div class="form-group">
-                <label for="character-emotions">Эмоции (через запятую)</label>
-                <input type="text" id="character-emotions" value="normal, happy, sad, angry, surprised">
+                <label for="system-prompt" class="form-label">System Prompt</label>
+                <textarea id="system-prompt" class="form-textarea" placeholder="Instructions for the AI..."></textarea>
             </div>
-            
-            <button class="btn" id="save-character-btn">Сохранить</button>
+            <button id="save-settings-btn" class="save-settings-btn">Save Settings</button>
         </div>
     </div>
-
-    <!-- Location Modal -->
-    <div class="modal" id="location-modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Редактирование локации</h3>
-                <button class="close-modal">&times;</button>
-            </div>
-            
-            <div class="form-group">
-                <label for="location-name">Название локации</label>
-                <input type="text" id="location-name">
-            </div>
-            
-            <div class="form-group">
-                <label for="location-description">Описание локации</label>
-                <textarea id="location-description" rows="4"></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label>Загрузить изображение локации</label>
-                <div class="file-upload" id="location-upload">
-                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
-                    </svg>
-                    <p>Нажмите или перетащите файл</p>
-                </div>
-                <input type="file" id="location-file" style="display: none" accept="image/*">
-                <div class="image-preview" id="location-preview"></div>
-            </div>
-            
-            <button class="btn" id="save-location-btn">Сохранить</button>
-        </div>
-    </div>
-
-    <!-- Loading spinner -->
-    <div id="loading">
-        <div class="spinner"></div>
-    </div>
-
+    
     <script>
-        // Default system prompt
-        const DEFAULT_SYSTEM_PROMPT = `Ты являешься искусственным интеллектом, управляющим интерактивной визуальной новеллой. Твоя задача - создавать увлекательное повествование, управлять персонажами, сценами и развитием сюжета на основе выборов игрока.
-
-### ФОРМАТ ОТВЕТОВ
-
-Отвечай ИСКЛЮЧИТЕЛЬНО в JSON-формате:
-
-{
-  "messages": [
-    {
-      "text": "Текст диалога или повествования",
-      "speaker": "имя_персонажа или narrator",
-      "emotion": "эмоция_персонажа",
-      "background": "фон_если_меняется",
-      "sound": "звуковой_эффект_если_нужен",
-      "position": "left/center/right",
-      "choices": ["вариант1", "вариант2"]
-    }
-  ],
-  "internal_notes": "Заметки для себя, не показываются игроку",
-  "resource_request": {
-    "type": "character/background/sound",
-    "name": "имя_ресурса",
-    "description": "описание_как_должен_выглядеть"
-  }
-}
-
-### ДОСТУПНЫЕ РЕСУРСЫ
-
-## Персонажи
-{{CHARACTERS_LIST}}
-
-## Фоны
-{{BACKGROUNDS_LIST}}
-
-### ПАРАМЕТРЫ ИСТОРИИ
-
-Название: {{STORY_TITLE}}
-Описание: {{STORY_DESCRIPTION}}
-Текущий день: {{CURRENT_DAY}} {{STORY_MODE_ENABLED}}
-
-{{MODE_INSTRUCTIONS}}
-
-### ПРАВИЛА ПОВЕСТВОВАНИЯ
-
-- Создавай эмоционально насыщенные диалоги, соответствующие характеру персонажей
-- Развивай историю последовательно, учитывая предыдущие выборы игрока
-- Предлагай выборы в ключевых моментах (не более 2-4 вариантов)
-- Используй смену фонов для обозначения перемещений между локациями
-- Меняй эмоции персонажей в соответствии с ситуацией
-- Персонажи могут находиться в разных позициях: left, center, right
-
-### СЖАТАЯ ИСТОРИЯ ПРЕДЫДУЩИХ СОБЫТИЙ
-{{COMPRESSED_HISTORY}}
-
-### НАЧАЛО ИСТОРИИ
-
-Начни историю с прибытия в пионерский лагерь. Представь главного персонажа (игрока) и хотя бы одного второстепенного персонажа. Опиши обстановку, создай интригу или цель, которая будет мотивировать игрока продолжать историю.
-
-### ОГРАНИЧЕНИЯ
-
-- Все персонажи старше 21 года
-- Не нарушай установленный сеттинг и жанр
-- Отвечай строго в указанном JSON-формате для корректной работы игры`;
-
-        // Game State
-        const gameState = {
-            characters: {},
-            backgrounds: {},
-            currentBackground: "",
-            activeCharacters: {},
-            dialogue: [],
-            context: [],
-            focusWindow: [], // Last 5 messages for context retention
-            compressedHistory: "", // Compressed history of older messages
-            settings: {
-                model: "google/gemini-2.0-flash-thinking-exp:free",
-                apiKeys: [""],
-                currentKeyIndex: 0,
-                temperature: 0.2,
-                maxTokens: 30000,
-                modes: {
-                    romance: false,
-                    cuteness: false,
-                    cringe: false,
-                    story: false
-                },
-                storyTitle: "",
-                storyDescription: "",
-                storyEvents: [],
-                systemPrompt: DEFAULT_SYSTEM_PROMPT
+        // Настройка библиотеки marked для Markdown
+        marked.setOptions({
+            renderer: new marked.Renderer(),
+            highlight: function(code, lang) {
+                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                return hljs.highlight(code, { language }).value;
             },
-            gameDay: 1,
-            waitingForResponse: false,
-            lastResponse: null,
-            userResources: {
-                characters: {},
-                backgrounds: {}
-            },
-            debug: {
-                logs: [],
-                testResults: {}
-            },
-            scannedResources: {
-                characterSprites: [],
-                backgroundImages: []
-            }
+            langPrefix: 'hljs language-', // добавляем префикс для CSS-классов highlight.js
+            breaks: true,                  // разрешаем возврат каретки как <br>
+            gfm: true,                     // разрешаем GitHub Flavored Markdown
+            headerIds: false,              // отключаем автоматические ID для заголовков
+            sanitize: false                // не санитайзим HTML (marked обрабатывает это безопасно)
+        });
+        
+        // Configuration object with default settings
+        const defaultConfig = {
+            model: "openrouter:anthropic/claude-3.7-sonnet:thinking",
+            temperature: 0.7,
+            maxTokens: 4096,
+            systemPrompt: ""
         };
-
-        // DOM Elements
-        const elements = {
-            // Screens
-            disclaimer: document.getElementById('disclaimer'),
-            settings: document.getElementById('settings'),
-            game: document.getElementById('game'),
-            
-            // Settings elements
-            modelSelect: document.getElementById('model-select'),
-            apiKeysContainer: document.getElementById('api-keys-container'),
-            temperature: document.getElementById('temperature'),
-            tempValue: document.getElementById('temp-value'),
-            maxTokens: document.getElementById('max-tokens'),
-            romanceMode: document.getElementById('romance-mode'),
-            cuteMode: document.getElementById('cute-mode'),
-            cringeMode: document.getElementById('cringe-mode'),
-            storyMode: document.getElementById('story-mode'),
-            storyTitle: document.getElementById('story-title'),
-            storyDescription: document.getElementById('story-description'),
-            characterList: document.getElementById('character-list'),
-            locationList: document.getElementById('location-list'),
-            eventsContainer: document.getElementById('events-container'),
-            systemPrompt: document.getElementById('system-prompt'),
-            debugLog: document.getElementById('debug-log'),
-            debugResults: document.getElementById('debug-results'),
-            
-            // Scanned resources
-            charactersScanned: document.getElementById('characters-scanned'),
-            charactersLoading: document.getElementById('characters-loading'),
-            backgroundsScanned: document.getElementById('backgrounds-scanned'),
-            backgroundsLoading: document.getElementById('backgrounds-loading'),
-            
-            // Game elements
-            background: document.getElementById('background'),
-            characters: document.getElementById('characters'),
-            speaker: document.getElementById('speaker'),
-            dialogueText: document.getElementById('dialogue-text'),
-            choices: document.getElementById('choices'),
-            userInput: document.getElementById('user-input'),
-            sendBtn: document.getElementById('send-btn'),
-            regenerateBtn: document.getElementById('regenerate-btn'),
-            menuButton: document.getElementById('menu-button'),
-            menuDropdown: document.getElementById('menu-dropdown'),
-            directRequest: document.getElementById('direct-request'),
-            sendDirectBtn: document.getElementById('send-direct-btn'),
-            
-            // Modals
-            characterModal: document.getElementById('character-modal'),
-            locationModal: document.getElementById('location-modal'),
-            
-            // Loading
-            loading: document.getElementById('loading')
-        };
-
-        // Debug function
-        function debugLog(message, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString();
-            const logEntry = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
-            gameState.debug.logs.push(logEntry);
-            
-            // Update UI if available
-            if (elements.debugLog) {
-                const logElement = document.createElement('div');
-                logElement.className = `log-entry log-${type}`;
-                logElement.textContent = logEntry;
-                elements.debugLog.appendChild(logElement);
-                elements.debugLog.scrollTop = elements.debugLog.scrollHeight;
-            }
-            
-            // Also log to console
-            console.log(logEntry);
-        }
-
-        // Event Listeners
-        document.getElementById('accept-btn').addEventListener('click', () => {
-            elements.disclaimer.style.display = 'none';
-            elements.settings.style.display = 'block';
-            loadSettings();
-            
-            // Start scanning resources
-            scanCharacterSprites();
-            scanBackgroundImages();
-        });
-
-        // Tab switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                // Remove active class from all tabs
-                document.querySelectorAll('.tab-btn').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-                
-                // Add active class to clicked tab
-                btn.classList.add('active');
-                document.getElementById(`${btn.dataset.tab}-tab`).classList.add('active');
-            });
-        });
-
-        // Temperature slider
-        elements.temperature.addEventListener('input', () => {
-            elements.tempValue.textContent = elements.temperature.value;
-        });
-
-        // Start game button
-        document.getElementById('start-game-btn').addEventListener('click', () => {
-            saveSettings();
-            startGame();
-        });
-
-        // Menu toggle
-        elements.menuButton.addEventListener('click', () => {
-            elements.menuDropdown.style.display = elements.menuDropdown.style.display === 'none' ? 'block' : 'none';
-        });
-
-        // Add character button
-        document.getElementById('add-character-btn').addEventListener('click', () => {
-            openCharacterModal();
-        });
-
-        // Add location button
-        document.getElementById('add-location-btn').addEventListener('click', () => {
-            openLocationModal();
-        });
-
-        // Add event button
-        document.getElementById('add-event-btn').addEventListener('click', () => {
-            const eventInput = document.createElement('div');
-            eventInput.className = 'form-group';
-            eventInput.innerHTML = `<input type="text" class="story-event" placeholder="Событие, которое должно произойти...">`;
-            elements.eventsContainer.appendChild(eventInput);
-        });
-
-        // Close modal buttons
-        document.querySelectorAll('.close-modal').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.modal').forEach(modal => {
-                    modal.style.display = 'none';
-                });
-            });
-        });
-
-        // Save character button
-        document.getElementById('save-character-btn').addEventListener('click', saveCharacter);
-
-        // Save location button
-        document.getElementById('save-location-btn').addEventListener('click', saveLocation);
-
-        // Send user input
-        elements.sendBtn.addEventListener('click', () => sendUserInput());
-        elements.userInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendUserInput();
-        });
-
-        // Regenerate button
-        elements.regenerateBtn.addEventListener('click', regenerateResponse);
-
-        // Send direct request
-        elements.sendDirectBtn.addEventListener('click', sendDirectRequest);
-
-        // Add API key button
-        document.getElementById('add-api-key-btn').addEventListener('click', () => {
-            addApiKeyField();
-        });
-
-        // Reset system prompt button
-        document.getElementById('reset-prompt-btn').addEventListener('click', () => {
-            elements.systemPrompt.value = DEFAULT_SYSTEM_PROMPT;
-        });
-
-        // Character file upload
-        document.getElementById('character-upload').addEventListener('click', () => {
-            document.getElementById('character-file').click();
-        });
-
-        document.getElementById('character-file').addEventListener('change', handleCharacterFileSelect);
-
-        // Character file drop zone
-        const characterDropZone = document.getElementById('character-upload');
-        characterDropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            characterDropZone.style.backgroundColor = 'rgba(0,0,0,0.4)';
-        });
-
-        characterDropZone.addEventListener('dragleave', () => {
-            characterDropZone.style.backgroundColor = '';
-        });
-
-        characterDropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            characterDropZone.style.backgroundColor = '';
-            handleCharacterFileDrop(e);
-        });
-
-        // Location file upload
-        document.getElementById('location-upload').addEventListener('click', () => {
-            document.getElementById('location-file').click();
-        });
-
-        document.getElementById('location-file').addEventListener('change', handleLocationFileSelect);
-
-        // Location file drop zone
-        const locationDropZone = document.getElementById('location-upload');
-        locationDropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            locationDropZone.style.backgroundColor = 'rgba(0,0,0,0.4)';
-        });
-
-        locationDropZone.addEventListener('dragleave', () => {
-            locationDropZone.style.backgroundColor = '';
-        });
-
-        locationDropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            locationDropZone.style.backgroundColor = '';
-            handleLocationFileDrop(e);
-        });
-
-        // Scan buttons
-        document.getElementById('scan-characters-btn').addEventListener('click', () => {
-            scanCharacterSprites();
-        });
         
-        document.getElementById('scan-locations-btn').addEventListener('click', () => {
-            scanBackgroundImages();
-        });
-
-        // Debug button
-        document.getElementById('clear-debug-btn')?.addEventListener('click', () => {
-            gameState.debug.logs = [];
-            elements.debugLog.innerHTML = '';
-        });
-
-        // Image checking utility function
-        function checkImageExists(url) {
-            return new Promise(resolve => {
-                const img = new Image();
-                img.onload = () => resolve(true);
-                img.onerror = () => resolve(false);
-                img.src = url;
-            });
-        }
-
-        // Function to scan the "Алиса" folder for character sprites
-        async function scanCharacterSprites() {
-            debugLog('Начинаем сканирование спрайтов...', 'info');
-            elements.charactersLoading.textContent = 'Сканирование спрайтов...';
-            elements.charactersScanned.innerHTML = '';
-            
-            try {
-                // Try to fetch the Алиса directory using fetch directly
-                const response = await fetch('Алиса/');
-                const html = await response.text();
-                
-                // Parse the HTML to find all sprite files
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const links = Array.from(doc.querySelectorAll('a'))
-                    .filter(a => a.href.endsWith('.png'))
-                    .map(a => {
-                        const href = a.href;
-                        const filename = href.substring(href.lastIndexOf('/') + 1);
-                        return {
-                            path: `Алиса/${filename}`,
-                            filename: filename,
-                            name: filename.replace('.png', '')
-                        };
-                    });
-                
-                if (links.length > 0) {
-                    gameState.scannedResources.characterSprites = links;
-                    debugLog(`Найдено ${links.length} спрайтов персонажа Алиса`, 'success');
-                    
-                    // Create character if not exists
-                    if (!gameState.characters.Алиса) {
-                        const emotions = links.map(sprite => sprite.name);
-                        
-                        gameState.characters.Алиса = {
-                            name: 'Алиса',
-                            description: 'Рыжеволосая спортивная девушка, яркая и напористая',
-                            sprites: links.map(sprite => sprite.filename),
-                            emotions: emotions
-                        };
-                        
-                        updateCharacterList();
-                    }
-                    
-                    // Display thumbnails
-                    displayCharacterSprites(links);
-                } else {
-                    // Fallback - try common emotions
-                    debugLog('Не удалось найти спрайты, пробуем стандартные эмоции', 'warning');
-                    const commonEmotions = ['normal', 'happy', 'angry', 'sad', 'surprised'];
-                    const foundSprites = [];
-                    
-                    for (const emotion of commonEmotions) {
-                        const path = `Алиса/${emotion}.png`;
-                        const exists = await checkImageExists(path);
-                        if (exists) {
-                            foundSprites.push({
-                                path: path,
-                                filename: `${emotion}.png`,
-                                name: emotion
-                            });
-                        }
-                    }
-                    
-                    if (foundSprites.length > 0) {
-                        gameState.scannedResources.characterSprites = foundSprites;
-                        debugLog(`Найдено ${foundSprites.length} стандартных спрайтов`, 'success');
-                        
-                        // Create character if not exists
-                        if (!gameState.characters.Алиса) {
-                            const emotions = foundSprites.map(sprite => sprite.name);
-                            
-                            gameState.characters.Алиса = {
-                                name: 'Алиса',
-                                description: 'Рыжеволосая спортивная девушка, яркая и напористая',
-                                sprites: foundSprites.map(sprite => sprite.filename),
-                                emotions: emotions
-                            };
-                            
-                            updateCharacterList();
-                        }
-                        
-                        // Display thumbnails
-                        displayCharacterSprites(foundSprites);
-                    } else {
-                        elements.charactersLoading.textContent = 'Спрайты не найдены';
-                        debugLog('Не удалось найти спрайты персонажа', 'error');
-                    }
-                }
-            } catch (error) {
-                console.error('Ошибка при сканировании спрайтов:', error);
-                debugLog(`Ошибка при сканировании спрайтов: ${error.message}`, 'error');
-                
-                // Try fallback method for character sprites
-                tryFallbackForCharacters();
-            }
-        }
+        // Current configuration (will be loaded from localStorage if available)
+        let config = { ...defaultConfig };
         
-        // Fallback method for character sprites
-        async function tryFallbackForCharacters() {
-            const commonEmotions = ['normal', 'happy', 'angry', 'sad', 'surprised'];
-            const foundSprites = [];
-            
-            for (const emotion of commonEmotions) {
-                const path = `Алиса/${emotion}.png`;
-                const exists = await checkImageExists(path);
-                if (exists) {
-                    foundSprites.push({
-                        path: path,
-                        filename: `${emotion}.png`,
-                        name: emotion
-                    });
-                    debugLog(`Найден спрайт: ${path}`, 'success');
-                }
-            }
-            
-            if (foundSprites.length > 0) {
-                gameState.scannedResources.characterSprites = foundSprites;
-                debugLog(`Найдено ${foundSprites.length} спрайтов с помощью запасного метода`, 'success');
-                
-                // Create character if not exists
-                if (!gameState.characters.Алиса) {
-                    const emotions = foundSprites.map(sprite => sprite.name);
-                    
-                    gameState.characters.Алиса = {
-                        name: 'Алиса',
-                        description: 'Рыжеволосая спортивная девушка, яркая и напористая',
-                        sprites: foundSprites.map(sprite => sprite.filename),
-                        emotions: emotions
-                    };
-                    
-                    updateCharacterList();
-                }
-                
-                // Display thumbnails
-                displayCharacterSprites(foundSprites);
-            } else {
-                elements.charactersLoading.textContent = 'Спрайты не найдены';
-                debugLog('Не удалось найти спрайты даже запасным методом', 'error');
-            }
-        }
+        // Chat messages
+        let messages = [];
         
-        // Display character sprites thumbnails
-        function displayCharacterSprites(sprites) {
-            elements.charactersLoading.style.display = 'none';
-            elements.charactersScanned.innerHTML = '';
-            
-            sprites.forEach(sprite => {
-                const thumbnail = document.createElement('div');
-                thumbnail.className = 'resource-thumbnail';
-                thumbnail.style.backgroundImage = `url('${sprite.path}')`;
-                
-                const nameLabel = document.createElement('div');
-                nameLabel.className = 'resource-thumbnail-name';
-                nameLabel.textContent = sprite.name;
-                
-                thumbnail.appendChild(nameLabel);
-                elements.charactersScanned.appendChild(thumbnail);
-                
-                // Add click event to add this sprite as a character
-                thumbnail.addEventListener('click', () => {
-                    const character = sprite.path.split('/')[0]; // Extract character name from path
-                    addSpriteAsCharacter(character, sprite);
-                });
-            });
-        }
+        // Controller for stopping generation
+        let abortController = null;
         
-        // Add sprite as character
-        function addSpriteAsCharacter(characterName, sprite) {
-            // Check if we already have this character
-            if (!gameState.characters[characterName]) {
-                gameState.characters[characterName] = {
-                    name: characterName,
-                    description: `${characterName} - персонаж визуальной новеллы`,
-                    sprites: [sprite.filename],
-                    emotions: [sprite.name]
-                };
-                
-                debugLog(`Добавлен персонаж ${characterName} из спрайта ${sprite.path}`, 'success');
-                updateCharacterList();
-            } else {
-                // Just add this sprite/emotion if we don't have it
-                if (!gameState.characters[characterName].sprites.includes(sprite.filename)) {
-                    gameState.characters[characterName].sprites.push(sprite.filename);
-                    gameState.characters[characterName].emotions.push(sprite.name);
-                    
-                    debugLog(`Добавлена эмоция ${sprite.name} для персонажа ${characterName}`, 'success');
-                    updateCharacterList();
-                }
-            }
-        }
-
-        // Function to scan the "background" folder for images
-        async function scanBackgroundImages() {
-            debugLog('Начинаем сканирование фонов...', 'info');
-            elements.backgroundsLoading.textContent = 'Сканирование фонов...';
-            elements.backgroundsScanned.innerHTML = '';
-            
-            try {
-                // Try to fetch the background directory using fetch directly
-                const response = await fetch('background/');
-                const html = await response.text();
-                
-                // Parse the HTML to find all background files
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(html, 'text/html');
-                const links = Array.from(doc.querySelectorAll('a'))
-                    .filter(a => a.href.endsWith('.jpg') || a.href.endsWith('.png'))
-                    .map(a => {
-                        const href = a.href;
-                        const filename = href.substring(href.lastIndexOf('/') + 1);
-                        return {
-                            path: `background/${filename}`,
-                            filename: filename,
-                            name: filename.replace(/\.[^/.]+$/, "") // Remove file extension
-                        };
-                    });
-                
-                if (links.length > 0) {
-                    gameState.scannedResources.backgroundImages = links;
-                    debugLog(`Найдено ${links.length} фоновых изображений`, 'success');
-                    
-                    // Add the gate background by default if available
-                    const gateBackground = links.find(bg => 
-                        bg.filename.toLowerCase().includes('вход') || 
-                        bg.filename.toLowerCase().includes('ворота')
-                    );
-                    
-                    if (gateBackground) {
-                        const key = gateBackground.name.replace(/\s+/g, '');
-                        
-                        if (!gameState.backgrounds[key]) {
-                            gameState.backgrounds[key] = {
-                                name: gateBackground.name,
-                                description: 'Вход в пионерский лагерь с воротами',
-                                file: gateBackground.path
-                            };
-                            
-                            updateLocationList();
-                        }
-                    }
-                    
-                    // Display thumbnails
-                    displayBackgroundImages(links);
-                } else {
-                    // Fallback - try common background
-                    debugLog('Не удалось найти фоны, пробуем стандартные', 'warning');
-                    const commonBackgrounds = ['ВходВоротаВпионерлагерь.jpg', 'Пляж.jpg', 'Столовая.jpg'];
-                    const foundBackgrounds = [];
-                    
-                    for (const bg of commonBackgrounds) {
-                        const path = `background/${bg}`;
-                        const exists = await checkImageExists(path);
-                        if (exists) {
-                            foundBackgrounds.push({
-                                path: path,
-                                filename: bg,
-                                name: bg.replace(/\.[^/.]+$/, "")
-                            });
-                        }
-                    }
-                    
-                    if (foundBackgrounds.length > 0) {
-                        gameState.scannedResources.backgroundImages = foundBackgrounds;
-                        debugLog(`Найдено ${foundBackgrounds.length} стандартных фонов`, 'success');
-                        
-                        // Add backgrounds to game
-                        foundBackgrounds.forEach(bg => {
-                            const key = bg.name.replace(/\s+/g, '');
-                            
-                            if (!gameState.backgrounds[key]) {
-                                gameState.backgrounds[key] = {
-                                    name: bg.name,
-                                    description: `Фон: ${bg.name}`,
-                                    file: bg.path
-                                };
-                            }
-                        });
-                        
-                        updateLocationList();
-                        
-                        // Display thumbnails
-                        displayBackgroundImages(foundBackgrounds);
-                    } else {
-                        elements.backgroundsLoading.textContent = 'Фоны не найдены';
-                        debugLog('Не удалось найти фоны', 'error');
-                    }
-                }
-            } catch (error) {
-                console.error('Ошибка при сканировании фонов:', error);
-                debugLog(`Ошибка при сканировании фонов: ${error.message}`, 'error');
-                
-                // Try fallback method for backgrounds
-                tryFallbackForBackgrounds();
-            }
-        }
+        // DOM elements
+        const chatContainer = document.getElementById('chat-container');
+        const messageInput = document.getElementById('message-input');
+        const contextLimit = document.getElementById('context-limit');
+        const sendBtn = document.getElementById('send-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const regenerateBtn = document.getElementById('regenerate-btn');
+        const settingsBtn = document.getElementById('settings-btn');
+        const downloadBtn = document.getElementById('download-btn');
+        const settingsModal = document.getElementById('settings-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const modelSelect = document.getElementById('model-select');
+        const customModelContainer = document.getElementById('custom-model-container');
+        const customModel = document.getElementById('custom-model');
+        const temperature = document.getElementById('temperature');
+        const temperatureValue = document.getElementById('temperature-value');
+        const maxTokens = document.getElementById('max-tokens');
+        const systemPrompt = document.getElementById('system-prompt');
+        const saveSettingsBtn = document.getElementById('save-settings-btn');
         
-        // Fallback method for backgrounds
-        async function tryFallbackForBackgrounds() {
-            const commonBackgrounds = ['ВходВоротаВпионерлагерь.jpg', 'Пляж.jpg', 'Столовая.jpg'];
-            const foundBackgrounds = [];
-            
-            for (const bg of commonBackgrounds) {
-                const path = `background/${bg}`;
-                const exists = await checkImageExists(path);
-                if (exists) {
-                    foundBackgrounds.push({
-                        path: path,
-                        filename: bg,
-                        name: bg.replace(/\.[^/.]+$/, "")
-                    });
-                    debugLog(`Найден фон: ${path}`, 'success');
-                }
-            }
-            
-            if (foundBackgrounds.length > 0) {
-                gameState.scannedResources.backgroundImages = foundBackgrounds;
-                debugLog(`Найдено ${foundBackgrounds.length} фонов с помощью запасного метода`, 'success');
-                
-                // Add backgrounds to game
-                foundBackgrounds.forEach(bg => {
-                    const key = bg.name.replace(/\s+/g, '');
-                    
-                    if (!gameState.backgrounds[key]) {
-                        gameState.backgrounds[key] = {
-                            name: bg.name,
-                            description: `Фон: ${bg.name}`,
-                            file: bg.path
-                        };
-                    }
-                });
-                
-                updateLocationList();
-                
-                // Display thumbnails
-                displayBackgroundImages(foundBackgrounds);
-            } else {
-                elements.backgroundsLoading.textContent = 'Фоны не найдены';
-                debugLog('Не удалось найти фоны даже запасным методом', 'error');
-            }
-        }
-        
-        // Display background images thumbnails
-        function displayBackgroundImages(backgrounds) {
-            elements.backgroundsLoading.style.display = 'none';
-            elements.backgroundsScanned.innerHTML = '';
-            
-            backgrounds.forEach(bg => {
-                const thumbnail = document.createElement('div');
-                thumbnail.className = 'resource-thumbnail';
-                thumbnail.style.backgroundImage = `url('${bg.path}')`;
-                
-                const nameLabel = document.createElement('div');
-                nameLabel.className = 'resource-thumbnail-name';
-                nameLabel.textContent = bg.name;
-                
-                thumbnail.appendChild(nameLabel);
-                elements.backgroundsScanned.appendChild(thumbnail);
-                
-                // Add click event to add this background
-                thumbnail.addEventListener('click', () => {
-                    addBackgroundImage(bg);
-                });
-            });
-        }
-        
-        // Add background image
-        function addBackgroundImage(background) {
-            const key = background.name.replace(/\s+/g, '');
-            
-            // Check if we already have this background
-            if (!gameState.backgrounds[key]) {
-                gameState.backgrounds[key] = {
-                    name: background.name,
-                    description: `Фон: ${background.name}`,
-                    file: background.path
-                };
-                
-                debugLog(`Добавлен фон ${background.name} из ${background.path}`, 'success');
-                updateLocationList();
-            }
-        }
-
-        function loadSettings() {
-            try {
-                const savedSettings = localStorage.getItem('vnSettings');
-                if (savedSettings) {
-                    const parsed = JSON.parse(savedSettings);
-                    gameState.settings = {...gameState.settings, ...parsed};
-                    
-                    // Update UI
-                    elements.modelSelect.value = gameState.settings.model;
-                    
-                    // Handle API keys
-                    updateApiKeysUI();
-                    
-                    elements.temperature.value = gameState.settings.temperature;
-                    elements.tempValue.textContent = gameState.settings.temperature;
-                    elements.maxTokens.value = gameState.settings.maxTokens;
-                    elements.romanceMode.checked = gameState.settings.modes.romance;
-                    elements.cuteMode.checked = gameState.settings.modes.cuteness;
-                    elements.cringeMode.checked = gameState.settings.modes.cringe;
-                    elements.storyMode.checked = gameState.settings.modes.story;
-                    elements.storyTitle.value = gameState.settings.storyTitle || '';
-                    elements.storyDescription.value = gameState.settings.storyDescription || '';
-                    
-                    // System prompt
-                    elements.systemPrompt.value = gameState.settings.systemPrompt || DEFAULT_SYSTEM_PROMPT;
-                    
-                    // Load characters
-                    if (gameState.settings.characters) {
-                        gameState.characters = gameState.settings.characters;
-                        updateCharacterList();
-                    }
-                    
-                    // Load backgrounds
-                    if (gameState.settings.backgrounds) {
-                        gameState.backgrounds = gameState.settings.backgrounds;
-                        updateLocationList();
-                    }
-                    
-                    // Load user resources
-                    if (gameState.settings.userResources) {
-                        gameState.userResources = gameState.settings.userResources;
-                    }
-                    
-                    // Load story events
-                    if (gameState.settings.storyEvents && gameState.settings.storyEvents.length > 0) {
-                        elements.eventsContainer.innerHTML = '';
-                        gameState.settings.storyEvents.forEach(event => {
-                            const eventInput = document.createElement('div');
-                            eventInput.className = 'form-group';
-                            eventInput.innerHTML = `<input type="text" class="story-event" value="${event}" placeholder="Событие, которое должно произойти...">`;
-                            elements.eventsContainer.appendChild(eventInput);
-                        });
-                    }
-                    
-                    debugLog('Настройки загружены из localStorage', 'success');
-                } else {
-                    // First time setup - initialize with default values
-                    elements.systemPrompt.value = DEFAULT_SYSTEM_PROMPT;
-                    debugLog('Первый запуск, установлены стандартные настройки', 'info');
-                }
-            } catch (error) {
-                console.error('Error loading settings:', error);
-                debugLog(`Ошибка при загрузке настроек: ${error.message}`, 'error');
-                elements.systemPrompt.value = DEFAULT_SYSTEM_PROMPT;
-            }
-        }
-
-        function saveSettings() {
-            try {
-                // API keys collection
-                const apiKeys = [];
-                document.querySelectorAll('.api-key-input').forEach(input => {
-                    if (input.value.trim()) {
-                        apiKeys.push(input.value.trim());
-                    }
-                });
-                
-                gameState.settings.model = elements.modelSelect.value;
-                gameState.settings.apiKeys = apiKeys;
-                gameState.settings.temperature = parseFloat(elements.temperature.value);
-                gameState.settings.maxTokens = parseInt(elements.maxTokens.value);
-                gameState.settings.modes.romance = elements.romanceMode.checked;
-                gameState.settings.modes.cuteness = elements.cuteMode.checked;
-                gameState.settings.modes.cringe = elements.cringeMode.checked;
-                gameState.settings.modes.story = elements.storyMode.checked;
-                gameState.settings.storyTitle = elements.storyTitle.value;
-                gameState.settings.storyDescription = elements.storyDescription.value;
-                gameState.settings.systemPrompt = elements.systemPrompt.value;
-                
-                // Save story events
-                gameState.settings.storyEvents = [];
-                document.querySelectorAll('.story-event').forEach(input => {
-                    if (input.value.trim()) {
-                        gameState.settings.storyEvents.push(input.value.trim());
-                    }
-                });
-                
-                // Save to localStorage
-                gameState.settings.characters = gameState.characters;
-                gameState.settings.backgrounds = gameState.backgrounds;
-                gameState.settings.userResources = gameState.userResources;
-                localStorage.setItem('vnSettings', JSON.stringify(gameState.settings));
-                
-                debugLog('Настройки сохранены в localStorage', 'success');
-            } catch (error) {
-                console.error('Error saving settings:', error);
-                debugLog(`Ошибка при сохранении настроек: ${error.message}`, 'error');
-            }
-        }
-
-        function updateApiKeysUI() {
-            elements.apiKeysContainer.innerHTML = '';
-            
-            if (!gameState.settings.apiKeys || gameState.settings.apiKeys.length === 0) {
-                // Add one empty field if no keys
-                addApiKeyField();
-                return;
-            }
-            
-            gameState.settings.apiKeys.forEach(key => {
-                addApiKeyField(key);
-            });
-        }
-
-        function addApiKeyField(value = '') {
-            const keyItem = document.createElement('div');
-            keyItem.className = 'api-key-item';
-            keyItem.innerHTML = `
-                <input type="text" class="api-key-input" value="${value}" placeholder="sk-or-...">
-                <button class="remove-api-key-btn">✕</button>
-            `;
-            elements.apiKeysContainer.appendChild(keyItem);
-            
-            // Add remove event listener
-            keyItem.querySelector('.remove-api-key-btn').addEventListener('click', () => {
-                if (document.querySelectorAll('.api-key-item').length > 1) {
-                    keyItem.remove();
-                } else {
-                    keyItem.querySelector('.api-key-input').value = '';
-                }
-            });
-        }
-
-        function updateCharacterList() {
-            elements.characterList.innerHTML = '';
-            
-            if (Object.keys(gameState.characters).length === 0 && Object.keys(gameState.userResources.characters).length === 0) {
-                elements.characterList.innerHTML = '<div id="character-loading">Нет персонажей</div>';
-                return;
-            }
-            
-            Object.values(gameState.characters).forEach(character => {
-                const item = document.createElement('div');
-                item.className = 'resource-item';
-                item.innerHTML = `
-                    <div class="resource-item-name">${character.name} (${character.emotions?.length || 0} эмоций)</div>
-                    <div class="resource-controls">
-                        <button class="edit-btn" data-name="${character.name}">✏️</button>
-                        <button class="delete-btn" data-name="${character.name}">🗑️</button>
-                    </div>
-                `;
-                elements.characterList.appendChild(item);
-            });
-            
-            // Add user-uploaded characters
-            Object.values(gameState.userResources.characters).forEach(character => {
-                const item = document.createElement('div');
-                item.className = 'resource-item';
-                item.innerHTML = `
-                    <div class="resource-item-name">${character.name} (загруженный)</div>
-                    <div class="resource-controls">
-                        <button class="edit-btn" data-name="${character.name}" data-user="true">✏️</button>
-                        <button class="delete-btn" data-name="${character.name}" data-user="true">🗑️</button>
-                    </div>
-                `;
-                elements.characterList.appendChild(item);
-            });
-            
-            // Add event listeners to edit and delete buttons
-            document.querySelectorAll('#character-list .edit-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (btn.dataset.user === 'true') {
-                        openCharacterModal(btn.dataset.name, true);
-                    } else {
-                        openCharacterModal(btn.dataset.name);
-                    }
-                });
-            });
-            
-            document.querySelectorAll('#character-list .delete-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const isUserResource = btn.dataset.user === 'true';
-                    if (confirm(`Удалить персонажа ${btn.dataset.name}?`)) {
-                        if (isUserResource) {
-                            delete gameState.userResources.characters[btn.dataset.name];
-                        } else {
-                            delete gameState.characters[btn.dataset.name];
-                        }
-                        updateCharacterList();
-                    }
-                });
-            });
-        }
-
-        function updateLocationList() {
-            elements.locationList.innerHTML = '';
-            
-            if (Object.keys(gameState.backgrounds).length === 0 && Object.keys(gameState.userResources.backgrounds).length === 0) {
-                elements.locationList.innerHTML = '<div id="location-loading">Нет локаций</div>';
-                return;
-            }
-            
-            Object.values(gameState.backgrounds).forEach(location => {
-                const item = document.createElement('div');
-                item.className = 'resource-item';
-                item.innerHTML = `
-                    <div class="resource-item-name">${location.name}</div>
-                    <div class="resource-controls">
-                        <button class="edit-btn" data-name="${location.name}">✏️</button>
-                        <button class="delete-btn" data-name="${location.name}">🗑️</button>
-                    </div>
-                `;
-                elements.locationList.appendChild(item);
-            });
-            
-            // Add user-uploaded backgrounds
-            Object.values(gameState.userResources.backgrounds).forEach(location => {
-                const item = document.createElement('div');
-                item.className = 'resource-item';
-                item.innerHTML = `
-                    <div class="resource-item-name">${location.name} (загруженный)</div>
-                    <div class="resource-controls">
-                        <button class="edit-btn" data-name="${location.name}" data-user="true">✏️</button>
-                        <button class="delete-btn" data-name="${location.name}" data-user="true">🗑️</button>
-                    </div>
-                `;
-                elements.locationList.appendChild(item);
-            });
-            
-            // Add event listeners to edit and delete buttons
-            document.querySelectorAll('#location-list .edit-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    if (btn.dataset.user === 'true') {
-                        openLocationModal(btn.dataset.name, true);
-                    } else {
-                        openLocationModal(btn.dataset.name);
-                    }
-                });
-            });
-            
-            document.querySelectorAll('#location-list .delete-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const isUserResource = btn.dataset.user === 'true';
-                    if (confirm(`Удалить локацию ${btn.dataset.name}?`)) {
-                        if (isUserResource) {
-                            delete gameState.userResources.backgrounds[btn.dataset.name];
-                        } else {
-                            const locationKey = Object.keys(gameState.backgrounds).find(
-                                key => gameState.backgrounds[key].name === btn.dataset.name
-                            );
-                            if (locationKey) {
-                                delete gameState.backgrounds[locationKey];
-                            }
-                        }
-                        updateLocationList();
-                    }
-                });
-            });
-        }
-
-        function openCharacterModal(characterName = null, isUserResource = false) {
-            const modal = elements.characterModal;
-            const nameInput = document.getElementById('character-name');
-            const descriptionInput = document.getElementById('character-description');
-            const emotionsInput = document.getElementById('character-emotions');
-            const preview = document.getElementById('character-preview');
-            
-            // Clear previous data
-            preview.style.backgroundImage = '';
-            
-            if (characterName) {
-                let character;
-                
-                if (isUserResource) {
-                    character = gameState.userResources.characters[characterName];
-                } else {
-                    character = gameState.characters[characterName];
-                }
-                
-                if (character) {
-                    nameInput.value = character.name;
-                    descriptionInput.value = character.description;
-                    emotionsInput.value = character.emotions ? character.emotions.join(', ') : 'normal';
-                    
-                    // Handle uploaded character
-                    if (isUserResource && character.image) {
-                        preview.style.backgroundImage = `url(${character.image})`;
-                    } else if (!isUserResource) {
-                        // Try to show preview of the character
-                        if (character.sprites && character.sprites.length > 0) {
-                            const firstSprite = character.sprites[0];
-                            const spritePath = `${character.name}/${firstSprite}`;
-                            preview.style.backgroundImage = `url('${spritePath}')`;
-                        }
-                    }
-                    
-                    // Store original data for update
-                    nameInput.dataset.originalName = characterName;
-                    nameInput.dataset.isUser = isUserResource ? 'true' : 'false';
-                } else {
-                    console.error('Character not found:', characterName);
-                    return;
-                }
-            } else {
-                // New character
-                nameInput.value = '';
-                descriptionInput.value = '';
-                emotionsInput.value = 'normal, happy, sad, angry, surprised';
-                nameInput.dataset.originalName = '';
-                nameInput.dataset.isUser = 'true'; // New characters are user resources
-            }
-            
-            modal.style.display = 'flex';
-        }
-
-        function openLocationModal(locationName = null, isUserResource = false) {
-            const modal = elements.locationModal;
-            const nameInput = document.getElementById('location-name');
-            const descriptionInput = document.getElementById('location-description');
-            const preview = document.getElementById('location-preview');
-            
-            if (locationName) {
-                let location;
-                
-                if (isUserResource) {
-                    location = gameState.userResources.backgrounds[locationName];
-                    
-                    if (location) {
-                        nameInput.value = location.name;
-                        descriptionInput.value = location.description;
-                        preview.style.backgroundImage = `url(${location.image})`;
-                        
-                        // Store original data for update
-                        nameInput.dataset.originalName = locationName;
-                        nameInput.dataset.isUser = 'true';
-                    }
-                } else {
-                    const locationKey = Object.keys(gameState.backgrounds).find(
-                        key => gameState.backgrounds[key].name === locationName
-                    );
-                    
-                    if (locationKey && gameState.backgrounds[locationKey]) {
-                        const location = gameState.backgrounds[locationKey];
-                        nameInput.value = location.name;
-                        descriptionInput.value = location.description;
-                        preview.style.backgroundImage = `url('${location.file}')`;
-                        
-                        // Store original data for update
-                        nameInput.dataset.originalKey = locationKey;
-                        nameInput.dataset.isUser = 'false';
-                    }
-                }
-            } else {
-                // New location
-                nameInput.value = '';
-                descriptionInput.value = '';
-                preview.style.backgroundImage = '';
-                nameInput.dataset.originalKey = '';
-                nameInput.dataset.originalName = '';
-                nameInput.dataset.isUser = 'true'; // New locations are user resources
-            }
-            
-            modal.style.display = 'flex';
-        }
-
-        function handleCharacterFileSelect(event) {
-            const files = event.target.files;
-            if (files.length > 0) {
-                const file = files[0];
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    const characterPreview = document.getElementById('character-preview');
-                    characterPreview.style.backgroundImage = `url(${e.target.result})`;
-                    characterPreview.dataset.image = e.target.result;
-                };
-                
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function handleCharacterFileDrop(event) {
-            event.preventDefault();
-            
-            const files = event.dataTransfer.files;
-            if (files.length > 0) {
-                const file = files[0];
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    const characterPreview = document.getElementById('character-preview');
-                    characterPreview.style.backgroundImage = `url(${e.target.result})`;
-                    characterPreview.dataset.image = e.target.result;
-                };
-                
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function handleLocationFileSelect(event) {
-            const files = event.target.files;
-            if (files.length > 0) {
-                const file = files[0];
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    const locationPreview = document.getElementById('location-preview');
-                    locationPreview.style.backgroundImage = `url(${e.target.result})`;
-                    locationPreview.dataset.image = e.target.result;
-                };
-                
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function handleLocationFileDrop(event) {
-            event.preventDefault();
-            
-            const files = event.dataTransfer.files;
-            if (files.length > 0) {
-                const file = files[0];
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    const locationPreview = document.getElementById('location-preview');
-                    locationPreview.style.backgroundImage = `url(${e.target.result})`;
-                    locationPreview.dataset.image = e.target.result;
-                };
-                
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function saveCharacter() {
-            const nameInput = document.getElementById('character-name');
-            const descriptionInput = document.getElementById('character-description');
-            const emotionsInput = document.getElementById('character-emotions');
-            const preview = document.getElementById('character-preview');
-            const originalName = nameInput.dataset.originalName;
-            const isUserResource = nameInput.dataset.isUser === 'true';
-            const newName = nameInput.value.trim();
-            
-            if (!newName) {
-                alert('Имя персонажа не может быть пустым');
-                return;
-            }
-            
-            const emotions = emotionsInput.value.split(',').map(e => e.trim()).filter(e => e);
-            
-            // Handle user resource
-            if (isUserResource) {
-                // Remove old entry if renamed
-                if (originalName && originalName !== newName) {
-                    delete gameState.userResources.characters[originalName];
-                }
-                
-                // Check if we have an image
-                if (!preview.dataset.image && !originalName) {
-                    alert('Пожалуйста, загрузите изображение персонажа');
-                    return;
-                }
-                
-                // Create or update character
-                gameState.userResources.characters[newName] = {
-                    name: newName,
-                    description: descriptionInput.value.trim(),
-                    image: preview.dataset.image || gameState.userResources.characters[originalName]?.image,
-                    emotions: emotions.length > 0 ? emotions : ['normal']
-                };
-            } else {
-                // Renaming system character
-                if (originalName && originalName !== newName) {
-                    const originalChar = gameState.characters[originalName];
-                    delete gameState.characters[originalName];
-                    
-                    // Create character with new name
-                    gameState.characters[newName] = {
-                        name: newName,
-                        description: descriptionInput.value.trim(),
-                        sprites: originalChar.sprites || [],
-                        emotions: emotions.length > 0 ? emotions : (originalChar.emotions || ['normal'])
-                    };
-                } else {
-                    // Update existing character
-                    gameState.characters[newName] = {
-                        ...gameState.characters[newName],
-                        name: newName,
-                        description: descriptionInput.value.trim(),
-                        emotions: emotions.length > 0 ? emotions : (gameState.characters[newName].emotions || ['normal'])
-                    };
-                }
-            }
-            
-            debugLog(`Персонаж ${newName} сохранен`, 'success');
-            updateCharacterList();
-            elements.characterModal.style.display = 'none';
-        }
-
-        function saveLocation() {
-            const nameInput = document.getElementById('location-name');
-            const descriptionInput = document.getElementById('location-description');
-            const preview = document.getElementById('location-preview');
-            const isUserResource = nameInput.dataset.isUser === 'true';
-            const newName = nameInput.value.trim();
-            
-            if (!newName) {
-                alert('Название локации не может быть пустым');
-                return;
-            }
-            
-            if (isUserResource) {
-                const originalName = nameInput.dataset.originalName;
-                
-                // Remove old entry if renamed
-                if (originalName && originalName !== newName) {
-                    delete gameState.userResources.backgrounds[originalName];
-                }
-                
-                // Check if we have an image
-                if (!preview.dataset.image && !originalName) {
-                    alert('Пожалуйста, загрузите изображение локации');
-                    return;
-                }
-                
-                // Create or update location
-                gameState.userResources.backgrounds[newName] = {
-                    name: newName,
-                    description: descriptionInput.value.trim(),
-                    image: preview.dataset.image || gameState.userResources.backgrounds[originalName]?.image
-                };
-            } else {
-                const originalKey = nameInput.dataset.originalKey;
-                
-                // Generate a key from the name
-                const newKey = newName.replace(/\s+/g, '');
-                
-                // If renaming, remove old entry
-                if (originalKey && originalKey !== newKey) {
-                    const originalLocation = gameState.backgrounds[originalKey];
-                    delete gameState.backgrounds[originalKey];
-                    
-                    // Create location with new key
-                    gameState.backgrounds[newKey] = {
-                        name: newName,
-                        description: descriptionInput.value.trim(),
-                        file: originalLocation.file
-                    };
-                } else {
-                    // Update existing location
-                    gameState.backgrounds[newKey || originalKey] = {
-                        ...gameState.backgrounds[newKey || originalKey],
-                        name: newName,
-                        description: descriptionInput.value.trim()
-                    };
-                }
-            }
-            
-            debugLog(`Локация ${newName} сохранена`, 'success');
-            updateLocationList();
-            elements.locationModal.style.display = 'none';
-        }
-
-        function startGame() {
-            elements.settings.style.display = 'none';
-            elements.game.style.display = 'block';
-            
-            // Set initial background - find entry that matches gate
-            let gateFound = false;
-            
-            // First try by key
-            if (gameState.backgrounds.ВходВоротаВпионерлагерь) {
-                setBackground('ВходВоротаВпионерлагерь');
-                gateFound = true;
-            } 
-            
-            // Then try by finding a matching name
-            if (!gateFound) {
-                for (const key in gameState.backgrounds) {
-                    const bg = gameState.backgrounds[key];
-                    if (bg.name.toLowerCase().includes('вход') || bg.name.toLowerCase().includes('ворота')) {
-                        setBackground(key);
-                        gateFound = true;
-                        break;
-                    }
-                }
-            }
-            
-            // Fallback to first background
-            if (!gateFound && Object.keys(gameState.backgrounds).length > 0) {
-                const firstKey = Object.keys(gameState.backgrounds)[0];
-                setBackground(firstKey);
-            }
-            
-            // Initialize game context
-            initializeGameContext();
-        }
-
-        function setBackground(backgroundKey, isUserResource = false) {
-            debugLog(`Установка фона: ${backgroundKey} (пользовательский: ${isUserResource})`, 'info');
-            
-            if (isUserResource && gameState.userResources.backgrounds[backgroundKey]) {
-                elements.background.style.backgroundImage = `url(${gameState.userResources.backgrounds[backgroundKey].image})`;
-                gameState.currentBackground = backgroundKey;
-                debugLog(`Установлен пользовательский фон: ${backgroundKey}`, 'success');
-            } else if (gameState.backgrounds[backgroundKey]) {
-                const bg = gameState.backgrounds[backgroundKey];
-                elements.background.style.backgroundImage = `url('${bg.file}')`;
-                gameState.currentBackground = backgroundKey;
-                debugLog(`Установлен фон: ${bg.file}`, 'success');
-            } else {
-                // Try standard backgrounds if direct key failed
-                for (const key in gameState.backgrounds) {
-                    if (gameState.backgrounds[key].name === backgroundKey) {
-                        const bg = gameState.backgrounds[key];
-                        elements.background.style.backgroundImage = `url('${bg.file}')`;
-                        gameState.currentBackground = key;
-                        debugLog(`Установлен фон по имени: ${bg.file}`, 'success');
-                        return;
-                    }
-                }
-                
-                debugLog(`Не удалось найти фон: ${backgroundKey}`, 'error');
-            }
-        }
-
-        function showCharacter(characterName, emotion = 'normal', position = 'center') {
-            debugLog(`Отображение персонажа: ${characterName}, эмоция: ${emotion}, позиция: ${position}`, 'info');
-            
-            let isUserResource = false;
-            let character;
-            
-            // Check if this is a user resource
-            if (gameState.userResources.characters[characterName]) {
-                character = gameState.userResources.characters[characterName];
-                isUserResource = true;
-                debugLog(`Найден пользовательский персонаж: ${characterName}`, 'info');
-            } else if (gameState.characters[characterName]) {
-                character = gameState.characters[characterName];
-                debugLog(`Найден системный персонаж: ${characterName}`, 'info');
-            } else {
-                console.error('Character not found:', characterName);
-                debugLog(`Персонаж не найден: ${characterName}`, 'error');
-                return;
-            }
-            
-            // Check if character is already on screen
-            let characterElement = document.querySelector(`.character[data-name="${characterName}"]`);
-            
-            if (!characterElement) {
-                // Create new character element
-                characterElement = document.createElement('div');
-                characterElement.className = 'character';
-                characterElement.dataset.name = characterName;
-                elements.characters.appendChild(characterElement);
-                debugLog(`Создан новый элемент персонажа для: ${characterName}`, 'info');
-            }
-            
-            // Set position
-            let posX = '50%';
-            if (position === 'left') posX = '25%';
-            if (position === 'right') posX = '75%';
-            
-            characterElement.style.left = posX;
-            characterElement.style.transform = 'translateX(-50%)';
-            
-            // Set sprite based on whether it's user resource or not
-            if (isUserResource) {
-                characterElement.style.backgroundImage = `url(${character.image})`;
-                debugLog(`Установлено пользовательское изображение для: ${characterName}`, 'success');
-            } else {
-                // For regular character, try to find the sprite with the specified emotion
-                const emotionExists = character.emotions && character.emotions.includes(emotion);
-                let spritePath;
-                
-                if (emotionExists) {
-                    // Find the sprite file that corresponds to this emotion
-                    if (character.sprites) {
-                        let spriteFile;
-                        
-                        // Try exact match first
-                        spriteFile = character.sprites.find(s => s === `${emotion}.png`);
-                        
-                        // If no exact match, try name contains emotion
-                        if (!spriteFile) {
-                            spriteFile = character.sprites.find(s => s.includes(emotion));
-                        }
-                        
-                        // If still no match, use first sprite
-                        if (!spriteFile && character.sprites.length > 0) {
-                            spriteFile = character.sprites[0];
-                        }
-                        
-                        if (spriteFile) {
-                            spritePath = `${characterName}/${spriteFile}`;
-                        }
-                    }
-                    
-                    // If we couldn't determine the sprite file, try standard path
-                    if (!spritePath) {
-                        spritePath = `${characterName}/${emotion}.png`;
-                    }
-                    
-                    debugLog(`Используем эмоцию ${emotion} для ${characterName}: ${spritePath}`, 'info');
-                } else {
-                    // Fallback to the first available emotion
-                    let fallbackEmotion = 'normal';
-                    
-                    if (character.emotions && character.emotions.length > 0) {
-                        fallbackEmotion = character.emotions[0];
-                    }
-                    
-                    // Find sprite file
-                    if (character.sprites && character.sprites.length > 0) {
-                        // Try to find sprite that matches fallback emotion
-                        let spriteFile = character.sprites.find(s => s === `${fallbackEmotion}.png`);
-                        
-                        // If not found, just use first sprite
-                        if (!spriteFile) {
-                            spriteFile = character.sprites[0];
-                        }
-                        
-                        spritePath = `${characterName}/${spriteFile}`;
-                    } else {
-                        // Just try standard path
-                        spritePath = `${characterName}/${fallbackEmotion}.png`;
-                    }
-                    
-                    debugLog(`Эмоция ${emotion} не найдена, используем ${fallbackEmotion} для ${characterName}: ${spritePath}`, 'warning');
-                }
-                
-                characterElement.style.backgroundImage = `url('${spritePath}')`;
-                debugLog(`Установлен спрайт: ${spritePath}`, 'success');
-            }
-            
-            characterElement.style.backgroundSize = 'contain';
-            characterElement.style.backgroundPosition = 'bottom center';
-            characterElement.style.backgroundRepeat = 'no-repeat';
-            
-            // Make sure character is visible
-            characterElement.style.opacity = '1';
-            
-            // Add to active characters
-            gameState.activeCharacters[characterName] = {
-                emotion: emotion,
-                position: position,
-                isUserResource: isUserResource
-            };
-        }
-
-        function hideCharacter(characterName) {
-            debugLog(`Скрытие персонажа: ${characterName}`, 'info');
-            
-            const characterElement = document.querySelector(`.character[data-name="${characterName}"]`);
-            if (characterElement) {
-                characterElement.style.opacity = '0';
-                setTimeout(() => {
-                    characterElement.remove();
-                    debugLog(`Персонаж ${characterName} удален со сцены`, 'info');
-                }, 500);
-            }
-            
-            delete gameState.activeCharacters[characterName];
-        }
-
-        function typeText(text) {
-            return new Promise(resolve => {
-                elements.dialogueText.textContent = ''; // Clear previous text
-                
-                // Add each character with a delay
-                let i = 0;
-                const typingSpeed = 30; // ms per character
-                
-                function typeChar() {
-                    if (i < text.length) {
-                        elements.dialogueText.textContent += text.charAt(i);
-                        i++;
-                        setTimeout(typeChar, typingSpeed);
-                    } else {
-                        resolve();
-                    }
-                }
-                
-                typeChar();
-            });
-        }
-
-        function showChoices(choices) {
-            elements.choices.innerHTML = '';
-            
-            choices.forEach(choice => {
-                const button = document.createElement('button');
-                button.className = 'choice-btn';
-                button.textContent = choice;
-                button.addEventListener('click', () => {
-                    selectChoice(choice);
-                });
-                elements.choices.appendChild(button);
-            });
-            
-            debugLog(`Отображено ${choices.length} вариантов выбора`, 'info');
-        }
-
-        function selectChoice(choice) {
-            debugLog(`Выбрано: ${choice}`, 'info');
-            elements.choices.innerHTML = '';
-            sendMessage(choice);
-        }
-
-        function initializeGameContext() {
-            // Build the system prompt
-            const systemPrompt = generateSystemPrompt();
-            
-            // Start the conversation
-            sendSystemMessage(systemPrompt);
-        }
-
-        function generateSystemPrompt() {
-            // Create the character list for the system prompt
-            let charactersListText = '';
-            
-            // Add regular characters
-            Object.values(gameState.characters).forEach(character => {
-                charactersListText += `${character.name}: ${character.description}\n`;
-                charactersListText += `Доступные эмоции: ${character.emotions ? character.emotions.join(', ') : 'normal'}\n\n`;
-            });
-            
-            // Add user-uploaded characters
-            Object.values(gameState.userResources.characters).forEach(character => {
-                charactersListText += `${character.name}: ${character.description}\n`;
-                charactersListText += `Доступные эмоции: ${character.emotions ? character.emotions.join(', ') : 'normal'}\n\n`;
-            });
-            
-            // Create the backgrounds list
-            let backgroundsListText = '';
-            
-            // Add regular backgrounds
-            Object.values(gameState.backgrounds).forEach(bg => {
-                backgroundsListText += `${bg.name}: ${bg.description}\n`;
-            });
-            
-            // Add user-uploaded backgrounds
-            Object.values(gameState.userResources.backgrounds).forEach(bg => {
-                backgroundsListText += `${bg.name}: ${bg.description}\n`;
-            });
-            
-            // Build mode-specific instructions
-            let modeInstructions = '';
-            
-            if (gameState.settings.modes.romance) {
-                modeInstructions += 'Включай в сюжет романтические линии и возможность отношений между персонажами. ';
-            }
-            
-            if (gameState.settings.modes.cuteness) {
-                modeInstructions += 'Делай историю милой и позитивной, с акцентом на приятные моменты и дружеские отношения. ';
-            }
-            
-            if (gameState.settings.modes.cringe) {
-                modeInstructions += 'Добавляй неловкие и забавные ситуации, которые могут вызвать смущение у персонажей. ';
-            }
-            
-            if (gameState.settings.modes.story) {
-                modeInstructions += 'Следуй структуре истории с началом, развитием и кульминацией. История должна длиться 7 игровых дней. ';
-                
-                if (gameState.settings.storyEvents.length > 0) {
-                    modeInstructions += 'Обязательно включи следующие события в повествование: ' + gameState.settings.storyEvents.join(', ') + '. ';
-                }
-            }
-            
-            // Start with user-defined system prompt
-            let customPrompt = gameState.settings.systemPrompt;
-            
-            // Replace placeholders
-            customPrompt = customPrompt.replace('{{CHARACTERS_LIST}}', charactersListText);
-            customPrompt = customPrompt.replace('{{BACKGROUNDS_LIST}}', backgroundsListText);
-            customPrompt = customPrompt.replace('{{STORY_TITLE}}', gameState.settings.storyTitle || 'Летние приключения');
-            customPrompt = customPrompt.replace('{{STORY_DESCRIPTION}}', gameState.settings.storyDescription || 'История о летнем отдыхе в пионерском лагере');
-            customPrompt = customPrompt.replace('{{CURRENT_DAY}}', gameState.gameDay.toString());
-            customPrompt = customPrompt.replace('{{STORY_MODE_ENABLED}}', gameState.settings.modes.story ? '(из 7)' : '');
-            customPrompt = customPrompt.replace('{{MODE_INSTRUCTIONS}}', modeInstructions);
-            customPrompt = customPrompt.replace('{{COMPRESSED_HISTORY}}', gameState.compressedHistory || 'История только начинается.');
-            
-            debugLog('Системный промпт сгенерирован', 'info');
-            return customPrompt;
-        }
-
-        async function sendSystemMessage(message) {
-            try {
-                elements.loading.style.display = 'flex';
-                debugLog('Отправка системного сообщения в LLM...', 'info');
-                
-                const response = await callLLM(message, true);
-                
-                if (response) {
-                    processLLMResponse(response);
-                    gameState.context.push({
-                        role: 'assistant',
-                        content: JSON.stringify(response)
-                    });
-                    debugLog('Получен и обработан ответ от LLM', 'success');
-                }
-                
-                elements.loading.style.display = 'none';
-            } catch (error) {
-                console.error('Error in system message:', error);
-                debugLog(`Ошибка при отправке системного сообщения: ${error.message}`, 'error');
-                elements.loading.style.display = 'none';
-                alert('Произошла ошибка при инициализации истории. Пожалуйста, проверьте API ключ и настройки.');
-            }
-        }
-
-        async function sendMessage(message) {
-            if (gameState.waitingForResponse) return;
-            
-            try {
-                gameState.waitingForResponse = true;
-                elements.loading.style.display = 'flex';
-                debugLog(`Отправка сообщения от пользователя: ${message}`, 'info');
-                
-                // Add user message to context
-                gameState.context.push({
-                    role: 'user',
-                    content: message
-                });
-                
-                // Add to focus window for context management
-                manageFocusWindow({
-                    role: 'user',
-                    content: message
-                });
-                
-                const response = await callLLM();
-                
-                if (response) {
-                    processLLMResponse(response);
-                    
-                    // Store the last response for potential regeneration
-                    gameState.lastResponse = response;
-                    
-                    // Add to context and focus window
-                    gameState.context.push({
-                        role: 'assistant',
-                        content: JSON.stringify(response)
-                    });
-                    
-                    manageFocusWindow({
-                        role: 'assistant',
-                        content: JSON.stringify(response)
-                    });
-                    
-                    debugLog('Получен и обработан ответ от LLM', 'success');
-                }
-                
-                gameState.waitingForResponse = false;
-                elements.loading.style.display = 'none';
-            } catch (error) {
-                console.error('Error in user message:', error);
-                debugLog(`Ошибка при отправке сообщения: ${error.message}`, 'error');
-                gameState.waitingForResponse = false;
-                elements.loading.style.display = 'none';
-                alert('Произошла ошибка при обработке сообщения.');
-            }
-        }
-
-        async function sendUserInput() {
-            const input = elements.userInput.value.trim();
-            if (!input) return;
-            
-            elements.userInput.value = '';
-            sendMessage(input);
-        }
-
-        async function regenerateResponse() {
-            if (gameState.waitingForResponse) return;
-            
-            try {
-                gameState.waitingForResponse = true;
-                elements.loading.style.display = 'flex';
-                debugLog('Перегенерация последнего ответа...', 'info');
-                
-                // Remove the last assistant message from context
-                if (gameState.context.length > 0 && gameState.context[gameState.context.length - 1].role === 'assistant') {
-                    gameState.context.pop();
-                }
-                
-                // Remove from focus window as well
-                if (gameState.focusWindow.length > 0 && gameState.focusWindow[gameState.focusWindow.length - 1].role === 'assistant') {
-                    gameState.focusWindow.pop();
-                }
-                
-                const response = await callLLM();
-                
-                if (response) {
-                    processLLMResponse(response);
-                    
-                    // Update the last response
-                    gameState.lastResponse = response;
-                    
-                    // Add to context and focus window
-                    gameState.context.push({
-                        role: 'assistant',
-                        content: JSON.stringify(response)
-                    });
-                    
-                    manageFocusWindow({
-                        role: 'assistant',
-                        content: JSON.stringify(response)
-                    });
-                    
-                    debugLog('Получен и обработан перегенерированный ответ', 'success');
-                }
-                
-                gameState.waitingForResponse = false;
-                elements.loading.style.display = 'none';
-            } catch (error) {
-                console.error('Error in regeneration:', error);
-                debugLog(`Ошибка при перегенерации: ${error.message}`, 'error');
-                gameState.waitingForResponse = false;
-                elements.loading.style.display = 'none';
-                alert('Произошла ошибка при перегенерации ответа.');
-            }
-        }
-
-        async function sendDirectRequest() {
-            if (gameState.waitingForResponse) return;
-            
-            const input = elements.directRequest.value.trim();
-            if (!input) return;
-            
-            try {
-                gameState.waitingForResponse = true;
-                elements.loading.style.display = 'flex';
-                elements.menuDropdown.style.display = 'none';
-                debugLog(`Отправка прямого запроса: ${input}`, 'info');
-                
-                // Add a special system message to guide the direct request
-                const directSystemPrompt = `
-Ты являешься искусственным интеллектом, управляющим интерактивной визуальной новеллой.
-Игрок отправил тебе прямой запрос: "${input}"
-
-Это специальный режим, в котором ты помогаешь игроку решить проблему или изменить ход истории.
-Ответь в обычном JSON формате, как если бы это был следующий ход в истории.
-
-Сделай свой ответ релевантным текущей ситуации в игре и постарайся учесть запрос игрока.
-                `;
-                
-                // Create a temporary context for this request
-                const tempContext = [
-                    { role: 'system', content: directSystemPrompt },
-                    ...gameState.context.slice(-5) // Include last 5 messages for context
-                ];
-                
-                const response = await callLLM(undefined, false, tempContext);
-                
-                if (response) {
-                    processLLMResponse(response);
-                    
-                    // Add this exchange to the regular context
-                    gameState.context.push({
-                        role: 'user',
-                        content: `[Прямой запрос]: ${input}`
-                    });
-                    
-                    gameState.context.push({
-                        role: 'assistant',
-                        content: JSON.stringify(response)
-                    });
-                    
-                    // Manage focus window
-                    manageFocusWindow({
-                        role: 'user',
-                        content: `[Прямой запрос]: ${input}`
-                    });
-                    
-                    manageFocusWindow({
-                        role: 'assistant',
-                        content: JSON.stringify(response)
-                    });
-                    
-                    debugLog('Получен и обработан ответ на прямой запрос', 'success');
-                }
-                
-                elements.directRequest.value = '';
-                gameState.waitingForResponse = false;
-                elements.loading.style.display = 'none';
-            } catch (error) {
-                console.error('Error in direct request:', error);
-                debugLog(`Ошибка при прямом запросе: ${error.message}`, 'error');
-                gameState.waitingForResponse = false;
-                elements.loading.style.display = 'none';
-                alert('Произошла ошибка при обработке прямого запроса.');
-            }
-        }
-
-        function manageFocusWindow(message) {
-            // Add message to focus window
-            gameState.focusWindow.push(message);
-            
-            // Keep only the last 5 messages in the focus window
-            if (gameState.focusWindow.length > 5) {
-                // Take the older messages and compress them
-                const oldMessages = gameState.focusWindow.splice(0, gameState.focusWindow.length - 5);
-                
-                // In a real implementation, we would send these to be compressed
-                // For now, we'll just create a simple summary
-                const summary = oldMessages.map(m => {
-                    if (m.role === 'user') {
-                        return `Игрок: ${m.content}`;
-                    } else if (m.role === 'assistant') {
-                        try {
-                            const parsed = JSON.parse(m.content);
-                            return parsed.messages.map(msg => {
-                                return `${msg.speaker}: ${msg.text}`;
-                            }).join(' ');
-                        } catch (e) {
-                            return `Ассистент: ${m.content}`;
-                        }
-                    }
-                    return '';
-                }).join('\n');
-                
-                // Append to compressed history
-                if (gameState.compressedHistory) {
-                    gameState.compressedHistory += '\n\n';
-                }
-                gameState.compressedHistory += summary;
-                
-                // Check if we need to compress further
-                if (gameState.compressedHistory.length > 10000) {
-                    // In a real implementation, we would super-compress the history
-                    // For now, we'll just keep the most recent part
-                    gameState.compressedHistory = gameState.compressedHistory.slice(-5000);
-                    gameState.compressedHistory = "Сжатая история предыдущих событий:\n" + gameState.compressedHistory;
-                }
-                
-                debugLog(`Управление контекстом: сжато ${oldMessages.length} старых сообщений`, 'info');
-            }
-        }
-
-        async function callLLM(systemPrompt = undefined, isSystemMessage = false, customContext = null) {
-            // Get all API keys
-            const apiKeys = gameState.settings.apiKeys.filter(key => key.trim());
-            
-            if (apiKeys.length === 0) {
-                alert('Пожалуйста, введите хотя бы один API ключ OpenRouter в настройках.');
-                return null;
-            }
-            
-            // Rotate through API keys
-            if (gameState.settings.currentKeyIndex >= apiKeys.length) {
-                gameState.settings.currentKeyIndex = 0;
-            }
-            
-            const apiKey = apiKeys[gameState.settings.currentKeyIndex];
-            debugLog(`Использование API ключа #${gameState.settings.currentKeyIndex + 1}`, 'info');
-            
-            // Move to next key for next call
-            gameState.settings.currentKeyIndex = (gameState.settings.currentKeyIndex + 1) % apiKeys.length;
-            
-            try {
-                let messages = [];
-                
-                if (customContext) {
-                    // Use custom context if provided (for direct requests)
-                    messages = customContext;
-                } else {
-                    // For system initialization
-                    if (isSystemMessage) {
-                        messages = [
-                            { role: 'system', content: systemPrompt }
-                        ];
-                    } else {
-                        // For regular messages, include compressed history and focus window
-                        let contextPrompt = generateSystemPrompt();
-                        
-                        messages = [
-                            { role: 'system', content: contextPrompt },
-                            ...gameState.focusWindow // Include only the focus window messages
-                        ];
-                    }
-                }
-                
-                debugLog(`Отправка запроса к OpenRouter, модель: ${gameState.settings.model}`, 'info');
-                
-                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${apiKey}`
-                    },
-                    body: JSON.stringify({
-                        model: gameState.settings.model,
-                        messages: messages,
-                        temperature: gameState.settings.temperature,
-                        max_tokens: gameState.settings.maxTokens
-                    })
-                });
-                
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    debugLog(`Ошибка API: ${JSON.stringify(errorData)}`, 'error');
-                    throw new Error(`API Error: ${JSON.stringify(errorData)}`);
-                }
-                
-                const data = await response.json();
-                let content = data.choices[0].message.content;
-                
-                debugLog(`Получен ответ от OpenRouter, длина: ${content.length} символов`, 'success');
-                
+        // Load configuration from localStorage
+        function loadConfig() {
+            const savedConfig = localStorage.getItem('claudeChatConfig');
+            if (savedConfig) {
                 try {
-                    // Try to parse as JSON
-                    return JSON.parse(content);
-                } catch (e) {
-                    // If it's not valid JSON, try to extract JSON part
-                    debugLog(`Ошибка парсинга JSON, пытаемся извлечь JSON из ответа`, 'warning');
-                    const jsonMatch = content.match(/\{[\s\S]*\}/);
-                    if (jsonMatch) {
-                        try {
-                            return JSON.parse(jsonMatch[0]);
-                        } catch (e2) {
-                            console.error('Failed to parse JSON from response:', content);
-                            debugLog(`Не удалось извлечь JSON из ответа`, 'error');
-                            throw new Error('Получен некорректный формат ответа от LLM.');
-                        }
+                    config = { ...defaultConfig, ...JSON.parse(savedConfig) };
+                    
+                    // Update UI with loaded settings
+                    temperature.value = config.temperature;
+                    temperatureValue.textContent = config.temperature;
+                    maxTokens.value = config.maxTokens;
+                    systemPrompt.value = config.systemPrompt || '';
+                    
+                    // Handle custom model
+                    if (modelSelect.querySelector(`option[value="${config.model}"]`)) {
+                        modelSelect.value = config.model;
                     } else {
-                        console.error('No JSON found in response:', content);
-                        debugLog(`JSON не найден в ответе`, 'error');
-                        throw new Error('Получен некорректный формат ответа от LLM.');
+                        modelSelect.value = 'custom';
+                        customModel.value = config.model;
+                        customModelContainer.style.display = 'block';
                     }
+                } catch (e) {
+                    console.error('Error loading config:', e);
+                    config = { ...defaultConfig };
                 }
-            } catch (error) {
-                console.error('API Error:', error);
-                throw error;
             }
         }
-
-        async function processLLMResponse(response) {
+        
+        // Save configuration to localStorage
+        function saveConfig() {
+            localStorage.setItem('claudeChatConfig', JSON.stringify(config));
+        }
+        
+        // Load messages from localStorage
+        function loadMessages() {
+            const savedMessages = localStorage.getItem('claudeChatMessages');
+            if (savedMessages) {
+                try {
+                    messages = JSON.parse(savedMessages);
+                    renderMessages();
+                } catch (e) {
+                    console.error('Error loading messages:', e);
+                    messages = [];
+                }
+            }
+        }
+        
+        // Save messages to localStorage
+        function saveMessages() {
+            localStorage.setItem('claudeChatMessages', JSON.stringify(messages));
+        }
+        
+        // Add a new message to the chat
+        function addMessage(role, content, isStreaming = false) {
+            const messageId = Date.now().toString();
+            messages.push({
+                id: messageId,
+                role,
+                content,
+                timestamp: new Date().toISOString()
+            });
+            
+            renderMessage(messages[messages.length - 1], isStreaming);
+            saveMessages();
+            
+            return messageId;
+        }
+        
+        // Update an existing message
+        function updateMessage(id, content) {
+            const index = messages.findIndex(m => m.id === id);
+            if (index !== -1) {
+                messages[index].content = content;
+                
+                const messageElement = document.getElementById(`message-${id}`);
+                if (messageElement) {
+                    const contentElement = messageElement.querySelector('.message-content');
+                    // Рендерим содержимое с Markdown
+                    contentElement.innerHTML = marked.parse(content);
+                    
+                    // Добавляем кнопки копирования к блокам кода
+                    addCopyButtonsToCodeBlocks(contentElement);
+                    
+                    // Обновляем счетчик символов
+                    const charCountElement = messageElement.querySelector('.char-count');
+                    charCountElement.textContent = `${content.length} characters`;
+                }
+                
+                saveMessages();
+            }
+        }
+        
+        // Delete a message
+        function deleteMessage(id) {
+            const index = messages.findIndex(m => m.id === id);
+            if (index !== -1) {
+                messages.splice(index, 1);
+                
+                const messageElement = document.getElementById(`message-${id}`);
+                if (messageElement) {
+                    messageElement.remove();
+                }
+                
+                saveMessages();
+            }
+        }
+        
+        // Добавляет кнопки копирования к блокам кода
+        function addCopyButtonsToCodeBlocks(element) {
+            // Находим все блоки pre>code
+            const codeBlocks = element.querySelectorAll('pre > code');
+            
+            codeBlocks.forEach((codeBlock, index) => {
+                // Получаем родительский pre-элемент
+                const preBlock = codeBlock.parentNode;
+                
+                // Проверяем, есть ли уже кнопка копирования
+                if (!preBlock.querySelector('.copy-code-btn')) {
+                    // Создаем кнопку копирования
+                    const copyButton = document.createElement('button');
+                    copyButton.className = 'copy-code-btn';
+                    copyButton.textContent = 'Copy';
+                    copyButton.setAttribute('aria-label', 'Copy code to clipboard');
+                    
+                    // Добавляем обработчик события клика
+                    copyButton.addEventListener('click', function() {
+                        // Получаем текст кода
+                        const code = codeBlock.textContent;
+                        
+                        // Копируем в буфер обмена
+                        navigator.clipboard.writeText(code)
+                            .then(() => {
+                                // Визуальное подтверждение успешного копирования
+                                const originalText = this.textContent;
+                                this.textContent = 'Copied!';
+                                setTimeout(() => {
+                                    this.textContent = originalText;
+                                }, 2000);
+                            })
+                            .catch(err => {
+                                console.error('Failed to copy code: ', err);
+                                this.textContent = 'Error!';
+                                setTimeout(() => {
+                                    this.textContent = 'Copy';
+                                }, 2000);
+                            });
+                    });
+                    
+                    // Добавляем кнопку к блоку pre
+                    preBlock.appendChild(copyButton);
+                }
+            });
+        }
+        
+        // Render all messages
+        function renderMessages() {
+            chatContainer.innerHTML = '';
+            messages.forEach(message => {
+                renderMessage(message);
+            });
+        }
+        
+        // Render a single message
+        function renderMessage(message, isStreaming = false) {
+            let messageElement = document.getElementById(`message-${message.id}`);
+            const isNewMessage = !messageElement;
+            
+            if (isNewMessage) {
+                messageElement = document.createElement('div');
+                messageElement.id = `message-${message.id}`;
+                messageElement.className = `message ${message.role === 'user' ? 'user-message' : 'bot-message'}`;
+                
+                const messageHeader = document.createElement('div');
+                messageHeader.className = 'message-header';
+                
+                const messageSender = document.createElement('div');
+                messageSender.className = 'message-sender';
+                messageSender.textContent = message.role === 'user' ? 'You' : 'Claude';
+                
+                const messageActions = document.createElement('div');
+                messageActions.className = 'message-actions';
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'action-btn';
+                editBtn.textContent = '✏️';
+                editBtn.title = 'Edit message';
+                editBtn.addEventListener('click', () => {
+                    const newContent = prompt('Edit message:', message.content);
+                    if (newContent !== null && newContent !== message.content) {
+                        updateMessage(message.id, newContent);
+                    }
+                });
+                
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'action-btn';
+                copyBtn.textContent = '📋';
+                copyBtn.title = 'Copy message';
+                copyBtn.addEventListener('click', () => {
+                    navigator.clipboard.writeText(message.content);
+                });
+                
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = 'action-btn';
+                deleteBtn.textContent = '🗑️';
+                deleteBtn.title = 'Delete message';
+                deleteBtn.addEventListener('click', () => {
+                    if (confirm('Are you sure you want to delete this message?')) {
+                        deleteMessage(message.id);
+                    }
+                });
+                
+                messageActions.appendChild(editBtn);
+                messageActions.appendChild(copyBtn);
+                messageActions.appendChild(deleteBtn);
+                
+                messageHeader.appendChild(messageSender);
+                messageHeader.appendChild(messageActions);
+                
+                const messageContent = document.createElement('div');
+                messageContent.className = 'message-content';
+                
+                // Используем marked для рендеринга Markdown
+                messageContent.innerHTML = marked.parse(message.content);
+                
+                const charCount = document.createElement('div');
+                charCount.className = 'char-count';
+                charCount.textContent = `${message.content.length} characters`;
+                
+                messageElement.appendChild(messageHeader);
+                messageElement.appendChild(messageContent);
+                messageElement.appendChild(charCount);
+                
+                chatContainer.appendChild(messageElement);
+                
+                // Добавляем кнопки копирования к блокам кода
+                addCopyButtonsToCodeBlocks(messageContent);
+                
+            } else if (!isStreaming) {
+                // Update existing message
+                const contentElement = messageElement.querySelector('.message-content');
+                contentElement.innerHTML = marked.parse(message.content);
+                
+                // Добавляем кнопки копирования к блокам кода
+                addCopyButtonsToCodeBlocks(contentElement);
+                
+                const charCountElement = messageElement.querySelector('.char-count');
+                charCountElement.textContent = `${message.content.length} characters`;
+            }
+            
+            // Scroll to the latest message
+            if (isNewMessage) {
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+        }
+        
+        // Send message to the LLM
+        async function sendMessage() {
+            const userInput = messageInput.value.trim();
+            if (!userInput) return;
+            
+            // Add user message to chat
+            addMessage('user', userInput);
+            
+            // Clear input
+            messageInput.value = '';
+            
+            // Prepare context window for API call
+            const contextWindow = prepareContextWindow();
+            
+            // Add an empty bot message (for streaming)
+            const botMessageId = addMessage('assistant', '', true);
+            const botMessage = document.getElementById(`message-${botMessageId}`);
+            const botMessageContent = botMessage.querySelector('.message-content');
+            
+            // Enable stop button, disable send and regenerate
+            sendBtn.disabled = true;
+            stopBtn.disabled = false;
+            regenerateBtn.disabled = true;
+            
+            let fullResponse = '';
+            abortController = new AbortController();
+            
             try {
-                if (!response.messages || !Array.isArray(response.messages)) {
-                    throw new Error('Некорректный формат ответа от LLM');
+                // Build messages array for API
+                const apiMessages = [];
+                
+                // Add system prompt if set
+                if (config.systemPrompt) {
+                    apiMessages.push({
+                        role: 'system',
+                        content: config.systemPrompt
+                    });
                 }
                 
-                // Process each message
-                for (const message of response.messages) {
-                    // Set background if specified
-                    if (message.background) {
-                        // First try to find it in user resources
-                        if (gameState.userResources.backgrounds[message.background]) {
-                            setBackground(message.background, true);
-                        } else {
-                            // Then try to find by key in regular backgrounds
-                            if (gameState.backgrounds[message.background]) {
-                                setBackground(message.background);
-                            } else {
-                                // Finally try to find by name
-                                setBackground(message.background);
-                            }
-                        }
+                // Add context messages
+                contextWindow.forEach(msg => {
+                    apiMessages.push({
+                        role: msg.role,
+                        content: msg.content
+                    });
+                });
+                
+                // Call LLM API with streaming
+                const response = await puter.ai.chat(
+                    apiMessages.length === 0 ? userInput : apiMessages, 
+                    {
+                        model: config.model,
+                        temperature: parseFloat(config.temperature),
+                        max_tokens: parseInt(config.maxTokens),
+                        stream: true,
+                        signal: abortController.signal
                     }
-                    
-                    // Update speaker name
-                    elements.speaker.textContent = message.speaker === 'narrator' ? '' : message.speaker;
-                    
-                    // Show character if it's a character speaking
-                    if (message.speaker && message.speaker !== 'narrator') {
-                        const position = message.position || 'center';
-                        const emotion = message.emotion || 'normal';
-                        showCharacter(message.speaker, emotion, position);
+                );
+                
+                // Process streaming response
+                for await (const part of response) {
+                    if (part?.text) {
+                        fullResponse += part.text;
+                        botMessageContent.innerHTML = marked.parse(fullResponse);
+                        
+                        // Добавляем кнопки копирования к новым блокам кода
+                        addCopyButtonsToCodeBlocks(botMessageContent);
+                        
+                        botMessage.querySelector('.char-count').textContent = `${fullResponse.length} characters`;
+                        botMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
                     }
-                    
-                    // Display text with typewriter effect
-                    await typeText(message.text);
-                    
-                    // Show choices if any
-                    if (message.choices && message.choices.length > 0) {
-                        showChoices(message.choices);
-                    }
-                    
-                    // Wait for user interaction if choices are shown
-                    if (message.choices && message.choices.length > 0) {
-                        // Don't continue to next message if choices are presented
-                        break;
-                    }
-                    
-                    // Add a small delay between messages for readability
-                    await new Promise(resolve => setTimeout(resolve, 500));
                 }
                 
-                // Check if there's a resource request
-                if (response.resource_request) {
-                    debugLog(`Запрос ресурса: ${JSON.stringify(response.resource_request)}`, 'info');
-                    // In a real implementation, we would handle the resource request
-                    // e.g., prompt the user to upload a new character or background
-                }
+                // Update message with full response
+                updateMessage(botMessageId, fullResponse);
             } catch (error) {
-                console.error('Error processing LLM response:', error);
-                debugLog(`Ошибка обработки ответа LLM: ${error.message}`, 'error');
-                alert('Произошла ошибка при обработке ответа LLM.');
+                if (error.name === 'AbortError') {
+                    console.log('Request was aborted');
+                } else {
+                    console.error('Error calling LLM:', error);
+                    updateMessage(botMessageId, `Error: ${error.message}`);
+                }
+            } finally {
+                // Reset UI state
+                abortController = null;
+                sendBtn.disabled = false;
+                stopBtn.disabled = true;
+                regenerateBtn.disabled = false;
             }
         }
-
-        // Initialize debug tab
-        if (elements.debugLog) {
-            elements.debugLog.innerHTML = '<div class="log-entry log-info">Журнал отладки инициализирован</div>';
+        
+        // Prepare the context window based on the limit setting
+        function prepareContextWindow() {
+            const limit = contextLimit.value.trim();
+            
+            if (limit === '-' || limit === '') {
+                // Return all messages
+                return [...messages];
+            }
+            
+            const numericLimit = parseInt(limit);
+            if (isNaN(numericLimit) || numericLimit <= 0) {
+                return [...messages];
+            }
+            
+            // Return the last N messages
+            return messages.slice(-numericLimit);
+        }
+        
+        // Regenerate the last bot response
+        async function regenerateLastResponse() {
+            // Find the last bot message
+            const lastBotMessageIndex = [...messages].reverse().findIndex(m => m.role === 'assistant');
+            if (lastBotMessageIndex === -1) return;
+            
+            const lastBotMessage = messages[messages.length - 1 - lastBotMessageIndex];
+            
+            // Prepare context up to the last user message
+            const contextMessages = messages.slice(0, messages.length - 1 - lastBotMessageIndex);
+            
+            // Delete last bot message
+            deleteMessage(lastBotMessage.id);
+            
+            // Disable buttons
+            sendBtn.disabled = true;
+            regenerateBtn.disabled = true;
+            stopBtn.disabled = false;
+            
+            // Add an empty bot message (for streaming)
+            const botMessageId = addMessage('assistant', '', true);
+            const botMessage = document.getElementById(`message-${botMessageId}`);
+            const botMessageContent = botMessage.querySelector('.message-content');
+            
+            let fullResponse = '';
+            abortController = new AbortController();
+            
+            try {
+                // Build messages array for API
+                const apiMessages = [];
+                
+                // Add system prompt if set
+                if (config.systemPrompt) {
+                    apiMessages.push({
+                        role: 'system',
+                        content: config.systemPrompt
+                    });
+                }
+                
+                // Add context messages
+                contextMessages.forEach(msg => {
+                    apiMessages.push({
+                        role: msg.role,
+                        content: msg.content
+                    });
+                });
+                
+                // Call LLM API with streaming
+                const response = await puter.ai.chat(
+                    apiMessages, 
+                    {
+                        model: config.model,
+                        temperature: parseFloat(config.temperature),
+                        max_tokens: parseInt(config.maxTokens),
+                        stream: true,
+                        signal: abortController.signal
+                    }
+                );
+                
+                // Process streaming response
+                for await (const part of response) {
+                    if (part?.text) {
+                        fullResponse += part.text;
+                        botMessageContent.innerHTML = marked.parse(fullResponse);
+                        
+                        // Добавляем кнопки копирования к блокам кода
+                        addCopyButtonsToCodeBlocks(botMessageContent);
+                        
+                        botMessage.querySelector('.char-count').textContent = `${fullResponse.length} characters`;
+                        botMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
+                    }
+                }
+                
+                // Update message with full response
+                updateMessage(botMessageId, fullResponse);
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log('Request was aborted');
+                } else {
+                    console.error('Error calling LLM:', error);
+                    updateMessage(botMessageId, `Error: ${error.message}`);
+                }
+            } finally {
+                // Reset UI state
+                abortController = null;
+                sendBtn.disabled = false;
+                stopBtn.disabled = true;
+                regenerateBtn.disabled = false;
+            }
+        }
+        
+        // Stop generation
+        function stopGeneration() {
+            if (abortController) {
+                abortController.abort();
+                abortController = null;
+                stopBtn.disabled = true;
+                sendBtn.disabled = false;
+                regenerateBtn.disabled = false;
+            }
+        }
+        
+        // Download AI responses as HTML
+        function downloadAIResponses() {
+            // Filter only assistant messages
+            const aiResponses = messages.filter(msg => msg.role === 'assistant');
+            
+            if (aiResponses.length === 0) {
+                alert('No AI responses to download.');
+                return;
+            }
+            
+            // Create HTML content
+            let htmlContent = `<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Responses</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        .response {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        pre {
+            background-color: #f5f7f9;
+            border-radius: 6px;
+            padding: 12px;
+            overflow: auto;
+        }
+        code {
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.9rem;
+        }
+        h1, h2, h3, h4, h5, h6 {
+            margin-top: 1.5em;
+            margin-bottom: 0.75em;
+        }
+        p {
+            margin: 0.75em 0;
+        }
+        ul, ol {
+            padding-left: 2em;
+            margin: 0.75em 0;
+        }
+        blockquote {
+            border-left: 3px solid #dfe2e5;
+            margin: 0.75em 0;
+            padding: 0 0 0 1em;
+            color: #666;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 1em 0;
+        }
+        th, td {
+            border: 1px solid #dfe2e5;
+            padding: 0.375em 0.75em;
+            text-align: left;
+        }
+        th {
+            background-color: #f9f9f9;
+        }
+    </style>
+</head>
+<body>
+    <h1>AI Responses</h1>`;
+            
+            // Add each response
+            aiResponses.forEach((response, index) => {
+                htmlContent += `
+    <div class="response">
+        ${marked.parse(response.content)}
+    </div>`;
+            });
+            
+            htmlContent += `
+</body>
+</html>`;
+            
+            // Create download link
+            const blob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `ai-responses-${new Date().toISOString().slice(0, 10)}.html`;
+            document.body.appendChild(a);
+            a.click();
+            
+            // Clean up
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 0);
+        }
+        
+        // Event Listeners
+        sendBtn.addEventListener('click', sendMessage);
+        
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+        
+        stopBtn.addEventListener('click', stopGeneration);
+        
+        regenerateBtn.addEventListener('click', regenerateLastResponse);
+        
+        settingsBtn.addEventListener('click', () => {
+            settingsModal.style.display = 'flex';
+        });
+        
+        closeModalBtn.addEventListener('click', () => {
+            settingsModal.style.display = 'none';
+        });
+        
+        modelSelect.addEventListener('change', () => {
+            if (modelSelect.value === 'custom') {
+                customModelContainer.style.display = 'block';
+            } else {
+                customModelContainer.style.display = 'none';
+            }
+        });
+        
+        temperature.addEventListener('input', () => {
+            temperatureValue.textContent = temperature.value;
+        });
+        
+        saveSettingsBtn.addEventListener('click', () => {
+            // Get values from form
+            config.temperature = parseFloat(temperature.value);
+            config.maxTokens = parseInt(maxTokens.value);
+            config.systemPrompt = systemPrompt.value.trim();
+            
+            // Handle model selection
+            if (modelSelect.value === 'custom') {
+                config.model = customModel.value.trim();
+            } else {
+                config.model = modelSelect.value;
+            }
+            
+            // Save config and close modal
+            saveConfig();
+            settingsModal.style.display = 'none';
+        });
+        
+        downloadBtn.addEventListener('click', downloadAIResponses);
+        
+        // Click outside modal to close
+        window.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.style.display = 'none';
+            }
+        });
+        
+        // Handle ESC key to close modal
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && settingsModal.style.display === 'flex') {
+                settingsModal.style.display = 'none';
+            }
+        });
+        
+        // Initialization
+        loadConfig();
+        loadMessages();
+        
+        // If there are no messages, add a welcome message
+        if (messages.length === 0) {
+            addMessage('assistant', "# Hello! I'm Claude.\n\nI can help you with various tasks. Here are some of my capabilities:\n\n- Answering questions and providing information\n- Writing and editing content\n- Analyzing data and solving problems\n- Programming assistance and code generation\n- Creative writing and brainstorming\n\nHow can I assist you today?");
         }
     </script>
 </body>
