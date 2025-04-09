@@ -13,14 +13,7 @@
     
     <!-- Подключение библиотеки для подсветки кода -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/styles/github.min.css">
-    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/highlight.js"></script>
-    <!-- Явно подключаем языки, которые чаще всего используются в блоках кода -->
-    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/languages/javascript.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/languages/python.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/languages/bash.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/languages/json.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/languages/html.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/lib/languages/css.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.7.0/highlight.min.js"></script>
     
     <!-- Стили для интерфейса -->
     <style>
@@ -38,8 +31,6 @@
             --inline-code-bg: #f1f1f1;
             --blockquote-border: #dfe2e5;
             --table-border: #dfe2e5;
-            --thinking-bg: #f8f9fa;
-            --loading-color: rgba(110, 86, 207, 0.2);
         }
         
         body {
@@ -98,7 +89,6 @@
             padding: 12px 16px;
             border-radius: 8px;
             position: relative;
-            transition: all 0.3s ease;
         }
         
         .message-header {
@@ -438,119 +428,131 @@
             opacity: 0.9;
         }
         
-        /* Анимации для состояний LLM */
-        @keyframes thinking {
-            0% { opacity: 0.7; }
-            50% { opacity: 1; }
-            100% { opacity: 0.7; }
-        }
-        
-        @keyframes sending {
-            0% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-            100% { transform: translateY(0); }
-        }
-        
-        @keyframes receiving {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        
-        @keyframes error-shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-            100% { transform: translateX(0); }
-        }
-        
-        .thinking-indicator {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 12px 16px;
-            background-color: var(--thinking-bg);
+        /* Стили для аддона-макросника */
+        .macro-addon-window {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 500px;
+            height: 620px;
+            background-color: white;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            margin-bottom: 15px;
-            max-width: 90%;
-            align-self: flex-start;
-            animation: thinking 1.5s infinite;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 1001;
+            display: none;
+            resize: both;
+            overflow: auto;
+            min-width: 350px;
+            min-height: 500px;
         }
         
-        .thinking-indicator .thinking-icon {
-            width: 24px;
-            height: 24px;
-            position: relative;
-        }
-        
-        .thinking-indicator .thinking-text {
-            font-size: 0.9rem;
-            color: var(--light-text);
-        }
-        
-        .thinking-indicator .dot {
-            display: inline-block;
-            width: 6px;
-            height: 6px;
-            border-radius: 50%;
-            background-color: var(--primary-color);
-            margin: 0 2px;
-        }
-        
-        .thinking-indicator .dot:nth-child(1) {
-            animation: dot-bounce 1.4s infinite 0s;
-        }
-        
-        .thinking-indicator .dot:nth-child(2) {
-            animation: dot-bounce 1.4s infinite 0.2s;
-        }
-        
-        .thinking-indicator .dot:nth-child(3) {
-            animation: dot-bounce 1.4s infinite 0.4s;
-        }
-        
-        @keyframes dot-bounce {
-            0%, 80%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-8px); }
-        }
-        
-        .message.sending {
-            animation: sending 0.8s ease;
-        }
-        
-        .message.receiving {
-            background: linear-gradient(270deg, #f8f9fb, #fff, #f8f9fb);
-            background-size: 200% 200%;
-            animation: receiving 2s ease infinite;
-        }
-        
-        .message.error {
-            border-color: #f8d7da !important;
-            background-color: #fff5f5 !important;
-            animation: error-shake 0.5s ease;
-        }
-        
-        .message.error .message-content {
-            color: var(--error-color);
-        }
-        
-        /* Индикатор понимания (reasoning) */
-        .reasoning-indicator {
-            margin-bottom: 8px;
-            padding: 6px 10px;
-            background-color: #e8f4fd;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            color: #0366d6;
-            display: inline-flex;
+        .macro-addon-header {
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 6px;
+            padding: 10px 15px;
+            border-bottom: 1px solid var(--border-color);
         }
         
-        .reasoning-indicator svg {
-            width: 14px;
-            height: 14px;
+        .macro-addon-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+        
+        .macro-addon-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .macro-addon-container {
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            font-family: 'Arial', sans-serif;
+            color: #333;
+            height: calc(100% - 55px);
+            overflow-y: auto;
+        }
+        
+        .macro-addon-group {
+            margin-bottom: 15px;
+        }
+        
+        .macro-addon-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .macro-addon-textarea, .macro-addon-input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 1em;
+            resize: vertical;
+        }
+        
+        .macro-addon-textarea {
+            min-height: 100px;
+        }
+        
+        .macro-addon-input[type="number"] {
+            width: 80px;
+        }
+        
+        .macro-addon-buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+        
+        .macro-addon-button {
+            padding: 10px 15px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 4px;
+            background-color: var(--primary-color);
+            color: white;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        
+        .macro-addon-button:hover {
+            opacity: 0.9;
+        }
+        
+        .macro-addon-button:disabled {
+            background-color: #ccc;
+            cursor: default;
+        }
+        
+        .macro-addon-status {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 1.2em;
+        }
+        
+        .macro-addon-autosave {
+            border-top: 1px solid #ccc;
+            padding-top: 15px;
+            margin-top: 15px;
+        }
+        
+        #macro-stopwatch {
+            font-weight: normal;
+        }
+        
+        #macro-variable-counter {
+            margin-left: 10px;
+            display: none;
+            font-size: 0.9em;
+            color: #777;
         }
         
         /* Дополнительные стили для адаптивности */
@@ -563,6 +565,11 @@
                 width: 40px;
                 padding: 10px 2px;
             }
+            
+            .macro-addon-window {
+                width: 95%;
+                height: 90%;
+            }
         }
     </style>
 </head>
@@ -570,6 +577,9 @@
     <div class="header">
         <div class="title">Claude Chat</div>
         <div class="header-actions">
+            <button id="macro-btn" title="Открыть макросник" class="settings-btn">
+                <span>🤖</span> Макрос
+            </button>
             <button id="download-btn" title="Download AI Responses" class="settings-btn">
                 <span>📥</span> Download
             </button>
@@ -640,140 +650,82 @@
         </div>
     </div>
     
+    <!-- Macro Addon Window -->
+    <div id="macro-addon-window" class="macro-addon-window">
+        <div class="macro-addon-header">
+            <div class="macro-addon-title">Аддон-макросник</div>
+            <button id="close-macro-btn" class="macro-addon-close">&times;</button>
+        </div>
+        <div class="macro-addon-container">
+            <div class="macro-addon-group">
+                <label for="macro-template-textarea" class="macro-addon-label"><b>Текст-шаблон:</b></label>
+                <textarea id="macro-template-textarea" class="macro-addon-textarea" placeholder="Введите текст шаблона с символами [] для подстановки переменных, {} для ключевых слов, <> для случайных чисел"></textarea>
+            </div>
+            <div class="macro-addon-group">
+                <label for="macro-variables-textarea" class="macro-addon-label"><b>Переменные ([]):</b></label>
+                <textarea id="macro-variables-textarea" class="macro-addon-textarea" placeholder="Каждая строка - отдельная переменная для подстановки"></textarea>
+            </div>
+            <div class="macro-addon-group">
+                <label for="macro-keywords-textarea" class="macro-addon-label"><b>Ключевые слова ({}):</b></label>
+                <textarea id="macro-keywords-textarea" class="macro-addon-textarea" placeholder="Каждая строка - отдельное ключевое слово"></textarea>
+            </div>
+            <div class="macro-addon-group">
+                <label class="macro-addon-label"><b>Количество ключевых слов:</b></label>
+                <div style="display: flex; align-items: center;">
+                    <span style="margin-right: 5px;">от</span>
+                    <input type="number" id="macro-keywords-count-min-input" class="macro-addon-input" value="1" min="1">
+                    <span style="margin-left: 5px; margin-right: 5px;">до</span>
+                    <input type="number" id="macro-keywords-count-max-input" class="macro-addon-input" value="3" min="1">
+                </div>
+            </div>
+            <div class="macro-addon-group">
+                <label class="macro-addon-label"><b>Диапазон чисел (&lt;&gt;):</b></label>
+                <div style="display: flex; align-items: center;">
+                    <span style="margin-right: 5px;">от</span>
+                    <input type="number" id="macro-number-range-min-input" class="macro-addon-input" value="1000" min="1">
+                    <span style="margin-left: 5px; margin-right: 5px;">до</span>
+                    <input type="number" id="macro-number-range-max-input" class="macro-addon-input" value="2000" min="1">
+                </div>
+            </div>
+            <div class="macro-addon-autosave">
+                <div class="macro-addon-group">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="macro-save-history-checkbox">
+                        Сохранять историю каждые 
+                        <input type="number" id="macro-save-interval-input" 
+                               style="width: 70px; padding: 5px;" 
+                               min="1" value="5" 
+                               disabled>
+                        ответов
+                    </label>
+                </div>
+            </div>
+            <div class="macro-addon-buttons">
+                <button id="macro-start-button" class="macro-addon-button">Старт</button>
+                <button id="macro-pause-button" class="macro-addon-button" disabled>Пауза</button>
+                <button id="macro-stop-button" class="macro-addon-button" disabled>Стоп</button>
+            </div>
+            <div class="macro-addon-status">
+                <b>Секундомер: <span id="macro-stopwatch">0 сек</span></b> 
+                <span id="macro-variable-counter"></span>
+            </div>
+        </div>
+    </div>
+    
     <script>
         // Настройка библиотеки marked для Markdown
-        // Ждем, пока hljs будет полностью загружен
-        window.addEventListener('DOMContentLoaded', () => {
-            if (window.hljs) {
-                marked.setOptions({
-                    renderer: new marked.Renderer(),
-                    highlight: function(code, lang) {
-                        try {
-                            const language = hljs.getLanguage(lang) ? lang : 'plaintext';
-                            return hljs.highlight(code, { language }).value;
-                        } catch (e) {
-                            console.error('Error highlighting code:', e);
-                            return code; // Возвращаем исходный код без подсветки в случае ошибки
-                        }
-                    },
-                    langPrefix: 'hljs language-',
-                    breaks: true,
-                    gfm: true,
-                    headerIds: false,
-                    sanitize: false
-                });
-            } else {
-                // Если hljs не загрузился, используем простые опции без подсветки
-                marked.setOptions({
-                    breaks: true,
-                    gfm: true,
-                    headerIds: false,
-                    sanitize: false
-                });
-                console.warn('Highlight.js not loaded, code highlighting disabled');
-            }
+        marked.setOptions({
+            renderer: new marked.Renderer(),
+            highlight: function(code, lang) {
+                const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                return hljs.highlight(code, { language }).value;
+            },
+            langPrefix: 'hljs language-', // добавляем префикс для CSS-классов highlight.js
+            breaks: true,                  // разрешаем возврат каретки как <br>
+            gfm: true,                     // разрешаем GitHub Flavored Markdown
+            headerIds: false,              // отключаем автоматические ID для заголовков
+            sanitize: false                // не санитайзим HTML (marked обрабатывает это безопасно)
         });
-        
-        // Fallback рендеринг кода без highlight.js
-        function renderCode(code, language) {
-            if (window.hljs) {
-                try {
-                    const validLanguage = hljs.getLanguage(language) ? language : 'plaintext';
-                    return hljs.highlight(code, { language: validLanguage }).value;
-                } catch (e) {
-                    console.error('Error in code highlighting:', e);
-                    return escapeHtml(code);
-                }
-            } else {
-                return escapeHtml(code);
-            }
-        }
-        
-        // Escape HTML для безопасного отображения кода
-        function escapeHtml(text) {
-            return text
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
-        }
-        
-        // Показать индикатор "думающего" LLM
-        function showThinkingIndicator() {
-            // Проверяем, нет ли уже индикатора
-            if (document.getElementById('thinking-indicator')) return;
-            
-            const indicatorElement = document.createElement('div');
-            indicatorElement.id = 'thinking-indicator';
-            indicatorElement.className = 'thinking-indicator';
-            indicatorElement.innerHTML = `
-                <div class="thinking-icon">
-                    <span class="dot"></span>
-                    <span class="dot"></span>
-                    <span class="dot"></span>
-                </div>
-                <div class="thinking-text">Claude is thinking...</div>
-            `;
-            chatContainer.appendChild(indicatorElement);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-        }
-        
-        // Скрыть индикатор "думающего" LLM
-        function hideThinkingIndicator() {
-            const indicatorElement = document.getElementById('thinking-indicator');
-            if (indicatorElement) {
-                indicatorElement.remove();
-            }
-        }
-        
-        // Показать индикатор reasoning (когда модель использует thinking)
-        function showReasoningIndicator(messageElement) {
-            // Проверяем, использует ли модель thinking
-            if (config.model.includes(':thinking')) {
-                const reasoningElement = document.createElement('div');
-                reasoningElement.className = 'reasoning-indicator';
-                reasoningElement.innerHTML = `
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"></circle>
-                        <path d="M12 16v-4"></path>
-                        <path d="M12 8h.01"></path>
-                    </svg>
-                    <span>Claude is reasoning carefully</span>
-                `;
-                
-                // Вставляем перед содержимым сообщения
-                const contentElement = messageElement.querySelector('.message-content');
-                if (contentElement) {
-                    messageElement.insertBefore(reasoningElement, contentElement);
-                }
-            }
-        }
-        
-        // Показать состояние отправки сообщения
-        function showSendingState(messageElement) {
-            messageElement.classList.add('sending');
-            setTimeout(() => {
-                messageElement.classList.remove('sending');
-            }, 1000);
-        }
-        
-        // Показать состояние получения ответа
-        function showReceivingState(messageElement) {
-            messageElement.classList.add('receiving');
-        }
-        
-        // Скрыть состояние получения ответа
-        function hideReceivingState(messageElement) {
-            messageElement.classList.remove('receiving');
-        }
-        
-        // Показать состояние ошибки
-        function showErrorState(messageElement, errorMessage) {
-            messageElement.classList.add('error');
-            const contentElement = messageElement.querySelector('.message-content');
-            contentElement.innerHTML = `<p>❌ Error: ${errorMessage}</p>`;
-        }
         
         // Configuration object with default settings
         const defaultConfig = {
@@ -889,18 +841,11 @@
                 const messageElement = document.getElementById(`message-${id}`);
                 if (messageElement) {
                     const contentElement = messageElement.querySelector('.message-content');
+                    // Рендерим содержимое с Markdown
+                    contentElement.innerHTML = marked.parse(content);
                     
-                    try {
-                        // Рендерим содержимое с Markdown
-                        contentElement.innerHTML = marked.parse(content);
-                        
-                        // Добавляем кнопки копирования к блокам кода
-                        addCopyButtonsToCodeBlocks(contentElement);
-                    } catch (e) {
-                        console.error('Error rendering markdown:', e);
-                        // Fallback для простого текста
-                        contentElement.textContent = content;
-                    }
+                    // Добавляем кнопки копирования к блокам кода
+                    addCopyButtonsToCodeBlocks(contentElement);
                     
                     // Обновляем счетчик символов
                     const charCountElement = messageElement.querySelector('.char-count');
@@ -1040,35 +985,18 @@
                 const messageContent = document.createElement('div');
                 messageContent.className = 'message-content';
                 
-                try {
-                    // Используем marked для рендеринга Markdown
-                    messageContent.innerHTML = marked.parse(message.content);
-                } catch (e) {
-                    console.error('Error parsing markdown:', e);
-                    // Fallback для отображения простого текста
-                    messageContent.textContent = message.content;
-                }
+                // Используем marked для рендеринга Markdown
+                messageContent.innerHTML = marked.parse(message.content);
                 
                 const charCount = document.createElement('div');
                 charCount.className = 'char-count';
                 charCount.textContent = `${message.content.length} characters`;
                 
                 messageElement.appendChild(messageHeader);
-                
-                // Добавляем индикатор reasoning для сообщений бота с thinking
-                if (message.role === 'assistant' && config.model.includes(':thinking')) {
-                    showReasoningIndicator(messageElement);
-                }
-                
                 messageElement.appendChild(messageContent);
                 messageElement.appendChild(charCount);
                 
                 chatContainer.appendChild(messageElement);
-                
-                // Анимация отправки для сообщений пользователя
-                if (message.role === 'user') {
-                    showSendingState(messageElement);
-                }
                 
                 // Добавляем кнопки копирования к блокам кода
                 addCopyButtonsToCodeBlocks(messageContent);
@@ -1076,17 +1004,10 @@
             } else if (!isStreaming) {
                 // Update existing message
                 const contentElement = messageElement.querySelector('.message-content');
+                contentElement.innerHTML = marked.parse(message.content);
                 
-                try {
-                    contentElement.innerHTML = marked.parse(message.content);
-                    
-                    // Добавляем кнопки копирования к блокам кода
-                    addCopyButtonsToCodeBlocks(contentElement);
-                } catch (e) {
-                    console.error('Error parsing markdown:', e);
-                    // Fallback для отображения простого текста
-                    contentElement.textContent = message.content;
-                }
+                // Добавляем кнопки копирования к блокам кода
+                addCopyButtonsToCodeBlocks(contentElement);
                 
                 const charCountElement = messageElement.querySelector('.char-count');
                 charCountElement.textContent = `${message.content.length} characters`;
@@ -1112,16 +1033,10 @@
             // Prepare context window for API call
             const contextWindow = prepareContextWindow();
             
-            // Показываем индикатор думающего LLM
-            showThinkingIndicator();
-            
             // Add an empty bot message (for streaming)
             const botMessageId = addMessage('assistant', '', true);
             const botMessage = document.getElementById(`message-${botMessageId}`);
             const botMessageContent = botMessage.querySelector('.message-content');
-            
-            // Показываем, что бот получает сообщение
-            showReceivingState(botMessage);
             
             // Enable stop button, disable send and regenerate
             sendBtn.disabled = true;
@@ -1151,9 +1066,6 @@
                     });
                 });
                 
-                // Скрываем индикатор думающего LLM перед отправкой запроса
-                hideThinkingIndicator();
-                
                 // Call LLM API with streaming
                 const response = await puter.ai.chat(
                     apiMessages.length === 0 ? userInput : apiMessages, 
@@ -1170,42 +1082,26 @@
                 for await (const part of response) {
                     if (part?.text) {
                         fullResponse += part.text;
-                        try {
-                            botMessageContent.innerHTML = marked.parse(fullResponse);
-                            
-                            // Добавляем кнопки копирования к новым блокам кода
-                            addCopyButtonsToCodeBlocks(botMessageContent);
-                        } catch (e) {
-                            console.error('Error parsing markdown during streaming:', e);
-                            // Fallback для отображения простого текста
-                            botMessageContent.textContent = fullResponse;
-                        }
+                        botMessageContent.innerHTML = marked.parse(fullResponse);
+                        
+                        // Добавляем кнопки копирования к новым блокам кода
+                        addCopyButtonsToCodeBlocks(botMessageContent);
                         
                         botMessage.querySelector('.char-count').textContent = `${fullResponse.length} characters`;
                         botMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
                     }
                 }
                 
-                // Скрываем анимацию получения ответа
-                hideReceivingState(botMessage);
-                
                 // Update message with full response
                 updateMessage(botMessageId, fullResponse);
             } catch (error) {
                 if (error.name === 'AbortError') {
                     console.log('Request was aborted');
-                    // При отмене оставляем текущий ответ
-                    hideReceivingState(botMessage);
                 } else {
                     console.error('Error calling LLM:', error);
-                    // Показываем ошибку
-                    hideReceivingState(botMessage);
-                    showErrorState(botMessage, error.message);
+                    updateMessage(botMessageId, `Error: ${error.message}`);
                 }
             } finally {
-                // Скрываем индикатор думающего LLM
-                hideThinkingIndicator();
-                
                 // Reset UI state
                 abortController = null;
                 sendBtn.disabled = false;
@@ -1246,9 +1142,6 @@
             // Delete last bot message
             deleteMessage(lastBotMessage.id);
             
-            // Показываем индикатор думающего LLM
-            showThinkingIndicator();
-            
             // Disable buttons
             sendBtn.disabled = true;
             regenerateBtn.disabled = true;
@@ -1258,9 +1151,6 @@
             const botMessageId = addMessage('assistant', '', true);
             const botMessage = document.getElementById(`message-${botMessageId}`);
             const botMessageContent = botMessage.querySelector('.message-content');
-            
-            // Показываем, что бот получает сообщение
-            showReceivingState(botMessage);
             
             let fullResponse = '';
             abortController = new AbortController();
@@ -1285,9 +1175,6 @@
                     });
                 });
                 
-                // Скрываем индикатор думающего LLM перед отправкой запроса
-                hideThinkingIndicator();
-                
                 // Call LLM API with streaming
                 const response = await puter.ai.chat(
                     apiMessages, 
@@ -1304,42 +1191,26 @@
                 for await (const part of response) {
                     if (part?.text) {
                         fullResponse += part.text;
-                        try {
-                            botMessageContent.innerHTML = marked.parse(fullResponse);
-                            
-                            // Добавляем кнопки копирования к блокам кода
-                            addCopyButtonsToCodeBlocks(botMessageContent);
-                        } catch (e) {
-                            console.error('Error parsing markdown during streaming:', e);
-                            // Fallback для отображения простого текста
-                            botMessageContent.textContent = fullResponse;
-                        }
+                        botMessageContent.innerHTML = marked.parse(fullResponse);
+                        
+                        // Добавляем кнопки копирования к блокам кода
+                        addCopyButtonsToCodeBlocks(botMessageContent);
                         
                         botMessage.querySelector('.char-count').textContent = `${fullResponse.length} characters`;
                         botMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
                     }
                 }
                 
-                // Скрываем анимацию получения ответа
-                hideReceivingState(botMessage);
-                
                 // Update message with full response
                 updateMessage(botMessageId, fullResponse);
             } catch (error) {
                 if (error.name === 'AbortError') {
                     console.log('Request was aborted');
-                    // При отмене оставляем текущий ответ
-                    hideReceivingState(botMessage);
                 } else {
                     console.error('Error calling LLM:', error);
-                    // Показываем ошибку
-                    hideReceivingState(botMessage);
-                    showErrorState(botMessage, error.message);
+                    updateMessage(botMessageId, `Error: ${error.message}`);
                 }
             } finally {
-                // Скрываем индикатор думающего LLM
-                hideThinkingIndicator();
-                
                 // Reset UI state
                 abortController = null;
                 sendBtn.disabled = false;
@@ -1356,14 +1227,6 @@
                 stopBtn.disabled = true;
                 sendBtn.disabled = false;
                 regenerateBtn.disabled = false;
-                
-                // Скрываем все индикаторы
-                hideThinkingIndicator();
-                
-                const lastBotMessage = document.querySelector('.bot-message.receiving');
-                if (lastBotMessage) {
-                    hideReceivingState(lastBotMessage);
-                }
             }
         }
         
@@ -1445,18 +1308,10 @@
             
             // Add each response
             aiResponses.forEach((response, index) => {
-                try {
-                    htmlContent += `
+                htmlContent += `
     <div class="response">
         ${marked.parse(response.content)}
     </div>`;
-                } catch (e) {
-                    // Fallback для обычного текста при ошибке
-                    htmlContent += `
-    <div class="response">
-        <p>${response.content}</p>
-    </div>`;
-                }
             });
             
             htmlContent += `
@@ -1477,6 +1332,8 @@
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
             }, 0);
+            
+            return url; // Возвращаем URL для использования в аддоне-макроснике
         }
         
         // Event Listeners
@@ -1548,16 +1405,317 @@
         });
         
         // Initialization
-        window.addEventListener('DOMContentLoaded', () => {
-            // Загружаем настройки и историю чата
-            loadConfig();
-            loadMessages();
-            
-            // If there are no messages, add a welcome message
-            if (messages.length === 0) {
-                addMessage('assistant', "# Hello! I'm Claude.\n\nI can help you with various tasks. Here are some of my capabilities:\n\n- Answering questions and providing information\n- Writing and editing content\n- Analyzing data and solving problems\n- Programming assistance and code generation\n- Creative writing and brainstorming\n\nHow can I assist you today?");
+        loadConfig();
+        loadMessages();
+        
+        // If there are no messages, add a welcome message
+        if (messages.length === 0) {
+            addMessage('assistant', "# Hello! I'm Claude.\n\nI can help you with various tasks. Here are some of my capabilities:\n\n- Answering questions and providing information\n- Writing and editing content\n- Analyzing data and solving problems\n- Programming assistance and code generation\n- Creative writing and brainstorming\n\nHow can I assist you today?");
+        }
+        
+        // ==========================================
+        // Код аддона-макросника
+        // ==========================================
+        
+        // Глобальные переменные для макросника
+        let macroRunning = false;
+        let macroPaused = false;
+        let variableLines = [];
+        let currentVariableIndex = 0;
+        let messageCheckInterval = null;
+        let lastMessageTime = null;
+        let stopwatchInterval = null;
+        let totalVariablesCount = 0;
+        let llmResponsesCounter = 0;
+        
+        // DOM элементы макросника
+        const macroBtn = document.getElementById('macro-btn');
+        const macroWindow = document.getElementById('macro-addon-window');
+        const closeMacroBtn = document.getElementById('close-macro-btn');
+        const templateTextArea = document.getElementById('macro-template-textarea');
+        const variablesTextArea = document.getElementById('macro-variables-textarea');
+        const keywordsTextArea = document.getElementById('macro-keywords-textarea');
+        const keywordsCountMinInput = document.getElementById('macro-keywords-count-min-input');
+        const keywordsCountMaxInput = document.getElementById('macro-keywords-count-max-input');
+        const numberRangeMinInput = document.getElementById('macro-number-range-min-input');
+        const numberRangeMaxInput = document.getElementById('macro-number-range-max-input');
+        const startButton = document.getElementById('macro-start-button');
+        const pauseButton = document.getElementById('macro-pause-button');
+        const stopButton = document.getElementById('macro-stop-button');
+        const stopwatchDisplay = document.getElementById('macro-stopwatch');
+        const variableCounterDisplay = document.getElementById('macro-variable-counter');
+        const saveHistoryCheckbox = document.getElementById('macro-save-history-checkbox');
+        const saveIntervalInput = document.getElementById('macro-save-interval-input');
+        
+        // Вспомогательные функции для макросника
+        function saveTextToLocalStorage(key, text) {
+            localStorage.setItem(key, text);
+        }
+        
+        function loadTextFromLocalStorage(key, defaultText = '') {
+            return localStorage.getItem(key) || defaultText;
+        }
+        
+        function startStopwatch() {
+            lastMessageTime = new Date();
+            stopwatchDisplay.textContent = '0 сек';
+            stopwatchInterval = setInterval(updateStopwatch, 1000);
+        }
+        
+        function updateStopwatch() {
+            if (!lastMessageTime) return;
+            const currentTime = new Date();
+            const elapsedSeconds = Math.round((currentTime - lastMessageTime) / 1000);
+            stopwatchDisplay.textContent = elapsedSeconds + ' сек';
+        }
+        
+        function stopStopwatch() {
+            clearInterval(stopwatchInterval);
+            stopwatchInterval = null;
+            lastMessageTime = null;
+            stopwatchDisplay.textContent = '0 сек';
+        }
+        
+        function getRandomKeywords(keywordsText, count) {
+            const keywords = keywordsText.split('\n').filter(line => line.trim() !== '');
+            if (keywords.length === 0) return '';
+            if (count > keywords.length) count = keywords.length;
+            const shuffledKeywords = keywords.sort(() => 0.5 - Math.random());
+            return shuffledKeywords.slice(0, count).join(', ');
+        }
+        
+        function getRandomNumberInRange(min, max) {
+            min = parseInt(min, 10);
+            max = parseInt(max, 10);
+            if (isNaN(min) || isNaN(max)) return 1;
+            if (min > max) return min;
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        
+        // Функция очистки чата
+        function clearChatHistory() {
+            // Очищаем чат-контейнер
+            chatContainer.innerHTML = '';
+            // Сбрасываем массив сообщений
+            messages = [];
+            saveMessages();
+            console.log('История чата очищена');
+        }
+        
+        function startMacro() {
+            if (macroRunning) {
+                alert('Макрос уже запущен.');
+                return;
             }
-        });
+            
+            // Сброс счетчика при новом запуске
+            llmResponsesCounter = 0;
+            
+            macroRunning = true;
+            macroPaused = false;
+            startButton.disabled = true;
+            pauseButton.disabled = false;
+            stopButton.disabled = false;
+            variablesTextArea.disabled = true;
+            templateTextArea.disabled = true;
+            keywordsTextArea.disabled = true;
+            keywordsCountMinInput.disabled = true;
+            keywordsCountMaxInput.disabled = true;
+            numberRangeMinInput.disabled = true;
+            numberRangeMaxInput.disabled = true;
+            saveHistoryCheckbox.disabled = true;
+            saveIntervalInput.disabled = true;
+            
+            variableLines = variablesTextArea.value.split('\n').filter(line => line.trim() !== '');
+            currentVariableIndex = 0;
+            totalVariablesCount = variableLines.length;
+            
+            if (variableLines.length === 0 && templateTextArea.value.includes('[]')) {
+                alert('Нет переменных для отправки, но в шаблоне используется плейсхолдер [].');
+                stopMacro();
+                return;
+            }
+            
+            updateVariableCounter();
+            sendNextMessage();
+        }
+        
+        async function sendNextMessage() {
+            if (!macroRunning) return;
+            if (macroPaused) return;
+            
+            // Проверка и выполнение автосохранения
+            if (saveHistoryCheckbox.checked) {
+                const interval = parseInt(saveIntervalInput.value);
+                if (llmResponsesCounter >= interval) {
+                    downloadAIResponses();
+                    await new Promise(resolve => setTimeout(resolve, 500));
+                    clearChatHistory();
+                    llmResponsesCounter = 0;
+                }
+            }
+            
+            if (templateTextArea.value.includes('[]') && currentVariableIndex >= variableLines.length) {
+                stopMacro();
+                alert('Макрос завершил отправку всех сообщений.');
+                return;
+            }
+            
+            let template = templateTextArea.value;
+            let messageContent = template;
+            
+            if (template.includes('{}')) {
+                const minKeywords = keywordsCountMinInput.value;
+                const maxKeywords = keywordsCountMaxInput.value;
+                const keywordsCount = getRandomNumberInRange(minKeywords, maxKeywords);
+                const randomKeywords = getRandomKeywords(keywordsTextArea.value, keywordsCount);
+                messageContent = messageContent.replace('{}', randomKeywords);
+            }
+            
+            if (template.includes('<>')) {
+                const minRange = numberRangeMinInput.value;
+                const maxRange = numberRangeMaxInput.value;
+                const randomNumber = getRandomNumberInRange(minRange, maxRange);
+                messageContent = messageContent.replace('<>', randomNumber);
+            }
+            
+            if (template.includes('[]')) {
+                if (variableLines.length > 0 && currentVariableIndex < variableLines.length) {
+                    messageContent = messageContent.replace('[]', variableLines[currentVariableIndex]);
+                }
+                updateVariableCounter();
+            } else {
+                updateVariableCounter(true);
+            }
+            
+            // Отправляем сообщение через существующий интерфейс
+            messageInput.value = messageContent;
+            await sendMessage();
+            
+            llmResponsesCounter++;
+            startStopwatch();
+            startMessageStatusCheck();
+        }
+        
+        function startMessageStatusCheck() {
+            messageCheckInterval = setInterval(checkLastAssistantMessageStatus, 500);
+        }
+        
+        function checkLastAssistantMessageStatus() {
+            // Проверяем, есть ли активный контроллер, что означает, что генерация в процессе
+            if (!abortController) {
+                clearInterval(messageCheckInterval);
+                messageCheckInterval = null;
+                stopStopwatch();
+                if (templateTextArea.value.includes('[]')) {
+                    currentVariableIndex++;
+                }
+                setTimeout(sendNextMessage, 1000); // Небольшая задержка перед отправкой следующего сообщения
+            }
+        }
+        
+        function pauseMacro() {
+            if (!macroRunning || macroPaused) return;
+            macroPaused = true;
+            pauseButton.disabled = true;
+            startButton.disabled = false;
+            if (messageCheckInterval) {
+                clearInterval(messageCheckInterval);
+                messageCheckInterval = null;
+            }
+            stopStopwatch();
+        }
+        
+        function stopMacro() {
+            macroRunning = false;
+            macroPaused = false;
+            startButton.disabled = false;
+            pauseButton.disabled = true;
+            stopButton.disabled = true;
+            variablesTextArea.disabled = false;
+            templateTextArea.disabled = false;
+            keywordsTextArea.disabled = false;
+            keywordsCountMinInput.disabled = false;
+            keywordsCountMaxInput.disabled = false;
+            numberRangeMinInput.disabled = false;
+            numberRangeMaxInput.disabled = false;
+            saveHistoryCheckbox.disabled = false;
+            saveIntervalInput.disabled = false;
+            if (messageCheckInterval) {
+                clearInterval(messageCheckInterval);
+                messageCheckInterval = null;
+            }
+            stopStopwatch();
+            updateVariableCounter(true);
+        }
+        
+        function updateVariableCounter(hide = false) {
+            if (variableCounterDisplay) {
+                if (hide) {
+                    variableCounterDisplay.style.display = 'none';
+                } else {
+                    variableCounterDisplay.style.display = 'inline';
+                    variableCounterDisplay.textContent = `(${currentVariableIndex + 1}/${totalVariablesCount})`;
+                }
+            }
+        }
+        
+        // Инициализация элементов макросника
+        function initMacroAddon() {
+            // Загрузка сохраненных данных
+            templateTextArea.value = loadTextFromLocalStorage('macroTemplateText', '');
+            variablesTextArea.value = loadTextFromLocalStorage('macroVariablesText', '');
+            keywordsTextArea.value = loadTextFromLocalStorage('macroKeywordsText', '');
+            keywordsCountMinInput.value = loadTextFromLocalStorage('macroKeywordsCountMin', '1');
+            keywordsCountMaxInput.value = loadTextFromLocalStorage('macroKeywordsCountMax', '3');
+            numberRangeMinInput.value = loadTextFromLocalStorage('macroNumberRangeMin', '1000');
+            numberRangeMaxInput.value = loadTextFromLocalStorage('macroNumberRangeMax', '2000');
+            saveHistoryCheckbox.checked = localStorage.getItem('macroSaveHistoryEnabled') === 'true';
+            saveIntervalInput.value = loadTextFromLocalStorage('macroSaveInterval', '5');
+            saveIntervalInput.disabled = !saveHistoryCheckbox.checked;
+            
+            // Добавляем обработчики событий
+            macroBtn.addEventListener('click', () => {
+                macroWindow.style.display = 'block';
+            });
+            
+            closeMacroBtn.addEventListener('click', () => {
+                macroWindow.style.display = 'none';
+            });
+            
+            startButton.addEventListener('click', startMacro);
+            pauseButton.addEventListener('click', pauseMacro);
+            stopButton.addEventListener('click', stopMacro);
+            
+            templateTextArea.addEventListener('input', () => saveTextToLocalStorage('macroTemplateText', templateTextArea.value));
+            variablesTextArea.addEventListener('input', () => saveTextToLocalStorage('macroVariablesText', variablesTextArea.value));
+            keywordsTextArea.addEventListener('input', () => saveTextToLocalStorage('macroKeywordsText', keywordsTextArea.value));
+            keywordsCountMinInput.addEventListener('input', () => saveTextToLocalStorage('macroKeywordsCountMin', keywordsCountMinInput.value));
+            keywordsCountMaxInput.addEventListener('input', () => saveTextToLocalStorage('macroKeywordsCountMax', keywordsCountMaxInput.value));
+            numberRangeMinInput.addEventListener('input', () => saveTextToLocalStorage('macroNumberRangeMin', numberRangeMinInput.value));
+            numberRangeMaxInput.addEventListener('input', () => saveTextToLocalStorage('macroNumberRangeMax', numberRangeMaxInput.value));
+            
+            saveHistoryCheckbox.addEventListener('change', function() {
+                saveIntervalInput.disabled = !this.checked;
+                localStorage.setItem('macroSaveHistoryEnabled', this.checked);
+            });
+            
+            saveIntervalInput.addEventListener('input', function() {
+                localStorage.setItem('macroSaveInterval', this.value);
+            });
+            
+            // Закрытие окна макросника по ESC
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && macroWindow.style.display === 'block') {
+                    macroWindow.style.display = 'none';
+                }
+            });
+            
+            console.log('Аддон "Макросник" инициализирован.');
+        }
+        
+        // Запускаем инициализацию макросника
+        initMacroAddon();
     </script>
 </body>
 </html>
