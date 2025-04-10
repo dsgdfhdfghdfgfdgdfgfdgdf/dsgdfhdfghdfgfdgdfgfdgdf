@@ -691,6 +691,34 @@
             opacity: 0.9;
         }
         
+        .token-info {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        #token-status {
+            font-size: 0.9rem;
+        }
+        
+        .regenerate-token-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .regenerate-token-btn:hover {
+            opacity: 0.9;
+        }
+        
         /* Отладочная панель */
         .debug-panel {
             position: fixed;
@@ -991,12 +1019,12 @@
             <div class="form-group">
                 <label for="model-select" class="form-label">Model</label>
                 <select id="model-select" class="form-select">
-                    <option value="openrouter:anthropic/claude-3.7-sonnet:thinking">Claude 3.7 Sonnet (Thinking)</option>
-                    <option value="openrouter:anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet</option>
-                    <option value="openrouter:anthropic/claude-3-opus">Claude 3 Opus</option>
-                    <option value="openrouter:openai/gpt-4o">GPT-4o</option>
-                    <option value="openrouter:google/gemini-pro">Gemini Pro</option>
-                    <option value="openrouter:meta-llama/llama-3-70b-instruct">Llama 3 70B</option>
+                    <option value="claude3.7">Claude 3.7 Sonnet</option>
+                    <option value="claude3.5">Claude 3.5 Sonnet</option>
+                    <option value="openrouter:anthropic/claude-3.7-sonnet:thinking">Claude 3.7 Sonnet (OpenRouter, с thinking)</option>
+                    <option value="openrouter:anthropic/claude-3.5-sonnet">Claude 3.5 Sonnet (OpenRouter)</option>
+                    <option value="openrouter:anthropic/claude-3-opus">Claude 3 Opus (OpenRouter)</option>
+                    <option value="openrouter:openai/gpt-4o">GPT-4o (OpenRouter)</option>
                     <option value="custom">Custom model...</option>
                 </select>
             </div>
@@ -1015,6 +1043,13 @@
             <div class="form-group">
                 <label for="system-prompt" class="form-label">System Prompt</label>
                 <textarea id="system-prompt" class="form-textarea" placeholder="Instructions for the AI..."></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Puter API Настройки</label>
+                <div class="token-info">
+                    <div id="token-status">Статус токена: Не загружен</div>
+                    <button id="regenerate-token-btn" class="regenerate-token-btn">Обновить токен</button>
+                </div>
             </div>
             <button id="save-settings-btn" class="save-settings-btn">Save Settings</button>
         </div>
@@ -1102,9 +1137,12 @@
             sanitize: false                // не санитайзим HTML (marked обрабатывает это безопасно)
         });
         
+        // Переменная для хранения JWT-токена Puter
+        let puterJwtToken = null;
+        
         // Configuration object with default settings
         const defaultConfig = {
-            model: "openrouter:anthropic/claude-3.7-sonnet:thinking",
+            model: "claude3.7",
             temperature: 0.7,
             maxTokens: 4096,
             systemPrompt: ""
@@ -1168,6 +1206,10 @@
         const chatsListElement = document.getElementById('chats-list');
         const newChatBtn = document.getElementById('new-chat-btn');
         
+        // Элементы обновления токена
+        const tokenStatus = document.getElementById('token-status');
+        const regenerateTokenBtn = document.getElementById('regenerate-token-btn');
+        
         // Макросник DOM элементы
         const macroBtn = document.getElementById('macro-btn');
         const macroWindow = document.getElementById('macro-window');
@@ -1203,6 +1245,285 @@
         let isDragging = false;
         let dragOffsetX = 0;
         let dragOffsetY = 0;
+        
+        // Функция для генерации JWT-токена Puter
+        async function generatePuterJwtToken() {
+            try {
+                console.log('Attempting to generate Puter JWT token...');
+                debugInfo.status = 'generating_token';
+                updateDebugPanel();
+                
+                const response = await fetch('https://puter.com/signup', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': '/',
+                        'Origin': 'https://puter.com',
+                        'Referer': 'https://puter.com/app/editor',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        "referrer": "/app/editor",
+                        "is_temp": true
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data && data.token) {
+                    puterJwtToken = data.token;
+                    // Сохраняем токен в localStorage
+                    localStorage.setItem('puterJwtToken', puterJwtToken);
+                    localStorage.setItem('puterTokenTimestamp', Date.now().toString());
+                    
+                    console.log('Puter JWT token generated successfully');
+                    debugInfo.status = 'token_generated';
+                    updateDebugPanel();
+                    
+                    return true;
+                } else {
+                    console.error('JWT token not found in response:', data);
+                    debugInfo.error = 'JWT token not found in response';
+                    updateDebugPanel();
+                    
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error generating Puter JWT token:', error.message);
+                debugInfo.error = `Error generating token: ${error.message}`;
+                updateDebugPanel();
+                
+                return false;
+            }
+        }
+        
+        // Функция для загрузки сохраненного токена
+        function loadPuterJwtToken() {
+            const savedToken = localStorage.getItem('puterJwtToken');
+            const timestamp = localStorage.getItem('puterTokenTimestamp');
+            
+            if (savedToken && timestamp) {
+                // Проверяем, не устарел ли токен (12 часов)
+                const tokenTime = parseInt(timestamp);
+                const currentTime = Date.now();
+                const twelveHoursInMs = 12 * 60 * 60 * 1000;
+                
+                if (currentTime - tokenTime < twelveHoursInMs) {
+                    puterJwtToken = savedToken;
+                    return true;
+                } else {
+                    // Токен устарел, удаляем
+                    localStorage.removeItem('puterJwtToken');
+                    localStorage.removeItem('puterTokenTimestamp');
+                }
+            }
+            
+            return false;
+        }
+        
+        // Обновление статуса токена
+        function updateTokenStatus() {
+            if (puterJwtToken) {
+                const timestamp = localStorage.getItem('puterTokenTimestamp');
+                if (timestamp) {
+                    const tokenDate = new Date(parseInt(timestamp));
+                    tokenStatus.textContent = `Токен активен с: ${tokenDate.toLocaleString()}`;
+                    tokenStatus.style.color = 'green';
+                } else {
+                    tokenStatus.textContent = `Токен активен`;
+                    tokenStatus.style.color = 'green';
+                }
+            } else {
+                tokenStatus.textContent = 'Токен не загружен';
+                tokenStatus.style.color = 'red';
+            }
+        }
+        
+        // Функция для вызова Puter API
+        async function usePuterAPI(messages, model, temperature, maxTokens, abortSignal) {
+            // Если нет токена, пытаемся загрузить его или сгенерировать новый
+            if (!puterJwtToken) {
+                const tokenLoaded = loadPuterJwtToken();
+                if (!tokenLoaded) {
+                    const tokenGenerated = await generatePuterJwtToken();
+                    if (!tokenGenerated) {
+                        throw new Error('Failed to authenticate with Puter API');
+                    }
+                }
+            }
+            
+            // Определяем, является ли модель OpenRouter-моделью
+            const isOpenRouterModel = model.startsWith('openrouter:');
+            let actualModel = model;
+            let driverModel = 'claude';
+            
+            if (isOpenRouterModel) {
+                // Для OpenRouter используем специальный интерфейс
+                driverModel = 'openrouter';
+                actualModel = model.replace('openrouter:', '');
+            } else {
+                // Для Puter стандартных моделей будем выбирать claude-3-5-sonnet или claude-3-7-sonnet
+                if (model === 'claude3.5') {
+                    actualModel = 'claude-3-5-sonnet-20241022';
+                } else if (model === 'claude3.7') {
+                    actualModel = 'claude-3-7-sonnet-latest';
+                }
+            }
+            
+            // Подготовка данных запроса
+            const requestData = {
+                "interface": "puter-chat-completion",
+                "driver": driverModel,
+                "test_mode": false,
+                "method": "complete",
+                "args": {
+                    "messages": messages.length === 0 ? [{ "content": "Hello" }] : messages,
+                    "model": actualModel,
+                    "temperature": temperature,
+                    "max_tokens": maxTokens
+                }
+            };
+            
+            // Для отладки
+            debugInfo.lastChunk = requestData;
+            updateDebugPanel();
+            
+            // Выполнение запроса
+            const response = await fetch("https://api.puter.com/drivers/call", {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json;charset=UTF-8',
+                    'Authorization': `Bearer ${puterJwtToken}`,
+                    'Origin': 'https://docs.puter.com',
+                    'Referer': 'https://docs.puter.com/',
+                    'Accept': '/',
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36'
+                },
+                body: JSON.stringify(requestData),
+                signal: abortSignal
+            });
+            
+            // Проверяем ответ
+            if (!response.ok) {
+                if (response.status === 401) {
+                    // Токен устарел, генерируем новый
+                    localStorage.removeItem('puterJwtToken');
+                    localStorage.removeItem('puterTokenTimestamp');
+                    puterJwtToken = null;
+                    
+                    const tokenGenerated = await generatePuterJwtToken();
+                    if (tokenGenerated) {
+                        // Повторяем запрос с новым токеном
+                        return usePuterAPI(messages, model, temperature, maxTokens, abortSignal);
+                    } else {
+                        throw new Error('Failed to refresh authentication token');
+                    }
+                }
+                
+                const errorText = await response.text();
+                throw new Error(`API request failed (${response.status}): ${errorText}`);
+            }
+            
+            return response;
+        }
+        
+// Обработка потока данных от Puter API
+async function processPuterResponse(response, botMessageId, updateMessageCallback) {
+    const reader = response.body.getReader();
+    let fullResponse = '';
+    let jsonBuffer = '';
+    
+    try {
+        while (true) {
+            const { done, value } = await reader.read();
+            
+            if (done) {
+                break;
+            }
+            
+            // Преобразуем Uint8Array в строку
+            const chunkStr = new TextDecoder().decode(value);
+            jsonBuffer += chunkStr;
+            
+            try {
+                // Пытаемся распарсить JSON, если он полный
+                const data = JSON.parse(jsonBuffer);
+                jsonBuffer = '';
+                
+                // Сохраняем данные для отладки
+                debugInfo.lastChunk = data;
+                // Добавляем подробное логирование для отладки
+                console.log('Полученные данные от API:', data);
+                debugInfo.rawResponse = data;
+                updateDebugPanel();
+                
+                // Проверяем на наличие содержимого
+                if (data.result && data.result.message) {
+                    // Для Claude 3.7 Sonnet с thinking
+                    if (data.result.message.model?.includes('thinking')) {
+                        if (data.result.message.thinking) {
+                            // Обновляем статус сообщения
+                            debugInfo.status = 'thinking';
+                            updateMessageCallback(botMessageId, fullResponse, MESSAGE_STATUS.THINKING);
+                        }
+                    }
+                    
+                    // Обработка различных форматов содержимого
+                    if (data.result.message.content) {
+                        // Формат Claude (массив с text-полями)
+                        if (Array.isArray(data.result.message.content) && data.result.message.content[0]?.text) {
+                            fullResponse = data.result.message.content[0].text;
+                            updateMessageCallback(botMessageId, fullResponse);
+                        }
+                        // Формат OpenAI/OpenRouter (строка или другая структура)
+                        else if (typeof data.result.message.content === 'string') {
+                            fullResponse = data.result.message.content;
+                            updateMessageCallback(botMessageId, fullResponse);
+                        }
+                        // Ещё один возможный формат
+                        else if (data.result.message.content.text) {
+                            fullResponse = data.result.message.content.text;
+                            updateMessageCallback(botMessageId, fullResponse);
+                        }
+                        // Для других неизвестных форматов
+                        else {
+                            console.log('Неизвестный формат ответа:', data.result.message.content);
+                            // Пробуем использовать любые доступные данные
+                            const contentStr = JSON.stringify(data.result.message.content);
+                            if (contentStr && contentStr !== '{}' && contentStr !== '[]') {
+                                fullResponse = contentStr;
+                                updateMessageCallback(botMessageId, fullResponse);
+                            }
+                        }
+                    }
+                    // Альтернативный формат (свойство text напрямую в message)
+                    else if (data.result.message.text) {
+                        fullResponse = data.result.message.text;
+                        updateMessageCallback(botMessageId, fullResponse);
+                    }
+                    
+                    // Сохраняем информацию о токенах
+                    if (data.result.usage) {
+                        debugInfo.totalTokens = data.result.usage.total_tokens || 0;
+                    }
+                }
+            } catch (e) {
+                // Если JSON неполный, продолжаем накапливать данные
+                console.log('Incomplete JSON chunk, continuing to buffer');
+            }
+        }
+    } catch (error) {
+        if (error.name === 'AbortError') {
+            throw error; // Пробрасываем ошибку прерывания дальше
+        }
+        console.error('Error processing stream:', error);
+        throw error;
+    }
+    
+    return fullResponse;
+}
+
         
         // Создание нового чата
         function createChat(title = "Новый чат") {
@@ -1441,6 +1762,11 @@
                 <span class="debug-value">${debugInfo.status}</span>
             </div>`;
             
+            content += `<div class="debug-info">
+                <span class="debug-label">Puter Token:</span>
+                <span class="debug-value">${puterJwtToken ? 'Present' : 'Not available'}</span>
+            </div>`;
+            
             if (debugInfo.startTime) {
                 content += `<div class="debug-info">
                     <span class="debug-label">Started:</span>
@@ -1458,6 +1784,13 @@
                 content += `<div class="debug-info">
                     <span class="debug-label">Duration:</span>
                     <span class="debug-value">${duration.toFixed(2)} seconds</span>
+                </div>`;
+            }
+            
+            if (debugInfo.totalTokens) {
+                content += `<div class="debug-info">
+                    <span class="debug-label">Total Tokens:</span>
+                    <span class="debug-value">${debugInfo.totalTokens}</span>
                 </div>`;
             }
             
@@ -1908,34 +2241,29 @@
             return activeChat.messages.slice(-numericLimit);
         }
         
-        // Send message to the LLM
+        // Отправка сообщения в LLM
         async function sendMessage(messageContent = null) {
             const userInput = messageContent || messageInput.value.trim();
             if (!userInput) return;
             
-            // Add user message to chat
+            // Добавляем сообщение пользователя в чат
             addMessage('user', userInput);
             
-            // Clear input
+            // Очищаем поле ввода
             if (!messageContent) {
                 messageInput.value = '';
             }
             
-            // Prepare context window for API call
+            // Подготавливаем контекст сообщений
             const contextWindow = prepareContextWindow();
             
-            // Add an empty bot message (for streaming) со статусом "отправка"
+            // Добавляем пустое сообщение бота со статусом "отправка"
             const botMessageId = addMessage('assistant', '', true, MESSAGE_STATUS.SENDING);
-            const botMessage = document.getElementById(`message-${botMessageId}`);
-            const botMessageContent = botMessage.querySelector('.message-content');
             
-            // Enable stop button, disable send and regenerate
+            // Обновляем состояние кнопок
             sendBtn.disabled = true;
             stopBtn.disabled = false;
             regenerateBtn.disabled = true;
-            
-            let fullResponse = '';
-            activeChat.abortController = new AbortController();
             
             // Сбрасываем отладочную информацию
             debugInfo = {
@@ -1949,16 +2277,19 @@
             };
             updateDebugPanel();
             
-            // Для макроса: начать отсчет времени ожидания ответа
+            // Для макроса: начинаем отсчет времени
             if (macroRunning) {
                 startStopwatch();
             }
             
+            let fullResponse = '';
+            activeChat.abortController = new AbortController();
+            
             try {
-                // Build messages array for API
+                // Готовим сообщения для API
                 const apiMessages = [];
                 
-                // Add system prompt if set
+                // Добавляем системный промпт, если он задан
                 if (config.systemPrompt) {
                     apiMessages.push({
                         role: 'system',
@@ -1966,7 +2297,7 @@
                     });
                 }
                 
-                // Add context messages
+                // Добавляем контекстные сообщения
                 contextWindow.forEach(msg => {
                     apiMessages.push({
                         role: msg.role,
@@ -1974,75 +2305,34 @@
                     });
                 });
                 
-                // Изменяем статус сообщения на "ожидание"
+                // Обновляем статус сообщения
                 updateMessage(botMessageId, '', MESSAGE_STATUS.WAITING);
                 debugInfo.status = 'waiting';
                 updateDebugPanel();
                 
-                // Call LLM API with streaming
-                const response = await puter.ai.chat(
-                    apiMessages.length === 0 ? userInput : apiMessages, 
-                    {
-                        model: config.model,
-                        temperature: parseFloat(config.temperature),
-                        max_tokens: parseInt(config.maxTokens),
-                        stream: true,
-                        signal: activeChat.abortController.signal
-                    }
+                // Вызываем Puter API
+                const response = await usePuterAPI(
+                    apiMessages, 
+                    config.model, 
+                    parseFloat(config.temperature), 
+                    parseInt(config.maxTokens),
+                    activeChat.abortController.signal
                 );
                 
-                // Process streaming response
-                for await (const part of response) {
-                    // Сохраняем последний чанк для отладки
-                    debugInfo.lastChunk = part;
-                    
-                    // Проверяем, содержит ли ответ thinking или reasoning
-                    if (part?.thinking || part?.reasoning) {
-                        if (debugInfo.status !== 'thinking') {
-                            debugInfo.status = 'thinking';
-                            updateMessage(botMessageId, fullResponse, MESSAGE_STATUS.THINKING);
-                        }
-                    }
-                    
-                    if (part?.text) {
-                        fullResponse += part.text;
-                        
-                        // Ищем сообщение по ID (на случай, если переключили чат)
-                        const currentBotMessage = document.getElementById(`message-${botMessageId}`);
-                        if (currentBotMessage) {
-                            const currentBotMessageContent = currentBotMessage.querySelector('.message-content');
-                            currentBotMessageContent.innerHTML = marked.parse(fullResponse);
-                            
-                            // Добавляем кнопки копирования к новым блокам кода
-                            addCopyButtonsToCodeBlocks(currentBotMessageContent);
-                            
-                            currentBotMessage.querySelector('.char-count').textContent = `${fullResponse.length} characters`;
-                            
-                            // Прокручиваем только если включен автоскролл
-                            if (autoScroll) {
-                                currentBotMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                            }
-                        }
-                        
-                        // Обновляем сообщение в активном чате
-                        const messageIndex = activeChat.messages.findIndex(m => m.id === botMessageId);
-                        if (messageIndex !== -1) {
-                            activeChat.messages[messageIndex].content = fullResponse;
-                            saveChats();
-                        }
-                    }
-                    
-                    // Обновляем отладочную панель
-                    updateDebugPanel();
-                }
+                // Обрабатываем потоковый ответ
+                fullResponse = await processPuterResponse(
+                    response, 
+                    botMessageId, 
+                    updateMessage
+                );
                 
-                // Стримминг закончен, убираем статус
+                // Обновляем отладочную информацию
                 debugInfo.status = 'completed';
                 debugInfo.endTime = Date.now();
                 updateMessage(botMessageId, fullResponse, MESSAGE_STATUS.NONE);
                 updateDebugPanel();
                 
-                // Для макроса: увеличиваем счетчик ответов
+                // Для макроса: увеличиваем счетчик и останавливаем секундомер
                 if (macroRunning) {
                     llmResponsesCounter++;
                     stopStopwatch();
@@ -2087,22 +2377,8 @@
                     debugInfo.endTime = Date.now();
                     debugInfo.error = error.message;
                     
-                    // Обновляем сообщение об ошибке в активном чате
-                    const messageIndex = activeChat.messages.findIndex(m => m.id === botMessageId);
-                    if (messageIndex !== -1) {
-                        activeChat.messages[messageIndex].content = `Error: ${error.message}`;
-                        activeChat.messages[messageIndex].status = MESSAGE_STATUS.ERROR;
-                        saveChats();
-                        
-                        // Обновляем UI если сообщение видимо
-                        const currentBotMessage = document.getElementById(`message-${botMessageId}`);
-                        if (currentBotMessage) {
-                            const currentBotMessageContent = currentBotMessage.querySelector('.message-content');
-                            currentBotMessageContent.innerHTML = `Error: ${error.message}`;
-                            currentBotMessage.querySelector('.char-count').textContent = `${(`Error: ${error.message}`).length} characters`;
-                            setMessageStatus(botMessageId, MESSAGE_STATUS.ERROR);
-                        }
-                    }
+                    // Обновляем сообщение об ошибке
+                    updateMessage(botMessageId, `Error: ${error.message}`, MESSAGE_STATUS.ERROR);
                 }
                 
                 updateDebugPanel();
@@ -2111,7 +2387,7 @@
                     stopStopwatch();
                 }
             } finally {
-                // Reset UI state
+                // Сбрасываем состояние UI
                 activeChat.abortController = null;
                 sendBtn.disabled = false;
                 stopBtn.disabled = true;
@@ -2119,28 +2395,28 @@
             }
         }
         
-        // Regenerate the last bot response
+        // Регенерация последнего ответа бота
         async function regenerateLastResponse() {
             if (!activeChat || !activeChat.messages) return;
             
-            // Find the last bot message
+            // Находим последнее сообщение бота
             const lastBotMessageIndex = [...activeChat.messages].reverse().findIndex(m => m.role === 'assistant');
             if (lastBotMessageIndex === -1) return;
             
             const lastBotMessage = activeChat.messages[activeChat.messages.length - 1 - lastBotMessageIndex];
             
-            // Prepare context up to the last user message
+            // Подготавливаем контекст до последнего сообщения пользователя
             const contextMessages = activeChat.messages.slice(0, activeChat.messages.length - 1 - lastBotMessageIndex);
             
-            // Delete last bot message
+            // Удаляем последнее сообщение бота
             deleteMessage(lastBotMessage.id);
             
-            // Disable buttons
+            // Отключаем кнопки
             sendBtn.disabled = true;
             regenerateBtn.disabled = true;
             stopBtn.disabled = false;
             
-            // Add an empty bot message (for streaming) со статусом "отправка"
+            // Добавляем пустое сообщение бота со статусом "отправка"
             const botMessageId = addMessage('assistant', '', true, MESSAGE_STATUS.SENDING);
             
             // Сбрасываем отладочную информацию
@@ -2159,10 +2435,10 @@
             activeChat.abortController = new AbortController();
             
             try {
-                // Build messages array for API
+                // Готовим сообщения для API
                 const apiMessages = [];
                 
-                // Add system prompt if set
+                // Добавляем системный промпт, если он задан
                 if (config.systemPrompt) {
                     apiMessages.push({
                         role: 'system',
@@ -2170,7 +2446,7 @@
                     });
                 }
                 
-                // Add context messages
+                // Добавляем контекстные сообщения
                 contextMessages.forEach(msg => {
                     apiMessages.push({
                         role: msg.role,
@@ -2178,69 +2454,28 @@
                     });
                 });
                 
-                // Изменяем статус сообщения на "ожидание"
+                // Обновляем статус сообщения
                 updateMessage(botMessageId, '', MESSAGE_STATUS.WAITING);
                 debugInfo.status = 'waiting';
                 updateDebugPanel();
                 
-                // Call LLM API with streaming
-                const response = await puter.ai.chat(
+                // Вызываем Puter API
+                const response = await usePuterAPI(
                     apiMessages, 
-                    {
-                        model: config.model,
-                        temperature: parseFloat(config.temperature),
-                        max_tokens: parseInt(config.maxTokens),
-                        stream: true,
-                        signal: activeChat.abortController.signal
-                    }
+                    config.model, 
+                    parseFloat(config.temperature), 
+                    parseInt(config.maxTokens),
+                    activeChat.abortController.signal
                 );
                 
-                // Process streaming response
-                for await (const part of response) {
-                    // Сохраняем последний чанк для отладки
-                    debugInfo.lastChunk = part;
-                    
-                    // Проверяем, содержит ли ответ thinking или reasoning
-                    if (part?.thinking || part?.reasoning) {
-                        if (debugInfo.status !== 'thinking') {
-                            debugInfo.status = 'thinking';
-                            updateMessage(botMessageId, fullResponse, MESSAGE_STATUS.THINKING);
-                        }
-                    }
-                    
-                    if (part?.text) {
-                        fullResponse += part.text;
-                        
-                        // Ищем сообщение по ID (на случай, если переключили чат)
-                        const currentBotMessage = document.getElementById(`message-${botMessageId}`);
-                        if (currentBotMessage) {
-                            const currentBotMessageContent = currentBotMessage.querySelector('.message-content');
-                            currentBotMessageContent.innerHTML = marked.parse(fullResponse);
-                            
-                            // Добавляем кнопки копирования к блокам кода
-                            addCopyButtonsToCodeBlocks(currentBotMessageContent);
-                            
-                            currentBotMessage.querySelector('.char-count').textContent = `${fullResponse.length} characters`;
-                            
-                            // Прокручиваем только если включен автоскролл
-                            if (autoScroll) {
-                                currentBotMessage.scrollIntoView({ behavior: 'smooth', block: 'end' });
-                            }
-                        }
-                        
-                        // Обновляем сообщение в активном чате
-                        const messageIndex = activeChat.messages.findIndex(m => m.id === botMessageId);
-                        if (messageIndex !== -1) {
-                            activeChat.messages[messageIndex].content = fullResponse;
-                            saveChats();
-                        }
-                    }
-                    
-                    // Обновляем отладочную панель
-                    updateDebugPanel();
-                }
+                // Обрабатываем потоковый ответ
+                fullResponse = await processPuterResponse(
+                    response, 
+                    botMessageId, 
+                    updateMessage
+                );
                 
-                // Стримминг закончен, убираем статус
+                // Обновляем отладочную информацию
                 debugInfo.status = 'completed';
                 debugInfo.endTime = Date.now();
                 updateMessage(botMessageId, fullResponse, MESSAGE_STATUS.NONE);
@@ -2258,27 +2493,13 @@
                     debugInfo.endTime = Date.now();
                     debugInfo.error = error.message;
                     
-                    // Обновляем сообщение об ошибке в активном чате
-                    const messageIndex = activeChat.messages.findIndex(m => m.id === botMessageId);
-                    if (messageIndex !== -1) {
-                        activeChat.messages[messageIndex].content = `Error: ${error.message}`;
-                        activeChat.messages[messageIndex].status = MESSAGE_STATUS.ERROR;
-                        saveChats();
-                        
-                        // Обновляем UI если сообщение видимо
-                        const currentBotMessage = document.getElementById(`message-${botMessageId}`);
-                        if (currentBotMessage) {
-                            const currentBotMessageContent = currentBotMessage.querySelector('.message-content');
-                            currentBotMessageContent.innerHTML = `Error: ${error.message}`;
-                            currentBotMessage.querySelector('.char-count').textContent = `${(`Error: ${error.message}`).length} characters`;
-                            setMessageStatus(botMessageId, MESSAGE_STATUS.ERROR);
-                        }
-                    }
+                    // Обновляем сообщение об ошибке
+                    updateMessage(botMessageId, `Error: ${error.message}`, MESSAGE_STATUS.ERROR);
                 }
                 
                 updateDebugPanel();
             } finally {
-                // Reset UI state
+                // Сбрасываем состояние UI
                 activeChat.abortController = null;
                 sendBtn.disabled = false;
                 stopBtn.disabled = true;
@@ -2286,7 +2507,7 @@
             }
         }
         
-        // Stop generation
+        // Остановка генерации
         function stopGeneration() {
             if (activeChat && activeChat.abortController) {
                 activeChat.abortController.abort();
@@ -2672,10 +2893,40 @@
         
         settingsBtn.addEventListener('click', () => {
             settingsModal.style.display = 'flex';
+            updateTokenStatus();
         });
         
         closeModalBtn.addEventListener('click', () => {
             settingsModal.style.display = 'none';
+        });
+        
+        // Обработчик нажатия на кнопку регенерации токена
+        regenerateTokenBtn.addEventListener('click', async () => {
+            regenerateTokenBtn.disabled = true;
+            regenerateTokenBtn.textContent = 'Генерация...';
+            
+            try {
+                // Удаляем старый токен
+                localStorage.removeItem('puterJwtToken');
+                localStorage.removeItem('puterTokenTimestamp');
+                puterJwtToken = null;
+                
+                // Генерируем новый
+                const success = await generatePuterJwtToken();
+                
+                if (success) {
+                    alert('Токен успешно обновлен!');
+                } else {
+                    alert('Ошибка при обновлении токена. Проверьте консоль для деталей.');
+                }
+            } catch (error) {
+                console.error('Error regenerating token:', error);
+                alert(`Ошибка: ${error.message}`);
+            } finally {
+                regenerateTokenBtn.disabled = false;
+                regenerateTokenBtn.textContent = 'Обновить токен';
+                updateTokenStatus();
+            }
         });
         
         // Отладочная панель
@@ -2838,9 +3089,11 @@
             saveTextToLocalStorage('macroSaveInterval', this.value);
         });
         
-        // Initialization
+        // Инициализация
         loadConfig();
         loadChats();
+        loadPuterJwtToken();
+        updateTokenStatus();
         
         // Загрузка настройки автопрокрутки
         autoScroll = localStorage.getItem('autoScroll') !== 'false';
